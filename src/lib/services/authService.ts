@@ -80,7 +80,7 @@ export class AuthService {
 	static verifyToken(token: string): JWTPayload {
 		try {
 			return jwt.verify(token, JWT_SECRET) as JWTPayload;
-		} catch (error) {
+		} catch {
 			throw new Error('Invalid or expired token');
 		}
 	}

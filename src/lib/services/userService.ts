@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { User, Prisma } from '@/generated/prisma/client';
+import bcrypt from 'bcryptjs';
 
 // Types for user operations
 export type CreateUserData = {
 	email: string;
+	password?: string; // Optional - will generate random password if not provided
 	firstName?: string;
 	lastName?: string;
 	username?: string;
@@ -29,9 +31,14 @@ export class UserService {
 	 */
 	static async createUser(data: CreateUserData): Promise<User> {
 		try {
+			// Generate a random password if none provided (for OAuth users)
+			const password = data.password || Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+			const hashedPassword = await bcrypt.hash(password, 12);
+
 			const user = await prisma.user.create({
 				data: {
 					email: data.email,
+					password: hashedPassword,
 					firstName: data.firstName,
 					lastName: data.lastName,
 					username: data.username,

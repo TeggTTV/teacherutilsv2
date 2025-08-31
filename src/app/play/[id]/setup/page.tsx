@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { getApiUrl } from '@/lib/config';
+import { useParams } from 'next/navigation';
 
 interface Team {
 	id: string;
@@ -11,7 +12,14 @@ interface Team {
 	score: number;
 }
 
-export default function GameSetupPage({ params }: { params: { id: string } }) {
+export default function GameSetupPage() {
+	const params = useParams();
+	const gameId = params.id as string;
+	
+	return <GameSetupContent gameId={gameId} />;
+}
+
+function GameSetupContent({ gameId }: { gameId: string }) {
 	const { user, loading } = useAuthGuard();
 	const router = useRouter();
 	const [gameTitle, setGameTitle] = useState('');
@@ -26,7 +34,7 @@ export default function GameSetupPage({ params }: { params: { id: string } }) {
 	useEffect(() => {
 		const loadGame = async () => {
 			try {
-				const response = await fetch(getApiUrl(`/api/games/${params.id}`), {
+				const response = await fetch(getApiUrl(`/api/games/${gameId}`), {
 					credentials: 'include',
 				});
 				if (response.ok) {
@@ -46,7 +54,7 @@ export default function GameSetupPage({ params }: { params: { id: string } }) {
 		if (user) {
 			loadGame();
 		}
-	}, [params.id, user, router]);
+	}, [gameId, user, router]);
 
 	// Update teams when team count changes
 	useEffect(() => {
@@ -60,6 +68,7 @@ export default function GameSetupPage({ params }: { params: { id: string } }) {
 			});
 		}
 		setTeams(newTeams);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [teamCount]); // teams is intentionally excluded to prevent infinite loop
 
 	const updateTeamName = (teamId: string, name: string) => {
@@ -71,7 +80,7 @@ export default function GameSetupPage({ params }: { params: { id: string } }) {
 	const startGame = () => {
 		// Store team data in sessionStorage to pass to the game
 		sessionStorage.setItem('gameTeams', JSON.stringify(teams));
-		router.push(`/play/${params.id}`);
+		router.push(`/play/${gameId}`);
 	};
 
 	if (loading || loadingGame) {

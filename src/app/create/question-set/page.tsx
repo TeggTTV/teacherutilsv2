@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -28,7 +28,7 @@ interface Question {
 	difficulty?: 'easy' | 'medium' | 'hard';
 }
 
-export default function QuestionSetPage() {
+function QuestionSetContent() {
 	const { user, loading } = useAuthGuard();
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -1117,5 +1117,17 @@ export default function QuestionSetPage() {
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function QuestionSetPage() {
+	return (
+		<Suspense fallback={
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="text-lg">Loading...</div>
+			</div>
+		}>
+			<QuestionSetContent />
+		</Suspense>
 	);
 }
