@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/config';
 
 interface Category {
 	id: string;
@@ -66,7 +67,7 @@ export default function QuestionSetPage() {
 			
 			setLoadingGame(true);
 			try {
-				const response = await fetch(`/api/games/${editGameId}`, {
+				const response = await fetch(getApiUrl(`/api/games/${editGameId}`), {
 					credentials: 'include',
 				});
 				if (response.ok) {
@@ -263,7 +264,7 @@ export default function QuestionSetPage() {
 					tags: []
 				};
 
-				const response = await fetch(`/api/games/${savedGameId}`, {
+				const response = await fetch(getApiUrl(`/api/games/${savedGameId}`), {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(gameData)

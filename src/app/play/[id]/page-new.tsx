@@ -4,6 +4,7 @@ import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { getApiUrl } from '@/lib/config';
 
 interface Team {
 	id: string;
@@ -64,7 +65,7 @@ export default function PlayGamePage() {
 			if (!user || !gameId) return;
 			
 			try {
-				const response = await fetch(`/api/games/${gameId}`, {
+				const response = await fetch(getApiUrl(`/api/games/${gameId}`), {
 					credentials: 'include',
 				});
 				if (response.ok) {

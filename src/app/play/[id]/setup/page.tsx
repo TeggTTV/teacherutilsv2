@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { getApiUrl } from '@/lib/config';
 
 interface Team {
 	id: string;
@@ -25,7 +26,7 @@ export default function GameSetupPage({ params }: { params: { id: string } }) {
 	useEffect(() => {
 		const loadGame = async () => {
 			try {
-				const response = await fetch(`/api/games/${params.id}`, {
+				const response = await fetch(getApiUrl(`/api/games/${params.id}`), {
 					credentials: 'include',
 				});
 				if (response.ok) {

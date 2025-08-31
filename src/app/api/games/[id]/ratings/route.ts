@@ -6,9 +6,10 @@ const prisma = new PrismaClient();
 
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const { id } = await params;
 		const userId = await verifyAuth(request);
 		if (!userId) {
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -69,14 +70,15 @@ export async function POST(
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const { id } = await params;
 		const userId = await verifyAuth(request);
 
 		const ratings = await prisma.gameRating.findMany({
 			where: {
-				gameId: params.id
+				gameId: id
 			},
 			include: {
 				user: {

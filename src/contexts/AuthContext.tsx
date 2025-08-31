@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthUser } from '@/lib/services/authService';
+import { getApiUrl } from '@/lib/config';
 
 interface AuthContextType {
 	user: AuthUser | null;
@@ -36,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const checkAuth = async () => {
 		try {
-			const response = await fetch('/api/auth/me', {
+			const response = await fetch(getApiUrl('/api/auth/me'), {
 				credentials: 'include',
 			});
 
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const login = async (email: string, password: string) => {
 		setLoading(true);
 		try {
-			const response = await fetch('/api/auth/login', {
+			const response = await fetch(getApiUrl('/api/auth/login'), {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const register = async (formData: RegisterFormData) => {
 		setLoading(true);
 		try {
-			const response = await fetch('/api/auth/register', {
+			const response = await fetch(getApiUrl('/api/auth/register'), {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -113,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const logout = async () => {
 		try {
-			await fetch('/api/auth/logout', {
+			await fetch(getApiUrl('/api/auth/logout'), {
 				method: 'POST',
 				credentials: 'include',
 			});

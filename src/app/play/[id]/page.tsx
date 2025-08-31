@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import { getApiUrl } from '@/lib/config';
 
 interface Team {
 	id: string;
@@ -76,7 +77,7 @@ export default function PlayGamePage() {
 			if (!user || !gameId) return;
 			
 			try {
-				const response = await fetch(`/api/games/${gameId}`, {
+				const response = await fetch(getApiUrl(`/api/games/${gameId}`), {
 					credentials: 'include',
 				});
 				if (response.ok) {
@@ -88,7 +89,7 @@ export default function PlayGamePage() {
 					// Track play if it's a public game
 					if (data.game.isPublic) {
 						try {
-							await fetch(`/api/games/${gameId}/track`, {
+							await fetch(getApiUrl(`/api/games/${gameId}/track`), {
 								method: 'POST',
 								headers: {
 									'Content-Type': 'application/json',

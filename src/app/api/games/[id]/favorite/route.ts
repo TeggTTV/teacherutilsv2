@@ -6,9 +6,10 @@ const prisma = new PrismaClient();
 
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const { id } = await params;
 		const userId = await verifyAuth(request);
 		if (!userId) {
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,7 +18,7 @@ export async function POST(
 		// Check if game exists and is public
 		const game = await prisma.game.findFirst({
 			where: {
-				id: params.id,
+				id: id,
 				isPublic: true
 			}
 		});
@@ -30,7 +31,7 @@ export async function POST(
 		const existingFavorite = await prisma.gameFavorite.findUnique({
 			where: {
 				gameId_userId: {
-					gameId: params.id,
+					gameId: id,
 					userId
 				}
 			}
@@ -41,7 +42,7 @@ export async function POST(
 			await prisma.gameFavorite.delete({
 				where: {
 					gameId_userId: {
-						gameId: params.id,
+						gameId: id,
 						userId
 					}
 				}
@@ -56,7 +57,7 @@ export async function POST(
 			// Add to favorites
 			await prisma.gameFavorite.create({
 				data: {
-					gameId: params.id,
+					gameId: id,
 					userId
 				}
 			});
@@ -79,9 +80,10 @@ export async function POST(
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const { id } = await params;
 		const userId = await verifyAuth(request);
 
 		let isFavorited = false;
@@ -89,7 +91,7 @@ export async function GET(
 			const favorite = await prisma.gameFavorite.findUnique({
 				where: {
 					gameId_userId: {
-						gameId: params.id,
+						gameId: id,
 						userId
 					}
 				}
@@ -99,7 +101,7 @@ export async function GET(
 
 		const favoritesCount = await prisma.gameFavorite.count({
 			where: {
-				gameId: params.id
+				gameId: id
 			}
 		});
 

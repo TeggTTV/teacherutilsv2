@@ -4,10 +4,10 @@ import { UserService, UpdateUserData } from '@/lib/services/userService';
 // GET /api/users/[id] - Get user by ID
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const { id } = params;
+		const { id } = await params;
 		const { searchParams } = new URL(request.url);
 		const includeGames = searchParams.get('includeGames') === 'true';
 

@@ -6,9 +6,10 @@ const prisma = new PrismaClient();
 
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const { id } = await params;
 		const userId = await verifyAuth(request);
 		if (!userId) {
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -26,7 +27,7 @@ export async function POST(
 		// Verify the user owns this game
 		const existingGame = await prisma.game.findFirst({
 			where: {
-				id: params.id,
+				id: id,
 				userId
 			}
 		});
@@ -37,7 +38,7 @@ export async function POST(
 
 		// Update the game with sharing settings
 		const updatedGame = await prisma.game.update({
-			where: { id: params.id },
+			where: { id: id },
 			data: {
 				isPublic,
 				description,

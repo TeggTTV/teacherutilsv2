@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { getApiUrl } from '@/lib/config';
 
 interface ShareModalProps {
 	game: {
@@ -35,7 +36,7 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 		setIsSubmitting(true);
 
 		try {
-			const response = await fetch(`/api/games/${game.id}/share`, {
+			const response = await fetch(getApiUrl(`/api/games/${game.id}/share`), {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

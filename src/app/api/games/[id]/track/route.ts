@@ -5,9 +5,10 @@ const prisma = new PrismaClient();
 
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		const { id } = await params;
 		const { action } = await request.json();
 
 		if (!action || !['play', 'download'].includes(action)) {
@@ -17,7 +18,7 @@ export async function POST(
 		// Check if game exists and is public
 		const game = await prisma.game.findFirst({
 			where: {
-				id: params.id,
+				id: id,
 				isPublic: true
 			}
 		});
@@ -30,7 +31,7 @@ export async function POST(
 		const updateField = action === 'play' ? { plays: { increment: 1 } } : { downloads: { increment: 1 } };
 
 		await prisma.game.update({
-			where: { id: params.id },
+			where: { id: id },
 			data: updateField
 		});
 

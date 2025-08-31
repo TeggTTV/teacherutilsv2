@@ -3,6 +3,7 @@
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getApiUrl } from '@/lib/config';
 
 export default function ProfilePage() {
 	const { user, loading } = useAuthGuard();
@@ -36,7 +37,7 @@ export default function ProfilePage() {
 	const handleSave = async () => {
 		setSaving(true);
 		try {
-			const response = await fetch(`/api/users/${user?.id}`, {
+			const response = await fetch(getApiUrl(`/api/users/${user?.id}`), {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',

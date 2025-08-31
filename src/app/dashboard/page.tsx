@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import ShareModal from '@/components/ShareModal';
+import { getApiUrl } from '@/lib/config';
 
 interface SavedGame {
 	id: string;
@@ -99,7 +100,7 @@ export default function Dashboard() {
 			if (!user) return;
 			
 			try {
-				const response = await fetch('/api/games');
+				const response = await fetch(getApiUrl('/api/games'));
 				if (response.ok) {
 					const data = await response.json();
 					setGames(data.games || []);
@@ -130,7 +131,7 @@ export default function Dashboard() {
 					limit: '12'
 				});
 
-				const response = await fetch(`/api/games/public?${params}`);
+				const response = await fetch(getApiUrl(`/api/games/public?${params}`));
 				if (response.ok) {
 					const data = await response.json();
 					setPublicGames(data.games || []);
@@ -139,7 +140,7 @@ export default function Dashboard() {
 					if (user && data.games) {
 						const favoriteChecks = data.games.map(async (game: PublicGame) => {
 							try {
-								const favResponse = await fetch(`/api/games/${game.id}/favorite`, {
+								const favResponse = await fetch(getApiUrl(`/api/games/${game.id}/favorite`), {
 									credentials: 'include'
 								});
 								if (favResponse.ok) {
@@ -177,7 +178,7 @@ export default function Dashboard() {
 		setSavingGames(prev => new Set(prev).add(gameId));
 		
 		try {
-			const response = await fetch(`/api/games/${gameId}/favorite`, {
+			const response = await fetch(getApiUrl(`/api/games/${gameId}/favorite`), {
 				method: 'POST',
 				credentials: 'include',
 			});
@@ -206,7 +207,7 @@ export default function Dashboard() {
 					limit: '12'
 				});
 
-				const refreshResponse = await fetch(`/api/games/public?${params}`);
+				const refreshResponse = await fetch(getApiUrl(`/api/games/public?${params}`));
 				if (refreshResponse.ok) {
 					const refreshData = await refreshResponse.json();
 					setPublicGames(refreshData.games || []);
@@ -869,7 +870,7 @@ export default function Dashboard() {
 						// Refresh games list to show updated sharing status
 						const loadGames = async () => {
 							try {
-								const response = await fetch('/api/games');
+								const response = await fetch(getApiUrl('/api/games'));
 								if (response.ok) {
 									const data = await response.json();
 									setGames(data.games || []);
