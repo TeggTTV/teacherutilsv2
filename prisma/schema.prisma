@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  password     String
+  firstName    String?
+  lastName     String?
+  username     String?  @unique
+  profileImage String?
+  bio          String?
+  school       String?
+  grade        String?
+  subject      String?
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  games         Game[]
+  gameRatings   GameRating[]
+  gameFavorites GameFavorite[]
+  gameReports   GameReport[]
+
+  @@map("users")
+}
+
+model Game {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  type        GameType
+  data        Json // Store game-specific data (questions, categories, etc.)
+  isPublic    Boolean  @default(false)
+  tags        String[]
+  
+  // New sharing and marketplace fields
+  publishedAt DateTime?
+  downloads   Int      @default(0)
+  plays       Int      @default(0)
+  difficulty  String?  // "beginner", "intermediate", "advanced"
+  gradeLevel  String?  // "K-2", "3-5", "6-8", "9-12", "college"
+  subject     String?  // "math", "science", "history", "english", etc.
+  language    String   @default("en")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // New relations for marketplace features
+  ratings     GameRating[]
+  favorites   GameFavorite[]
+  reports     GameReport[]
+
+  @@map("games")
+}
+
+// New models for marketplace features
+model GameRating {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  rating  Int    // 1-5 stars
+  review  String?
+  
+  gameId  String @db.ObjectId
+  game    Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([gameId, userId]) // One rating per user per game
+  @@map("game_ratings")
+}
+
+model GameFavorite {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  
+  gameId  String @db.ObjectId
+  game    Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([gameId, userId]) // One favorite per user per game
+  @@map("game_favorites")
+}
+
+model GameReport {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  reason  String // "inappropriate", "copyright", "spam", "other"
+  details String?
+  status  String @default("pending") // "pending", "reviewed", "resolved"
+  
+  gameId  String @db.ObjectId
+  game    Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  userId  String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("game_reports")
+}
+
+enum GameType {
+  JEOPARDY
+  QUIZ
+  WORD_GAME
+}
