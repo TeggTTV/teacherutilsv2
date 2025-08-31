@@ -24,7 +24,7 @@ export async function POST(
 		// Check if game exists and is public
 		const game = await prisma.game.findFirst({
 			where: {
-				id: params.id,
+				id: id,
 				isPublic: true
 			}
 		});
@@ -37,7 +37,7 @@ export async function POST(
 		const gameRating = await prisma.gameRating.upsert({
 			where: {
 				gameId_userId: {
-					gameId: params.id,
+					gameId: id,
 					userId
 				}
 			},
@@ -46,7 +46,7 @@ export async function POST(
 				review: review || null
 			},
 			create: {
-				gameId: params.id,
+				gameId: id,
 				userId,
 				rating,
 				review: review || null
@@ -101,7 +101,7 @@ export async function GET(
 			userRating = await prisma.gameRating.findUnique({
 				where: {
 					gameId_userId: {
-						gameId: params.id,
+						gameId: id,
 						userId
 					}
 				}

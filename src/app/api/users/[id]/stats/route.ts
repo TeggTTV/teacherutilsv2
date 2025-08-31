@@ -4,10 +4,10 @@ import { UserService } from '@/lib/services/userService';
 // GET /api/users/[id]/stats - Get user statistics
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const { id } = params;
+		const { id } = await params;
 
 		const stats = await UserService.getUserStats(id);
 
