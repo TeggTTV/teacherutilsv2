@@ -86,7 +86,7 @@ export default function Navbar() {
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
 								onClick={() => setIsAuthModalOpen(true)}
-								className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg"
+								className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg"
 							>
 								<span>Join Free</span>
 								<motion.div
@@ -208,10 +208,10 @@ export default function Navbar() {
 										animate={{ opacity: 1, y: 0 }}
 										exit={{ opacity: 0, y: -10 }}
 										className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 py-1"
-										style={{ 
+										style={{
 											zIndex: 999999,
 											position: 'absolute',
-											isolation: 'isolate'
+											isolation: 'isolate',
 										}}
 									>
 										{user ? (
@@ -242,9 +242,12 @@ export default function Navbar() {
 													<Link href="/profile">
 														<motion.div
 															whileHover={{
-																backgroundColor: '#f3f4f6',
+																backgroundColor:
+																	'#f3f4f6',
 															}}
-															transition={{ duration: 0.2 }}
+															transition={{
+																duration: 0.2,
+															}}
 															className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
 														>
 															<svg
@@ -256,7 +259,9 @@ export default function Navbar() {
 																<path
 																	strokeLinecap="round"
 																	strokeLinejoin="round"
-																	strokeWidth={2}
+																	strokeWidth={
+																		2
+																	}
 																	d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 																/>
 															</svg>
@@ -268,18 +273,32 @@ export default function Navbar() {
 
 													<motion.button
 														whileHover={{
-															backgroundColor: '#f0f9ff',
+															backgroundColor:
+																'#f0f9ff',
 														}}
-														transition={{ duration: 0.2 }}
+														transition={{
+															duration: 0.2,
+														}}
 														onClick={() => {
 															// Refresh games from database
-															if (typeof window !== 'undefined') {
+															if (
+																typeof window !==
+																'undefined'
+															) {
 																// Trigger refresh event that the question-set page can listen to
-																window.dispatchEvent(new CustomEvent('refreshGames'));
+																window.dispatchEvent(
+																	new CustomEvent(
+																		'refreshGames'
+																	)
+																);
 																// Clear localStorage cache
-																localStorage.removeItem('savedGames');
+																localStorage.removeItem(
+																	'savedGames'
+																);
 															}
-															setIsProfileOpen(false);
+															setIsProfileOpen(
+																false
+															);
 														}}
 														className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-blue-600 flex items-center space-x-3"
 													>
@@ -305,9 +324,12 @@ export default function Navbar() {
 														<Link href="/help">
 															<motion.div
 																whileHover={{
-																	backgroundColor: '#f3f4f6',
+																	backgroundColor:
+																		'#f3f4f6',
 																}}
-																transition={{ duration: 0.2 }}
+																transition={{
+																	duration: 0.2,
+																}}
 																className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
 															>
 																<svg
@@ -326,17 +348,21 @@ export default function Navbar() {
 																	/>
 																</svg>
 																<span className="truncate">
-																	Help & Support
+																	Help &
+																	Support
 																</span>
 															</motion.div>
 														</Link>
 
 														<motion.button
 															whileHover={{
-																backgroundColor: '#fef2f2',
+																backgroundColor:
+																	'#fef2f2',
 																color: '#dc2626',
 															}}
-															transition={{ duration: 0.2 }}
+															transition={{
+																duration: 0.2,
+															}}
 															onClick={
 																handleLogout
 															}
@@ -387,9 +413,12 @@ export default function Navbar() {
 												<div className="py-1">
 													<motion.button
 														whileHover={{
-															backgroundColor: '#eff6ff',
+															backgroundColor:
+																'#eff6ff',
 														}}
-														transition={{ duration: 0.2 }}
+														transition={{
+															duration: 0.2,
+														}}
 														onClick={handleSignIn}
 														className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-blue-600 flex items-center space-x-3 font-medium"
 													>
@@ -414,9 +443,12 @@ export default function Navbar() {
 													<div className="border-t border-gray-100 mt-1 pt-1">
 														<motion.button
 															whileHover={{
-																backgroundColor: '#f9fafb',
+																backgroundColor:
+																	'#f9fafb',
 															}}
-															transition={{ duration: 0.2 }}
+															transition={{
+																duration: 0.2,
+															}}
 															className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-400 flex items-center space-x-3 cursor-not-allowed"
 															disabled
 														>

@@ -1,0 +1,48 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { Resend } from 'resend';
+
+// Initialize Resend with API key
+const resend = new Resend('re_Cee5NTRX_P1ufpDKiXWMG4jeuFNC7oK3q');
+
+export async function POST(req: Request) {
+    try {
+        const { email } = await req.json();
+
+        if (!email || !email.includes('@')) {
+            return NextResponse.json(
+                { success: false, error: 'Invalid email address' },
+                { status: 400 }
+            );
+        }
+
+        // Create new subscriber in database
+        await prisma.newsletterSubscriber.create({
+            data: {
+                email,
+                status: 'confirmed'
+            }
+        });
+
+        // Send welcome email using Resend
+        await resend.emails.send({
+            from: 'onboarding@resend.dev',
+            to: email,
+            subject: 'Welcome to Compyy - Your Free Templates',
+            html: `<p>Thank you for subscribing to Compyy! Here are your <strong>free game templates</strong>!</p>
+                   <p>Get started creating amazing educational games for your students.</p>`
+        });
+
+        return NextResponse.json({
+            success: true,
+            message: 'Successfully subscribed! Check your email for the templates.'
+        });
+
+    } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        return NextResponse.json(
+            { success: false, error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
