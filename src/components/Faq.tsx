@@ -6,35 +6,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 const faqs = [
     {
         question: "Is Compyy free to use?",
-        answer: "Yes! Compyy offers a generous free tier that includes access to basic templates and features. Premium features are available with our Pro subscription, starting at $9.99/month."
+        answer: "Yes! Compyy offers a generous free tier that includes access to basic templates and features. Premium features are available with our Pro subscription, starting at $9.99/month.",
+        icon: "💰"
     },
     {
         question: "Do I need technical skills to use Compyy?",
-        answer: "Not at all! Our platform is designed to be user-friendly. If you can use PowerPoint, you can use Compyy to create engaging educational games."
-    },
-    {
-        question: "Can I share games with other teachers?",
-        answer: "Absolutely! You can easily share your games with colleagues through our teacher community marketplace or by sharing a direct link. Premium users can also create private sharing groups."
+        answer: "Not at all! Our platform is designed to be user-friendly. If you can use PowerPoint, you can use Compyy to create engaging educational games.",
+        icon: "🎯"
     },
     {
         question: "How do students access the games?",
-        answer: "Students can access games through a simple link or code - no registration required. They can play on any device with a web browser, including smartphones and tablets."
+        answer: "Students can access games through a simple link or code - no registration required. They can play on any device with a web browser, including smartphones and tablets.",
+        icon: "📱"
     },
     {
         question: "What types of games can I create?",
-        answer: "Compyy supports various game types including quiz shows, flashcards, memory games, word searches, crosswords, and more. Premium users get access to advanced game templates like escape rooms and interactive storytelling."
-    },
-    {
-        question: "Can I track student progress?",
-        answer: "Yes! Our basic analytics show participation rates and overall scores. Premium users get detailed insights including individual student performance, learning trends, and downloadable progress reports."
-    },
-    {
-        question: "Is Compyy compatible with my school's LMS?",
-        answer: "Yes! Compyy integrates with major Learning Management Systems including Google Classroom, Canvas, and Schoology. We also support single sign-on (SSO) for enterprise users."
-    },
-    {
-        question: "What support options are available?",
-        answer: "All users get access to our help center and community forums. Premium users receive priority email support, and enterprise customers get dedicated support managers."
+        answer: "Compyy supports various game types including quiz shows, flashcards, memory games, word searches, crosswords, and more. Premium users get access to advanced game templates like escape rooms and interactive storytelling.",
+        icon: "🎮"
     }
 ];
 
@@ -42,49 +30,108 @@ export default function Faq() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
-        <div className="space-y-4">
-            {faqs.map((faq, index) => (
-                <div
-                    key={index}
-                    className="border border-gray-200 rounded-lg bg-white overflow-hidden"
-                >
-                    <button
-                        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors duration-200"
-                        onClick={() => setOpenIndex(openIndex === index ? null : index)}
+        <div>
+            {/* Card Layout for Desktop/Tablet */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-2 gap-6">
+                {faqs.map((faq, index) => (
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300"
                     >
-                        <span className="text-lg font-semibold text-gray-900">{faq.question}</span>
-                        <svg
-                            className={`w-5 h-5 text-gray-500 transform transition-transform duration-200 ${
-                                openIndex === index ? 'rotate-180' : ''
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
-                    </button>
-                    <AnimatePresence>
-                        {openIndex === index && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <div className="px-6 py-4 border-t border-gray-100">
-                                    <p className="text-gray-600">{faq.answer}</p>
+                        <div className="flex items-start space-x-4">
+                            <div className="flex-shrink-0">
+                                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span className="text-2xl">{faq.icon}</span>
                                 </div>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                                    {faq.question}
+                                </h3>
+                                <p className="text-gray-600 leading-relaxed">
+                                    {faq.answer}
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Dropdown Layout for Mobile */}
+            <div className="md:hidden space-y-4">
+                {faqs.map((faq, index) => (
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
+                    >
+                        <motion.button
+                            className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-50 transition-all duration-200 rounded-xl"
+                            onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                            whileTap={{ scale: 0.99 }}
+                        >
+                            <div className="flex items-center space-x-3">
+                                <span className="text-xl">{faq.icon}</span>
+                                <span className="text-lg font-semibold text-gray-900">{faq.question}</span>
+                            </div>
+                            
+                            <motion.div
+                                className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"
+                                animate={{
+                                    rotate: openIndex === index ? 180 : 0,
+                                    backgroundColor: openIndex === index ? '#3B82F6' : '#DBEAFE'
+                                }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <svg
+                                    className={`w-4 h-4 transition-colors duration-300 ${
+                                        openIndex === index ? 'text-white' : 'text-blue-600'
+                                    }`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
                             </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            ))}
+                        </motion.button>
+                        
+                        <AnimatePresence>
+                            {openIndex === index && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                                        <motion.p
+                                            className="text-gray-700 leading-relaxed"
+                                            initial={{ y: -10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            exit={{ y: -10, opacity: 0 }}
+                                            transition={{ duration: 0.2, delay: 0.1 }}
+                                        >
+                                            {faq.answer}
+                                        </motion.p>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                ))}
+            </div>
         </div>
     );
 }

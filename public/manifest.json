@@ -1,0 +1,53 @@
+{
+  "name": "Compyy. - Interactive Educational Games Platform",
+  "short_name": "Compyy.",
+  "description": "Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "games", "productivity"],
+  "screenshots": [
+    {
+      "src": "/Compyy%20Logo%20w%20Text.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Compyy. Platform Overview"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/Compyy%20Logo%20Icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/Compyy%20Logo%20Icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Compyy%20Logo%20Icon%20Transparent.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Compyy%20Logo%20Icon%20Transparent.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

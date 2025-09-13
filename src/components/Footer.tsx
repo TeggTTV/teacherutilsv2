@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
 	return (
@@ -16,10 +17,14 @@ export default function Footer() {
 							transition={{ duration: 0.6 }}
 						>
 							<div className="flex items-center space-x-2 mb-4">
-								<div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-									<span className="text-white font-bold text-sm">
-										TU
-									</span>
+								<div className="w-8 h-8 flex items-center justify-center">
+									<Image
+										src="/Compyy%20Logo%20Icon%20Transparent.png"
+										alt="Compyy. Logo"
+										width={32}
+										height={32}
+										className="object-contain"
+									/>
 								</div>
 								<span className="text-xl font-bold">
 									Compyy.
@@ -45,10 +50,10 @@ export default function Footer() {
 									href="#"
 									whileHover={{ scale: 1.1, y: -2 }}
 									whileTap={{ scale: 0.9 }}
-									className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
+									className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-pink-600 transition-colors"
 								>
 									<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-										<path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+										<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
 									</svg>
 								</motion.a>
 								<motion.a
@@ -65,67 +70,72 @@ export default function Footer() {
 						</motion.div>
 					</div>
 
-					{/* Quick Links */}
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.6, delay: 0.1 }}
-					>
-						<h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-						<ul className="space-y-2">
-							<li>
-								<Link href="/" className="text-gray-300 hover:text-white transition-colors">
-									Home
-								</Link>
-							</li>
-							<li>
-								<Link href="/create" className="text-gray-300 hover:text-white transition-colors">
-									Create Games
-								</Link>
-							</li>
-							<li>
-								<Link href="/explore" className="text-gray-300 hover:text-white transition-colors">
-									Explore
-								</Link>
-							</li>
-							<li>
-								<Link href="/templates" className="text-gray-300 hover:text-white transition-colors">
-									Templates
-								</Link>
-							</li>
-						</ul>
-					</motion.div>
+					{/* Links - Mobile Two Column Layout, Desktop Single Columns */}
+					<div className="grid grid-cols-2 md:grid-cols-2 gap-8 md:contents">
+						{/* Quick Links */}
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.6, delay: 0.1 }}
+							className="md:col-auto"
+						>
+							<h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+							<ul className="space-y-2">
+								<li>
+									<Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Home
+									</Link>
+								</li>
+								<li>
+									<Link href="/create" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Create Games
+									</Link>
+								</li>
+								<li>
+									<Link href="/explore" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Explore
+									</Link>
+								</li>
+								<li>
+									<Link href="/templates" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Templates
+									</Link>
+								</li>
+							</ul>
+						</motion.div>
 
-					{/* Support */}
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.6, delay: 0.2 }}
-					>
-						<h3 className="text-lg font-semibold mb-4">Support</h3>
-						<ul className="space-y-2">
-							<li>
-								<Link href="/help" className="text-gray-300 hover:text-white transition-colors">
-									Help Center
-								</Link>
-							</li>
-							<li>
-								<Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
-									Contact Us
-								</Link>
-							</li>
-							<li>
-								<Link href="/tutorials" className="text-gray-300 hover:text-white transition-colors">
-									Tutorials
-								</Link>
-							</li>
-							<li>
-								<Link href="/community" className="text-gray-300 hover:text-white transition-colors">
-									Community
-								</Link>
-							</li>
-						</ul>
-					</motion.div>
+						{/* Support */}
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.6, delay: 0.2 }}
+							className="md:col-auto"
+						>
+							<h3 className="text-lg font-semibold mb-4">Support</h3>
+							<ul className="space-y-2">
+								<li>
+									<Link href="/help" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Help Center
+									</Link>
+								</li>
+								<li>
+									<Link href="/contact" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Contact Us
+									</Link>
+								</li>
+								<li>
+									<Link href="/tutorials" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Tutorials
+									</Link>
+								</li>
+								<li>
+									<Link href="/community" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Community
+									</Link>
+								</li>
+							</ul>
+						</motion.div>
+					</div>
 				</div>
 
 				{/* Bottom Section */}

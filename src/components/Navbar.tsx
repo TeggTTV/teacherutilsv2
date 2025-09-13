@@ -67,10 +67,12 @@ export default function Navbar() {
 						className="flex-shrink-0"
 					>
 						<Link href="/" className="flex items-center space-x-2">
-							<div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-								<span className="text-white font-bold text-sm">
-									C
-								</span>
+							<div className="w-8 h-8 flex items-center justify-center">
+								<img
+									src="/Compyy%20Logo%20Icon%20Transparent.png"
+									alt="Compyy. Logo"
+									className="w-full h-full object-contain"
+								/>
 							</div>
 							<span className="text-xl font-bold text-gray-900">
 								Compyy.

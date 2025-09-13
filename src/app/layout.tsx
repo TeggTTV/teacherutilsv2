@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 	title: 'Compyy. - Interactive Educational Games Platform',
 	description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 	metadataBase: new URL(process.env.SITE_URL || 'https://compyy.vercel.app'),
+	manifest: '/manifest.json',
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: [
 			{
-				url: '/og-image.png',
+				url: '/Compyy%20Logo%20w%20Text.png',
 				width: 1200,
 				height: 630,
 				alt: 'Compyy. - Interactive Educational Games Platform',
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Compyy. - Interactive Educational Games Platform',
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-		images: ['/og-image.png'],
+		images: ['/Compyy%20Logo%20w%20Text.png'],
 	},
 	viewport: {
 		width: 'device-width',
@@ -48,7 +49,38 @@ export const metadata: Metadata = {
 	},
 	themeColor: '#3B82F6',
 	icons: {
-		icon: '/favicon.ico',
+		icon: [
+			{ url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+			{ url: '/Compyy%20Logo%20Icon.png', sizes: '192x192', type: 'image/png' },
+			{ url: '/Compyy%20Logo%20Icon.png', sizes: '512x512', type: 'image/png' },
+		],
+		apple: [
+			{ url: '/Compyy%20Logo%20Icon.png', sizes: '180x180', type: 'image/png' },
+		],
+		other: [
+			{
+				rel: 'icon',
+				url: '/Compyy%20Logo%20Icon%20Transparent.png',
+				sizes: '192x192',
+				type: 'image/png',
+			},
+		],
+	},
+	keywords: ['education', 'games', 'jeopardy', 'quiz', 'teaching', 'learning', 'interactive', 'classroom'],
+	authors: [{ name: 'Compyy. Team' }],
+	creator: 'Compyy.',
+	publisher: 'Compyy.',
+	formatDetection: {
+		email: false,
+		address: false,
+		telephone: false,
+	},
+	applicationName: 'Compyy.',
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: 'default',
+		title: 'Compyy.',
+		startupImage: '/Compyy%20Logo%20Icon.png',
 	},
 };
 
@@ -59,6 +91,18 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
+			<head>
+				<link rel="icon" href="/favicon.ico" sizes="32x32" />
+				<link rel="icon" href="/Compyy%20Logo%20Icon.png" sizes="192x192" type="image/png" />
+				<link rel="apple-touch-icon" href="/Compyy%20Logo%20Icon.png" />
+				<link rel="manifest" href="/manifest.json" />
+				<meta name="mobile-web-app-capable" content="yes" />
+				<meta name="apple-mobile-web-app-capable" content="yes" />
+				<meta name="application-name" content="Compyy." />
+				<meta name="apple-mobile-web-app-title" content="Compyy." />
+				<meta name="msapplication-TileColor" content="#3B82F6" />
+				<meta name="msapplication-TileImage" content="/Compyy%20Logo%20Icon.png" />
+			</head>
 			<body
 				suppressHydrationWarning
 				className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}

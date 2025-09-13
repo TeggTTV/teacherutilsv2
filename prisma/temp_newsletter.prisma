@@ -1,9 +1,0 @@
-model NewsletterSubscriber {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  status    String   @default("pending") // "pending", "confirmed", "unsubscribed"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("newsletter_subscribers")
-}
