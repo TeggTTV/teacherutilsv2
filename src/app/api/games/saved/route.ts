@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { GameType } from '@prisma/client';
+import { GameType } from '@/generated/prisma/client';
 import { verifyAuth } from '@/lib/auth';
 
 interface SavedGame {
