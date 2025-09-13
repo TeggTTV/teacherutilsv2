@@ -7,7 +7,7 @@ import { getApiUrl } from '@/lib/config';
 import UnsubscribeModal from '@/components/UnsubscribeModal';
 
 export default function ProfilePage() {
-	const { user, loading, updateUserData } = useAuthGuard();
+	const { user, loading } = useAuthGuard();
 	const [isEditing, setIsEditing] = useState(false);
 	const [subscriptionStatus, setSubscriptionStatus] = useState<{ status: string } | null>(null);
 	const [isUnsubscribing, setIsUnsubscribing] = useState(false);
@@ -74,9 +74,7 @@ export default function ProfilePage() {
 			});
 
 			if (response.ok) {
-				const data = await response.json();
-				// Update client-side state
-				// updateUserData(data);
+				// Update successful  
 				setIsEditing(false);
 			} else {
 				throw new Error('Failed to update profile');

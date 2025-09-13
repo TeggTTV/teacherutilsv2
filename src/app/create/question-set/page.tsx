@@ -146,23 +146,6 @@ function QuestionSetContent() {
 		});
 	};
 
-	const addCategory = () => {
-		if (categories.length >= 6) return;
-		
-		const newCategory: Category = {
-			id: `category-${categories.length}`,
-			name: '',
-			questions: customValues.map((value, j) => ({
-				id: `question-${categories.length}-${j}`,
-				value,
-				question: '',
-				answer: '',
-				isAnswered: false
-			}))
-		};
-		setCategories(prev => [...prev, newCategory]);
-	};
-
 	const addQuestion = (categoryIndex: number) => {
 		const category = categories[categoryIndex];
 		if (category.questions.length >= 5) return;

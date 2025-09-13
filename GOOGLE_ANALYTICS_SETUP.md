@@ -10,7 +10,7 @@
 2. **Create a Property**
    - Click "Admin" (gear icon)
    - Under "Property", click "Create Property"
-   - Enter your website name (e.g., "TeacherUtils")
+   - Enter your website name (e.g., "Compyy.")
    - Select your reporting time zone and currency
 
 3. **Set Up Data Stream**
