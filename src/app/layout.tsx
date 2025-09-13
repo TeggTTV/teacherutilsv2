@@ -57,14 +57,6 @@ export const metadata: Metadata = {
 		apple: [
 			{ url: '/Compyy%20Logo%20Icon.png', sizes: '180x180', type: 'image/png' },
 		],
-		other: [
-			{
-				rel: 'icon',
-				url: '/Compyy%20Logo%20Icon%20Transparent.png',
-				sizes: '192x192',
-				type: 'image/png',
-			},
-		],
 	},
 	keywords: ['education', 'games', 'jeopardy', 'quiz', 'teaching', 'learning', 'interactive', 'classroom'],
 	authors: [{ name: 'Compyy. Team' }],

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from './AuthModal';
@@ -68,10 +69,12 @@ export default function Navbar() {
 					>
 						<Link href="/" className="flex items-center space-x-2">
 							<div className="w-8 h-8 flex items-center justify-center">
-								<img
+								<Image
 									src="/Compyy%20Logo%20Icon%20Transparent.png"
 									alt="Compyy. Logo"
-									className="w-full h-full object-contain"
+									width={32}
+									height={32}
+									className="object-contain"
 								/>
 							</div>
 							<span className="text-xl font-bold text-gray-900">
