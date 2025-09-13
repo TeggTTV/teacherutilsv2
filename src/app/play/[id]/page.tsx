@@ -57,6 +57,7 @@ export default function PlayGamePage() {
 	
 	const [game, setGame] = useState<SavedGame | null>(null);
 	const [teams, setTeams] = useState<Team[]>([]);
+	const [displayScores, setDisplayScores] = useState<{ [key: string]: number }>({});
 	const [loadingGame, setLoadingGame] = useState(true);
 	const [gameState, setGameState] = useState<'board' | 'question' | 'teamSelect'>('board');
 	const [currentQuestion, setCurrentQuestion] = useState<{
@@ -113,15 +114,20 @@ export default function PlayGamePage() {
 		// Load teams from sessionStorage
 		const loadTeams = () => {
 			const savedTeams = sessionStorage.getItem('gameTeams');
-			if (savedTeams) {
-				setTeams(JSON.parse(savedTeams));
-			} else {
-				// Default to 2 teams if none found
-				setTeams([
+			const initialTeams = savedTeams 
+				? JSON.parse(savedTeams)
+				: [
 					{ id: '1', name: 'Team 1', score: 0 },
 					{ id: '2', name: 'Team 2', score: 0 }
-				]);
-			}
+				];
+			
+			setTeams(initialTeams);
+			// Initialize display scores
+			const initialDisplayScores = initialTeams.reduce((acc: Record<string, number>, team: Team) => ({
+				...acc,
+				[team.id]: team.score
+			}), {});
+			setDisplayScores(initialDisplayScores);
 		};
 
 		loadGame();
@@ -181,6 +187,36 @@ export default function PlayGamePage() {
 		setGameState('teamSelect');
 	};
 
+	const animateScore = (teamId: string, startScore: number, endScore: number) => {
+		const duration = 800; // Animation duration in ms, slightly faster
+		const startTime = performance.now();
+		
+		// Easing function - easeOutCubic
+		const easeOutCubic = (t: number): number => {
+			return 1 - Math.pow(1 - t, 3);
+		};
+
+		const animate = (currentTime: number) => {
+			const elapsed = currentTime - startTime;
+			const progress = Math.min(elapsed / duration, 1);
+			
+			// Apply easing to progress
+			const easedProgress = easeOutCubic(progress);
+			const currentValue = startScore + (endScore - startScore) * easedProgress;
+			
+			setDisplayScores(prev => ({
+				...prev,
+				[teamId]: Math.round(currentValue)
+			}));
+
+			if (progress < 1) {
+				requestAnimationFrame(animate);
+			}
+		};
+
+		requestAnimationFrame(animate);
+	};
+
 	const awardPoints = (teamId: string) => {
 		if (!currentQuestion) return;
 		
@@ -191,6 +227,12 @@ export default function PlayGamePage() {
 		}
 		setTimeRemaining(null);
 		
+		const team = teams.find(t => t.id === teamId);
+		if (team) {
+			const newScore = team.score + currentQuestion.question.value;
+			animateScore(teamId, team.score, newScore);
+		}
+
 		setTeams(prev => prev.map(team => 
 			team.id === teamId 
 				? { ...team, score: team.score + currentQuestion.question.value }
@@ -259,8 +301,8 @@ export default function PlayGamePage() {
 
 	return (
 		<div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-			{/* Header with Game Title and Team Scores - Hidden for now */}
-			<div className="bg-white shadow-sm border-b flex-shrink-0 hidden">
+			{/* Header with Game Title and Team Scores */}
+			<div className="bg-white shadow-sm border-b flex-shrink-0">
 				<div className="px-6 py-3">
 					<div className="flex justify-between items-center">
 						<h1 className="text-xl font-bold text-gray-900">{game.title}</h1>
@@ -268,7 +310,9 @@ export default function PlayGamePage() {
 							{teams.map((team) => (
 								<div key={team.id} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1">
 									<div className="text-xs text-blue-600 font-medium">{team.name}</div>
-									<div className="text-lg font-bold text-blue-800">${team.score}</div>
+									<div className="text-lg font-bold text-blue-800">
+										${displayScores[team.id] !== undefined ? displayScores[team.id] : team.score}
+									</div>
 								</div>
 							))}
 						</div>

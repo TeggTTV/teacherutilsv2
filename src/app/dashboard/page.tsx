@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import ShareModal from '@/components/ShareModal';
 import { getApiUrl } from '@/lib/config';
+import { trackGameSave, trackSearch, trackGamePlay } from '@/lib/analytics';
 
 interface SavedGame {
 	id: string;
@@ -93,6 +94,7 @@ export default function Dashboard() {
 	const [shareModalGame, setShareModalGame] = useState<SavedGame | null>(null);
 	const [savingGames, setSavingGames] = useState<Set<string>>(new Set());
 	const [savedGames, setSavedGames] = useState<Set<string>>(new Set());
+	const [savedGamesList, setSavedGamesList] = useState<PublicGame[]>([]);
 
 	// Load user's saved games
 	useEffect(() => {
@@ -115,10 +117,32 @@ export default function Dashboard() {
 		loadGames();
 	}, [user]);
 
+	// Load saved games when saved tab is active
+	useEffect(() => {
+		const loadSavedGames = async () => {
+			if (activeTab !== 'saved' || !user) return;
+
+			try {
+				const response = await fetch(getApiUrl('/api/games/saved'), {
+					credentials: 'include'
+				});
+				
+				if (response.ok) {
+					const data = await response.json();
+					setSavedGamesList(data.games || []);
+				}
+			} catch (error) {
+				console.error('Error loading saved games:', error);
+			}
+		};
+
+		loadSavedGames();
+	}, [activeTab, user]);
+
 	// Load public games when market tab is active
 	useEffect(() => {
 		const loadPublicGames = async () => {
-			if (activeTab !== 'market' && activeTab !== 'discover') return;
+			if (activeTab !== 'discover') return;
 			
 			setLoadingPublicGames(true);
 			try {
@@ -186,6 +210,12 @@ export default function Dashboard() {
 			if (response.ok) {
 				const data = await response.json();
 				
+				// Track the save/unsave action
+				const game = publicGames.find(g => g.id === gameId);
+				if (game) {
+					trackGameSave(gameId, game.title);
+				}
+				
 				// Update saved games state based on response
 				if (data.isFavorited) {
 					setSavedGames(prev => new Set(prev).add(gameId));
@@ -246,8 +276,8 @@ export default function Dashboard() {
 				</svg>
 			),
 			label: 'Play',
-			bgColor: 'bg-gradient-to-r from-blue-400 to-blue-500',
-			textColor: 'text-white',
+			bgColor: activeTab === 'play' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'play' ? 'text-white' : 'text-gray-700',
 		},
 		{
 			id: 'stats',
@@ -257,20 +287,10 @@ export default function Dashboard() {
 				</svg>
 			),
 			label: 'Stats',
-			bgColor: 'bg-gray-100',
-			textColor: 'text-gray-700',
+			bgColor: activeTab === 'stats' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'stats' ? 'text-white' : 'text-gray-700',
 		},
-		{
-			id: 'market',
-			icon: (
-				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z" />
-				</svg>
-			),
-			label: 'Market',
-			bgColor: 'bg-gray-100',
-			textColor: 'text-gray-700',
-		},
+
 		{
 			id: 'discover',
 			icon: (
@@ -279,8 +299,8 @@ export default function Dashboard() {
 				</svg>
 			),
 			label: 'Discover',
-			bgColor: 'bg-gray-100',
-			textColor: 'text-gray-700',
+			bgColor: activeTab === 'discover' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'discover' ? 'text-white' : 'text-gray-700',
 		},
 		{
 			id: 'my-sets',
@@ -290,19 +310,19 @@ export default function Dashboard() {
 				</svg>
 			),
 			label: 'My Sets',
-			bgColor: 'bg-blue-500',
-			textColor: 'text-white',
+			bgColor: activeTab === 'my-sets' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'my-sets' ? 'text-white' : 'text-gray-700',
 		},
 		{
-			id: 'favorites',
+			id: 'saved',
 			icon: (
 				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
 					<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
 				</svg>
 			),
-			label: 'Favorites',
-			bgColor: 'bg-gray-100',
-			textColor: 'text-gray-700',
+			label: 'Saved',
+			bgColor: activeTab === 'saved' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'saved' ? 'text-white' : 'text-gray-700',
 		},
 	];
 
@@ -341,22 +361,22 @@ export default function Dashboard() {
 				{/* Bottom Navigation */}
 				<div className="p-4 border-t border-gray-200">
 					<div className="flex items-center justify-center space-x-4">
-						<button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+						<button className="p-2 text-gray-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all">
 							<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
 								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 							</svg>
 						</button>
-						<button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+						<button className="p-2 text-gray-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all">
 							<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
 								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
 							</svg>
 						</button>
-						<button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+						<button className="p-2 text-gray-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all">
 							<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
 								<path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
 							</svg>
 						</button>
-						<button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+						<button className="p-2 text-gray-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all">
 							<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
 								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 							</svg>
@@ -375,17 +395,15 @@ export default function Dashboard() {
 								{activeTab === 'my-sets' && 'My Sets'}
 								{activeTab === 'play' && 'Play Games'}
 								{activeTab === 'stats' && 'Statistics'}
-								{activeTab === 'market' && 'Game Market'}
-								{activeTab === 'discover' && 'Discover'}
-								{activeTab === 'favorites' && 'Favorites'}
+								{activeTab === 'discover' && 'Discover Games'}
+								{activeTab === 'saved' && 'Saved Games'}
 							</h1>
 							<p className="text-gray-600 mt-1">
 								{activeTab === 'my-sets' && 'Manage your question sets and games'}
 								{activeTab === 'play' && 'Start playing educational games'}
 								{activeTab === 'stats' && 'View your performance analytics'}
-								{activeTab === 'market' && 'Discover new educational content'}
-								{activeTab === 'discover' && 'Find trending games and activities'}
-								{activeTab === 'favorites' && 'Your saved games and sets'}
+								{activeTab === 'discover' && 'Browse and discover educational games'}
+								{activeTab === 'saved' && 'Games you\'ve saved from the marketplace'}
 							</p>
 						</div>
 						{activeTab === 'my-sets' && (
@@ -465,7 +483,7 @@ export default function Dashboard() {
 													</div>
 													<div className="flex items-center space-x-2">
 														<Link href={`/play/${game.id}/setup`} className="flex-1">
-															<button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
+															<button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
 																<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
 																	<path d="M8 5v14l11-7z" />
 																</svg>
@@ -474,7 +492,7 @@ export default function Dashboard() {
 														</Link>
 														<button
 															onClick={() => setShareModalGame(game)}
-															className="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+															className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
 														>
 															<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -482,7 +500,7 @@ export default function Dashboard() {
 															<span>Share</span>
 														</button>
 														<Link href={`/create/question-set?edit=${game.id}`} className="flex-1">
-															<button className="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
+															<button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
 																<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																	<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
 																</svg>
@@ -630,17 +648,24 @@ export default function Dashboard() {
 						</div>
 					)}
 
-					{activeTab === 'market' && (
+					{activeTab === 'discover' && (
 						<div>
-							{/* Market Search and Filters */}
+							{/* Search and Filters */}
 							<div className="mb-6 space-y-4">
 								{/* Search Bar */}
 								<div className="relative">
 									<input
 										type="text"
-										placeholder="Search public games..."
+										placeholder="Search games to discover..."
 										value={marketSearch}
-										onChange={(e) => setMarketSearch(e.target.value)}
+										onChange={(e) => {
+											const value = e.target.value;
+											setMarketSearch(value);
+											// Track search after user stops typing for 1 second
+											if (value.length > 2) {
+												setTimeout(() => trackSearch(value), 1000);
+											}
+										}}
 										className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 									/>
 									<svg
@@ -711,7 +736,7 @@ export default function Dashboard() {
 								</div>
 							</div>
 
-							{/* Public Games Grid */}
+							{/* Games Grid */}
 							{loadingPublicGames ? (
 								<div className="flex items-center justify-center py-16">
 									<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -816,7 +841,10 @@ export default function Dashboard() {
 														)}
 													</motion.button>
 													<Link href={`/play/${game.id}/setup`} className="flex-1">
-														<button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
+														<button 
+															onClick={() => trackGamePlay(game.id, game.title)}
+															className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+														>
 															<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
 																<path d="M8 5v14l11-7z" />
 															</svg>
@@ -833,18 +861,155 @@ export default function Dashboard() {
 									<div className="max-w-md mx-auto">
 										<div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
 											<svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-												<path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z" />
+												<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 											</svg>
 										</div>
-										<h3 className="text-xl font-semibold text-gray-900 mb-4">No public games found</h3>
-										<p className="text-gray-600">Try adjusting your search or filters to find games.</p>
+										<h3 className="text-xl font-semibold text-gray-900 mb-4">No games found</h3>
+										<p className="text-gray-600">Try adjusting your search or filters to discover games.</p>
 									</div>
 								</div>
 							)}
 						</div>
 					)}
 
-					{activeTab !== 'my-sets' && activeTab !== 'play' && activeTab !== 'market' && (
+					{activeTab === 'saved' && (
+						<div>
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+								{savedGamesList.length > 0 ? (
+									savedGamesList.map((game) => (
+										<motion.div
+											key={game.id}
+											whileHover={{ scale: 1.02 }}
+											className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
+										>
+											<div className="p-4">
+												<div className="w-full h-32 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-4 flex items-center justify-center">
+													<div className="text-4xl">🎯</div>
+												</div>
+												
+												<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+													{game.title}
+												</h3>
+												
+												{game.description && (
+													<p className="text-sm text-gray-600 mb-3 line-clamp-2">
+														{game.description}
+													</p>
+												)}
+
+												<div className="space-y-2 mb-4">
+													{game.subject && (
+														<span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+															{game.subject}
+														</span>
+													)}
+													{game.gradeLevel && (
+														<span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full ml-1">
+															{game.gradeLevel}
+														</span>
+													)}
+													{game.difficulty && (
+														<span className="inline-block px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full ml-1">
+															{game.difficulty}
+														</span>
+													)}
+												</div>
+
+												<div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+													<span>By {game.author.name}</span>
+													<div className="flex items-center space-x-2">
+														{game.avgRating > 0 && (
+															<div className="flex items-center">
+																<span>⭐</span>
+																<span className="ml-1">{game.avgRating}</span>
+																<span className="text-gray-400">({game.ratingsCount})</span>
+															</div>
+														)}
+													</div>
+												</div>
+
+												<div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+													<span>🎮 {game.plays} plays</span>
+													<span>📥 {game.downloads} downloads</span>
+													<span>❤️ {game.favoritesCount}</span>
+												</div>
+
+												<div className="flex items-center space-x-2">
+													<motion.button
+														onClick={() => handleFavoriteGame(game.id)}
+														disabled={savingGames.has(game.id)}
+														whileHover={{ scale: savingGames.has(game.id) ? 1 : 1.05 }}
+														whileTap={{ scale: savingGames.has(game.id) ? 1 : 0.95 }}
+														animate={{ 
+															backgroundColor: '#fef2f2',
+															color: '#b91c1c'
+														}}
+														transition={{ duration: 0.2 }}
+														className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1 border-2 border-red-200 shadow-md ${
+															savingGames.has(game.id) ? 'cursor-not-allowed opacity-75' : 'hover:shadow-sm'
+														}`}
+													>
+														{savingGames.has(game.id) ? (
+															<>
+																<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+																<span>Saving...</span>
+															</>
+														) : (
+															<>
+																<motion.span
+																	animate={{ 
+																		scale: [1, 1.2, 1],
+																		rotate: [0, 10, -10, 0]
+																	}}
+																	transition={{ duration: 0.3 }}
+																>
+																	❤️
+																</motion.span>
+																<span className="font-semibold">
+																	Remove
+																</span>
+															</>
+														)}
+													</motion.button>
+													<Link href={`/play/${game.id}/setup`} className="flex-1">
+														<button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
+															<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+																<path d="M8 5v14l11-7z" />
+															</svg>
+															<span>Play</span>
+														</button>
+													</Link>
+												</div>
+											</div>
+										</motion.div>
+									))
+								) : (
+									<div className="col-span-full text-center py-16">
+										<div className="max-w-md mx-auto">
+											<div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+												<svg className="w-12 h-12 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+													<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+												</svg>
+											</div>
+											<h3 className="text-xl font-semibold text-gray-900 mb-4">No saved games yet</h3>
+											<p className="text-gray-600 mb-6">Browse the marketplace to find and save games you like.</p>
+											<button
+												onClick={() => setActiveTab('discover')}
+												className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-flex items-center space-x-2"
+											>
+												<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+													<path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1z" />
+												</svg>
+												<span>Discover Games</span>
+											</button>
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+					)}
+
+					{activeTab !== 'my-sets' && activeTab !== 'play' && activeTab !== 'discover' && activeTab !== 'saved' && (
 						<div className="text-center py-16">
 							<div className="max-w-md mx-auto">
 								<div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">

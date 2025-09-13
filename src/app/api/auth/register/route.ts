@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
 					user: result.user,
 				},
 				message: 'Registration successful',
+				trackEvent: 'signup', // Signal client to track signup
 			},
 			{ status: 201 }
 		);

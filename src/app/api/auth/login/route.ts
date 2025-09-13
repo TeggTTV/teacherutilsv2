@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
 					user: result.user,
 				},
 				message: 'Login successful',
+				trackEvent: 'login', // Signal client to track login
 			},
 			{ status: 200 }
 		);
