@@ -1,281 +1,269 @@
 'use client';
 
 import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 import ShareModal from '@/components/ShareModal';
 import { getApiUrl } from '@/lib/config';
-import { trackGameSave, trackSearch, trackGamePlay } from '@/lib/analytics';
+import { trackGamePlay, trackSearch } from '@/lib/analytics';
 
-interface SavedGame {
-	id: string;
-	title: string;
-	description?: string;
-	type: 'JEOPARDY';
-	data: {
-		gameTitle: string;
-		categories: Category[];
-		customValues: number[];
-	};
-	isPublic: boolean;
-	tags: string[];
-	createdAt: string;
-	updatedAt: string;
-}
-
-interface PublicGame {
-	id: string;
-	title: string;
-	description?: string;
-	type: 'JEOPARDY';
-	tags: string[];
-	subject?: string;
-	gradeLevel?: string;
-	difficulty?: string;
-	language: string;
-	publishedAt: string;
-	downloads: number;
-	plays: number;
-	avgRating: number;
-	ratingsCount: number;
-	favoritesCount: number;
-	author: {
-		id: string;
-		name: string;
-		school?: string;
-	};
-}
-
-interface SavedGame {
-	id: string;
-	title: string;
-	description?: string;
-	type: 'JEOPARDY';
-	data: {
-		gameTitle: string;
-		categories: Category[];
-		customValues: number[];
-	};
-	isPublic: boolean;
-	tags: string[];
-	createdAt: string;
-	updatedAt: string;
-}
-
-interface Category {
-	id: string;
-	name: string;
-	questions: Question[];
-}
-
-interface Question {
-	id: string;
-	value: number;
-	question: string;
-	answer: string;
-	isAnswered: boolean;
-}
+// Import our new modular components
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import MySetsTab from '@/components/dashboard/MySetsTab';
+import { SavedGame, SidebarItem, PublicGame, MarketFilters } from '@/components/dashboard/types';
 
 export default function Dashboard() {
 	const { user, loading } = useAuthGuard();
-	const [activeTab, setActiveTab] = useState('my-sets');
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	const pathname = usePathname();
+	
+	// Get tab from URL parameters, default to 'play'
+	const [activeTab, setActiveTab] = useState(() => {
+		const urlTab = searchParams.get('tab');
+		return ['play', 'discover', 'market', 'stats', 'my-sets', 'saved'].includes(urlTab || '') 
+			? (urlTab as string) 
+			: 'play';
+	});
+	
 	const [games, setGames] = useState<SavedGame[]>([]);
 	const [publicGames, setPublicGames] = useState<PublicGame[]>([]);
 	const [loadingGames, setLoadingGames] = useState(true);
 	const [loadingPublicGames, setLoadingPublicGames] = useState(false);
 	const [marketSearch, setMarketSearch] = useState('');
-	const [marketFilters, setMarketFilters] = useState({
+	const [marketFilters, setMarketFilters] = useState<MarketFilters>({
 		subject: '',
 		gradeLevel: '',
 		difficulty: '',
 		sortBy: 'newest'
 	});
 	const [shareModalGame, setShareModalGame] = useState<SavedGame | null>(null);
-	const [savingGames, setSavingGames] = useState<Set<string>>(new Set());
-	const [savedGames, setSavedGames] = useState<Set<string>>(new Set());
-	const [savedGamesList, setSavedGamesList] = useState<PublicGame[]>([]);
+	const [selectedGameInfo, setSelectedGameInfo] = useState<SavedGame | null>(null);
+
+	const [savedGames, setSavedGames] = useState<PublicGame[]>([]);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
-	// Load user's saved games
+	// Function to handle tab navigation
+	const handleTabChange = (tabId: string) => {
+		setActiveTab(tabId);
+		// Update URL without page reload
+		const newUrl = `${pathname}?tab=${tabId}`;
+		window.history.pushState({}, '', newUrl);
+	};
+
+	// Listen for URL changes (browser back/forward)
 	useEffect(() => {
-		const loadGames = async () => {
-			if (!user) return;
-			
-			try {
-				const response = await fetch(getApiUrl('/api/games'));
-				if (response.ok) {
-					const data = await response.json();
-					setGames(data.games || []);
-				}
-			} catch (error) {
-				console.error('Error loading games:', error);
-			} finally {
-				setLoadingGames(false);
+		const handlePopState = () => {
+			const urlParams = new URLSearchParams(window.location.search);
+			const urlTab = urlParams.get('tab');
+			if (urlTab && ['play', 'stats', 'market', 'discover', 'my-sets', 'saved'].includes(urlTab)) {
+				setActiveTab(urlTab);
 			}
 		};
 
-		loadGames();
-	}, [user]);
-
-	// Close dropdowns when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as Element;
-			const dropdowns = document.querySelectorAll('[id^="dropdown-"]');
-			
-			dropdowns.forEach((dropdown) => {
-				if (!dropdown.contains(target) && !dropdown.parentElement?.contains(target)) {
-					dropdown.classList.add('hidden');
-				}
-			});
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
+		window.addEventListener('popstate', handlePopState);
+		return () => window.removeEventListener('popstate', handlePopState);
 	}, []);
 
-	// Load saved games when saved tab is active
+	// Load user's games
+	const loadGames = useCallback(async () => {
+		if (!user) return;
+		
+		try {
+			const response = await fetch(getApiUrl('/api/games'));
+			if (response.ok) {
+				const data = await response.json();
+				setGames(data.games || []);
+			}
+		} catch (error) {
+			console.error('Error loading games:', error);
+		} finally {
+			setLoadingGames(false);
+		}
+	}, [user]);
+
+	useEffect(() => {
+		if (user && !loading) {
+			loadGames();
+		}
+	}, [user, loading, loadGames]);
+
+	// Load public games for discover tab
+	useEffect(() => {
+		const loadPublicGames = async () => {
+			if (activeTab === 'discover') {
+				setLoadingPublicGames(true);
+				try {
+					const response = await fetch('/api/games/public');
+					if (response.ok) {
+						const data = await response.json();
+						setPublicGames(data.games || []); // Extract games from response
+					}
+				} catch (error) {
+					console.error('Error loading public games:', error);
+				} finally {
+					setLoadingPublicGames(false);
+				}
+			}
+		};
+
+		loadPublicGames();
+	}, [activeTab, user]);
+
+	// Load saved games for saved tab
 	useEffect(() => {
 		const loadSavedGames = async () => {
-			if (activeTab !== 'saved' || !user) return;
-
-			try {
-				const response = await fetch(getApiUrl('/api/games/saved'), {
-					credentials: 'include'
-				});
-				
-				if (response.ok) {
-					const data = await response.json();
-					setSavedGamesList(data.games || []);
+			if (activeTab === 'saved' && user) {
+				try {
+					const response = await fetch('/api/games/saved');
+					if (response.ok) {
+						const data = await response.json();
+						setSavedGames(data.games || []); // Extract games from response
+					}
+				} catch (error) {
+					console.error('Error loading saved games:', error);
 				}
-			} catch (error) {
-				console.error('Error loading saved games:', error);
 			}
 		};
 
 		loadSavedGames();
 	}, [activeTab, user]);
 
-	// Load public games when market tab is active
-	useEffect(() => {
-		const loadPublicGames = async () => {
-			if (activeTab !== 'discover') return;
-			
-			setLoadingPublicGames(true);
-			try {
-				const params = new URLSearchParams({
-					search: marketSearch,
-					subject: marketFilters.subject,
-					gradeLevel: marketFilters.gradeLevel,
-					difficulty: marketFilters.difficulty,
-					sortBy: marketFilters.sortBy,
-					limit: '12'
-				});
+	// Handle game actions
+	const handleEditGame = (game: SavedGame) => {
+		router.push(`/create/question-set?edit=${game.id}`);
+	};
 
-				const response = await fetch(getApiUrl(`/api/games/public?${params}`));
-				if (response.ok) {
-					const data = await response.json();
-					setPublicGames(data.games || []);
-					
-					// Check favorite status for each game
-					if (user && data.games) {
-						const favoriteChecks = data.games.map(async (game: PublicGame) => {
-							try {
-								const favResponse = await fetch(getApiUrl(`/api/games/${game.id}/favorite`), {
-									credentials: 'include'
-								});
-								if (favResponse.ok) {
-									const favData = await favResponse.json();
-									return { gameId: game.id, isFavorited: favData.isFavorited };
-								}
-							} catch (error) {
-								console.error('Error checking favorite status:', error);
-							}
-							return { gameId: game.id, isFavorited: false };
-						});
-						
-						const favoriteResults = await Promise.all(favoriteChecks);
-						const newSavedGames = new Set<string>();
-						favoriteResults.forEach(result => {
-							if (result.isFavorited) {
-								newSavedGames.add(result.gameId);
-							}
-						});
-						setSavedGames(newSavedGames);
-					}
-				}
-			} catch (error) {
-				console.error('Error loading public games:', error);
-			} finally {
-				setLoadingPublicGames(false);
-			}
-		};
+	const handleShareGame = (game: SavedGame) => {
+		setShareModalGame(game);
+	};
 
-		loadPublicGames();
-	}, [activeTab, marketSearch, marketFilters, user]);
+	const handleGameInfo = (game: SavedGame) => {
+		setSelectedGameInfo(game);
+	};
+
+	const handlePlayGame = (game: SavedGame) => {
+		trackGamePlay(game.id, game.data.gameTitle);
+	};
 
 	const handleFavoriteGame = async (gameId: string) => {
-		// Add to saving state
-		setSavingGames(prev => new Set(prev).add(gameId));
-		
 		try {
-			const response = await fetch(getApiUrl(`/api/games/${gameId}/favorite`), {
-				method: 'POST',
-				credentials: 'include',
-			});
-			
-			if (response.ok) {
-				const data = await response.json();
-				
-				// Track the save/unsave action
-				const game = publicGames.find(g => g.id === gameId);
-				if (game) {
-					trackGameSave(gameId, game.title);
-				}
-				
-				// Update saved games state based on response
-				if (data.isFavorited) {
-					setSavedGames(prev => new Set(prev).add(gameId));
-				} else {
-					setSavedGames(prev => {
-						const newSet = new Set(prev);
-						newSet.delete(gameId);
-						return newSet;
-					});
-				}
-				
-				// Refresh public games to update favorite status
-				const params = new URLSearchParams({
-					search: marketSearch,
-					subject: marketFilters.subject,
-					gradeLevel: marketFilters.gradeLevel,
-					difficulty: marketFilters.difficulty,
-					sortBy: marketFilters.sortBy,
-					limit: '12'
+			const savedGame = savedGames?.find(g => g.id === gameId);
+			if (savedGame) {
+				// Unsave game
+				const response = await fetch(`/api/games/saved/${gameId}`, {
+					method: 'DELETE',
 				});
-
-				const refreshResponse = await fetch(getApiUrl(`/api/games/public?${params}`));
-				if (refreshResponse.ok) {
-					const refreshData = await refreshResponse.json();
-					setPublicGames(refreshData.games || []);
+				if (response.ok) {
+					setSavedGames(prev => prev?.filter(g => g.id !== gameId) || []);
+				}
+			} else {
+				// Save game
+				const response = await fetch(`/api/games/saved/${gameId}`, {
+					method: 'POST',
+				});
+				if (response.ok) {
+					// Add to saved games
+					const gameToSave = publicGames?.find(g => g.id === gameId);
+					if (gameToSave) {
+						setSavedGames(prev => [...(prev || []), gameToSave]);
+					}
 				}
 			}
 		} catch (error) {
-			console.error('Error toggling favorite:', error);
-		} finally {
-			// Remove from saving state
-			setSavingGames(prev => {
-				const newSet = new Set(prev);
-				newSet.delete(gameId);
-				return newSet;
-			});
+			console.error('Error toggling saved game:', error);
 		}
 	};
 
-	if (loading || loadingGames) {
+	const handleSearch = (searchTerm: string) => {
+		setMarketSearch(searchTerm);
+		if (searchTerm) {
+			trackSearch(searchTerm);
+		}
+	};
+
+	const handleFilterChange = (filterType: keyof MarketFilters, value: string) => {
+		setMarketFilters(prev => ({
+			...prev,
+			[filterType]: value
+		}));
+	};
+
+	// Sidebar configuration
+	const sidebarItems: SidebarItem[] = [
+		{
+			id: 'play',
+			label: 'Play Games',
+			icon: (
+				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M8 5v14l11-7z" />
+				</svg>
+			),
+			bgColor: activeTab === 'play' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'play' ? 'text-white' : 'text-gray-700',
+		},
+		{
+			id: 'discover',
+			label: 'Discover',
+			icon: (
+				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+				</svg>
+			),
+			bgColor: activeTab === 'discover' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'discover' ? 'text-white' : 'text-gray-700',
+		},
+		{
+			id: 'market',
+			label: 'Market',
+			icon: (
+				<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H19M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
+				</svg>
+			),
+			bgColor: activeTab === 'market' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'market' ? 'text-white' : 'text-gray-700',
+		},
+		{
+			id: 'stats',
+			label: 'Statistics',
+			icon: (
+				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+				</svg>
+			),
+			bgColor: activeTab === 'stats' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'stats' ? 'text-white' : 'text-gray-700',
+		},
+		{
+			id: 'my-sets',
+			label: 'My Sets',
+			icon: (
+				<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v0H8v0z" />
+				</svg>
+			),
+			bgColor: activeTab === 'my-sets' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'my-sets' ? 'text-white' : 'text-gray-700',
+		},
+		{
+			id: 'saved',
+			label: 'Saved Games',
+			icon: (
+				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+				</svg>
+			),
+			bgColor: activeTab === 'saved' ? 'bg-blue-500' : 'bg-gray-100',
+			textColor: activeTab === 'saved' ? 'text-white' : 'text-gray-700',
+		},
+	];
+
+	if (loading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -283,850 +271,521 @@ export default function Dashboard() {
 		);
 	}
 
-	if (!user) {
-		return null; // Will redirect in useAuthGuard
-	}
-
-	const sidebarItems = [
-		{
-			id: 'play',
-			icon: (
-				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M8 5v14l11-7z" />
-				</svg>
-			),
-			label: 'Play',
-			bgColor: activeTab === 'play' ? 'bg-blue-500' : 'bg-gray-100',
-			textColor: activeTab === 'play' ? 'text-white' : 'text-gray-700',
-		},
-		{
-			id: 'stats',
-			icon: (
-				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-				</svg>
-			),
-			label: 'Stats',
-			bgColor: activeTab === 'stats' ? 'bg-blue-500' : 'bg-gray-100',
-			textColor: activeTab === 'stats' ? 'text-white' : 'text-gray-700',
-		},
-
-		{
-			id: 'discover',
-			icon: (
-				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-				</svg>
-			),
-			label: 'Discover',
-			bgColor: activeTab === 'discover' ? 'bg-blue-500' : 'bg-gray-100',
-			textColor: activeTab === 'discover' ? 'text-white' : 'text-gray-700',
-		},
-		{
-			id: 'my-sets',
-			icon: (
-				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
-				</svg>
-			),
-			label: 'My Sets',
-			bgColor: activeTab === 'my-sets' ? 'bg-blue-500' : 'bg-gray-100',
-			textColor: activeTab === 'my-sets' ? 'text-white' : 'text-gray-700',
-		},
-		{
-			id: 'saved',
-			icon: (
-				<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-				</svg>
-			),
-			label: 'Saved',
-			bgColor: activeTab === 'saved' ? 'bg-blue-500' : 'bg-gray-100',
-			textColor: activeTab === 'saved' ? 'text-white' : 'text-gray-700',
-		},
-	];
-
 	return (
-		<div className="min-h-screen bg-gray-50 flex">
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex">
 			{/* Sidebar */}
-			<motion.div 
-				initial={{ x: -256 }}
-				animate={{
-					x: sidebarOpen ? 0 : -256,
-				}}
-				transition={{
-					type: "spring",
-					stiffness: 400,
-					damping: 40,
-					mass: 1
-				}}
-				className={`
-					lg:translate-x-0 lg:!transform-none
-					fixed lg:static 
-					inset-y-0 left-0 
-					z-50 lg:z-auto
-					w-64 
-					bg-white shadow-lg lg:shadow-sm border-r border-gray-200 
-					flex flex-col
-				`}
-			>
-						{/* Close button for mobile */}
-						<div className="flex items-center justify-between p-4 lg:hidden border-b border-gray-200">
-							<span className="text-lg font-bold text-gray-900">Navigation</span>
-							<button
-								onClick={() => setSidebarOpen(false)}
-								className="p-3 rounded-lg hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-							>
-								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						</div>				{/* Navigation */}
-				<div className="flex-1 py-6">
-					<nav className="space-y-2 px-4">
-						{sidebarItems.map((item) => (
-							<motion.button
-								key={item.id}
-								whileHover={{ scale: 1.02 }}
-								whileTap={{ scale: 0.98 }}
-								onClick={() => {
-									setActiveTab(item.id);
-									setSidebarOpen(false); // Close sidebar on mobile after selection
-								}}
-								className={`w-full flex items-center space-x-3 px-4 py-4 lg:py-3 rounded-lg transition-all duration-200 ${item.bgColor} ${item.textColor} min-h-[48px] lg:min-h-[44px]`}
-							>
-								{item.icon}
-								<span className="font-medium">{item.label}</span>
-							</motion.button>
-						))}
-					</nav>
-				</div>
-
-				{/* Bottom Information */}
-				<div className="p-4 border-t border-gray-200">
-					<div className="text-center">
-						<p className="text-sm text-gray-600 mb-1">Compyy. Dashboard</p>
-						<p className="text-xs text-gray-500">Create, play, and discover educational games</p>
-					</div>
-				</div>
-			</motion.div>
+			<DashboardSidebar
+				sidebarOpen={sidebarOpen}
+				setSidebarOpen={setSidebarOpen}
+				sidebarItems={sidebarItems}
+				activeTab={activeTab}
+				onTabChange={handleTabChange}
+			/>
 
 			{/* Main Content */}
 			<div className="flex-1 min-w-0">
 				{/* Header */}
-				<div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center space-x-4">
-							{/* Mobile Menu Button */}
-							<button
-								onClick={() => setSidebarOpen(true)}
-								className="lg:hidden p-3 rounded-lg hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-							>
-								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-								</svg>
-							</button>
-							
-							<div>
-								<h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-									{activeTab === 'my-sets' && 'My Sets'}
-									{activeTab === 'play' && 'Play Games'}
-									{activeTab === 'stats' && 'Statistics'}
-									{activeTab === 'discover' && 'Discover Games'}
-									{activeTab === 'saved' && 'Saved Games'}
-								</h1>
-								<p className="text-gray-600 mt-1 hidden sm:block">
-									{activeTab === 'my-sets' && 'Manage your question sets and games'}
-									{activeTab === 'play' && 'Start playing educational games'}
-									{activeTab === 'stats' && 'View your performance analytics'}
-									{activeTab === 'discover' && 'Browse and discover educational games'}
-									{activeTab === 'saved' && 'Games you\'ve saved from the marketplace'}
-								</p>
-							</div>
-						</div>
-						
-						{activeTab === 'my-sets' && (
-							<div className="flex items-center space-x-2 sm:space-x-4">
-								<div className="relative hidden sm:block">
-									<input
-										type="text"
-										placeholder="Search your sets..."
-										className="w-60 lg:w-80 pl-10 pr-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-									/>
-									<svg
-										className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-										/>
-									</svg>
-								</div>
-								<Link href="/create">
-									<motion.button
-										whileHover={{ scale: 1.02 }}
-										whileTap={{ scale: 0.98 }}
-										className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-6 py-3 sm:py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg min-h-[44px] sm:min-h-[40px]"
-									>
-										<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-										</svg>
-										<span className="hidden sm:inline">Create Set</span>
-										<span className="sm:hidden">Create</span>
-									</motion.button>
-								</Link>
-							</div>
-						)}
-					</div>
-					
-					{/* Mobile Search for My Sets tab */}
-					{activeTab === 'my-sets' && (
-						<div className="relative mt-4 sm:hidden">
-							<input
-								type="text"
-								placeholder="Search your sets..."
-								className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-							/>
-							<svg
-								className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-								/>
-							</svg>
-						</div>
-					)}
-				</div>
+				<DashboardHeader
+					activeTab={activeTab}
+					sidebarOpen={sidebarOpen}
+					setSidebarOpen={setSidebarOpen}
+				/>
 
 				{/* Content Area */}
-				<div className="p-4 sm:p-6 lg:p-8">
-					{activeTab === 'my-sets' && (
-						<div>
-							{loadingGames ? (
-								<div className="flex items-center justify-center py-16">
-									<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+				<div className="p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-blue-50/30 to-indigo-100/30 min-h-screen">
+					<div className="max-w-7xl mx-auto">
+						{/* My Sets Tab */}
+						{activeTab === 'my-sets' && (
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.6, delay: 0.2 }}
+							>
+								<MySetsTab
+									games={games}
+									loadingGames={loadingGames}
+									onEditGame={handleEditGame}
+									onShareGame={handleShareGame}
+									onGameInfo={handleGameInfo}
+									onPlayGame={handlePlayGame}
+								/>
+							</motion.div>
+						)}
+
+						{/* Other tabs - Placeholder content for now */}
+						{activeTab === 'play' && (
+							<div className="space-y-6">
+								<div className="flex justify-between items-center">
+									<h2 className="text-2xl font-bold text-gray-900">Play Your Games</h2>
 								</div>
-							) : games.length > 0 ? (
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-									{games.map((game) => {
-										return (
+
+								{games && games.length > 0 ? (
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+										{games.filter(game => game.isPublic).map((game) => (
+											<motion.div
+												key={game.id}
+												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+												initial={{ opacity: 0, y: 20 }}
+												animate={{ opacity: 1, y: 0 }}
+												whileHover={{ y: -5 }}
+											>
+												{/* Display Image */}
+												<div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg overflow-hidden">
+													{game.data.displayImage ? (
+														<img 
+															src={game.data.displayImage} 
+															alt={game.data.gameTitle}
+															className="w-full h-full object-cover"
+														/>
+													) : (
+														<div className="w-full h-full flex items-center justify-center">
+															<div className="text-6xl opacity-50">🎮</div>
+														</div>
+													)}
+												</div>
+												<div className="p-4">
+													<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+														{game.data.gameTitle}
+													</h3>
+													<p className="text-sm text-gray-600 mb-4 line-clamp-2">
+														{game.description || 'No description available'}
+													</p>
+
+													<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+														<span className="flex items-center">
+															<svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+															</svg>
+															Published
+														</span>
+														<span className="text-green-600 font-medium">Ready to Play</span>
+													</div>
+
+													<Link
+														href={`/play/${game.id}/setup`}
+														className="block w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center"
+													>
+														Start Game
+													</Link>
+												</div>
+											</motion.div>
+										))}
+									</div>
+								) : (
+									<div className="text-center py-16">
+										<svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+										<h3 className="text-lg font-medium text-gray-900 mb-2">No Games to Play</h3>
+										<p className="text-gray-600 mb-4">You need to publish some games first to make them playable.</p>
+										<Link
+											href="#"
+											onClick={() => setActiveTab('my-sets')}
+											className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+										>
+											Go to My Sets
+										</Link>
+									</div>
+								)}
+							</div>
+						)}
+
+						{activeTab === 'stats' && (
+							<div className="text-center py-16">
+								<h2 className="text-2xl font-bold text-gray-900 mb-4">Statistics</h2>
+								<p className="text-gray-600">Statistics feature coming soon!</p>
+							</div>
+						)}
+
+						{activeTab === 'market' && (
+							<div className="space-y-6">
+								<div className="flex justify-between items-center">
+									<h2 className="text-2xl font-bold text-gray-900">Game Templates Market</h2>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+									{/* Sample template cards */}
+									<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
+										<div className="p-4">
+											<h3 className="font-semibold text-gray-900 mb-2">Science Quiz Template</h3>
+											<p className="text-sm text-gray-600 mb-4">
+												Ready-to-use science questions for middle school students
+											</p>
+											<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+												<span>25 questions</span>
+												<span className="text-green-600 font-medium">Free</span>
+											</div>
+											<button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200">
+												Use Template
+											</button>
+										</div>
+									</div>
+
+									<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
+										<div className="p-4">
+											<h3 className="font-semibold text-gray-900 mb-2">History Jeopardy</h3>
+											<p className="text-sm text-gray-600 mb-4">
+												Complete history game with categories and questions
+											</p>
+											<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+												<span>30 questions</span>
+												<span className="text-green-600 font-medium">Free</span>
+											</div>
+											<button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200">
+												Use Template
+											</button>
+										</div>
+									</div>
+
+									<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
+										<div className="p-4">
+											<h3 className="font-semibold text-gray-900 mb-2">Math Practice Set</h3>
+											<p className="text-sm text-gray-600 mb-4">
+												Mathematical concepts for elementary grades
+											</p>
+											<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+												<span>20 questions</span>
+												<span className="text-green-600 font-medium">Free</span>
+											</div>
+											<button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200">
+												Use Template
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<div className="text-center py-8">
+									<p className="text-gray-600">More templates coming soon! Create your own to share with the community.</p>
+								</div>
+							</div>
+						)}
+
+						{activeTab === 'discover' && (
+							<div>
+								{/* Search and Filters */}
+								<div className="mb-6 space-y-4">
+									{/* Search Bar */}
+									<div className="relative">
+										<input
+											type="text"
+											placeholder="Search games to discover..."
+											value={marketSearch}
+											onChange={(e) => {
+												const value = e.target.value;
+												setMarketSearch(value);
+												// Track search after user stops typing for 1 second
+												if (value.length > 2) {
+													setTimeout(() => trackSearch(value), 1000);
+												}
+											}}
+											className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+										/>
+										<svg
+											className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+											/>
+										</svg>
+									</div>
+
+									{/* Filters */}
+									<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+										<select
+											value={marketFilters.subject}
+											onChange={(e) => setMarketFilters({...marketFilters, subject: e.target.value})}
+											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+										>
+											<option value="">All Subjects</option>
+											<option value="math">Math</option>
+											<option value="science">Science</option>
+											<option value="history">History</option>
+											<option value="english">English</option>
+											<option value="geography">Geography</option>
+											<option value="art">Art</option>
+										</select>
+
+										<select
+											value={marketFilters.gradeLevel}
+											onChange={(e) => setMarketFilters({...marketFilters, gradeLevel: e.target.value})}
+											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+										>
+											<option value="">All Grades</option>
+											<option value="K-2">K-2</option>
+											<option value="3-5">3-5</option>
+											<option value="6-8">6-8</option>
+											<option value="9-12">9-12</option>
+											<option value="college">College</option>
+										</select>
+
+										<select
+											value={marketFilters.difficulty}
+											onChange={(e) => setMarketFilters({...marketFilters, difficulty: e.target.value})}
+											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+										>
+											<option value="">All Difficulties</option>
+											<option value="beginner">Beginner</option>
+											<option value="intermediate">Intermediate</option>
+											<option value="advanced">Advanced</option>
+										</select>
+
+										<select
+											value={marketFilters.sortBy}
+											onChange={(e) => setMarketFilters({...marketFilters, sortBy: e.target.value})}
+											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+										>
+											<option value="newest">Newest</option>
+											<option value="popular">Most Popular</option>
+											<option value="downloads">Most Downloaded</option>
+											<option value="rating">Highest Rated</option>
+										</select>
+									</div>
+								</div>
+
+								{/* Games Grid */}
+								{loadingPublicGames ? (
+									<div className="flex items-center justify-center py-16">
+										<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+									</div>
+								) : publicGames.length > 0 ? (
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+										{publicGames.map((game) => (
 											<motion.div
 												key={game.id}
 												whileHover={{ scale: 1.02 }}
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
 											>
 												<div className="p-4 sm:p-6">
-													<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 sm:mb-4 flex items-center justify-center">
-														<div className="text-2xl sm:text-4xl">🎯</div>
+													{/* Display Image */}
+													<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+														{game.data?.displayImage ? (
+															<img 
+																src={game.data.displayImage} 
+																alt={game.title}
+																className="w-full h-full object-cover"
+															/>
+														) : (
+															<div className="w-full h-full flex items-center justify-center">
+																<div className="text-2xl sm:text-4xl opacity-50">🌟</div>
+															</div>
+														)}
 													</div>
+													
 													<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base">
 														{game.title}
 													</h3>
-													<div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-														<span>{game.data.categories.length} Categories</span>
-														<span className="hidden sm:inline">{new Date(game.updatedAt).toLocaleDateString()}</span>
-														{game.isPublic && (
-															<span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-																<svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-																	<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-																</svg>
-																Public
+													
+													{game.description && (
+														<p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">
+															{game.description}
+														</p>
+													)}
+
+													<div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
+														{game.subject && (
+															<span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+																{game.subject}
+															</span>
+														)}
+														{game.gradeLevel && (
+															<span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+																{game.gradeLevel}
+															</span>
+														)}
+														{game.difficulty && (
+															<span className="inline-block px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+																{game.difficulty}
 															</span>
 														)}
 													</div>
-													<div className="flex space-x-2">
-														{/* Primary Action - Play Button */}
+
+													<div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
+														<span className="truncate">By {game.author.name}</span>
+														<div className="flex items-center space-x-2">
+															{game.avgRating > 0 && (
+																<div className="flex items-center">
+																	<span>⭐</span>
+																	<span className="ml-1">{game.avgRating}</span>
+																	<span className="text-gray-400 hidden sm:inline">({game.ratingsCount})</span>
+																</div>
+															)}
+														</div>
+													</div>
+
+													<div className="flex items-center justify-between text-xs text-gray-500 mb-3 sm:mb-4">
+														<span>🎮 {game.plays}</span>
+														<span>📥 {game.downloads}</span>
+														<span>❤️ {game.favoritesCount}</span>
+													</div>
+
+													<div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-2">
+														<motion.button
+															onClick={() => handleFavoriteGame(game.id)}
+															whileHover={{ scale: 1.05 }}
+															whileTap={{ scale: 0.95 }}
+															animate={{ 
+																backgroundColor: savedGames.some(g => g.id === game.id) ? '#fef2f2' : '#f3f4f6',
+																color: savedGames.some(g => g.id === game.id) ? '#b91c1c' : '#374151'
+															}}
+															transition={{ duration: 0.2 }}
+															className={`flex-1 py-3 sm:py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1 border-2 min-h-[44px] sm:min-h-[40px] hover:shadow-sm ${
+																savedGames.some(g => g.id === game.id)
+																	? 'border-red-200 shadow-md'
+																	: 'border-gray-200 hover:border-gray-300'
+															}`}
+														>
+															{(
+																<>
+																	<motion.span
+																		animate={{ 
+																			scale: savedGames.some(g => g.id === game.id) ? [1, 1.2, 1] : 1,
+																			rotate: savedGames.some(g => g.id === game.id) ? [0, 10, -10, 0] : 0
+																		}}
+																		transition={{ duration: 0.3 }}
+																	>
+																		{savedGames.some(g => g.id === game.id) ? '❤️' : '🤍'}
+																	</motion.span>
+																	<span className="font-semibold">
+																		{savedGames.some(g => g.id === game.id) ? 'Saved!' : 'Save'}
+																	</span>
+																</>
+															)}
+														</motion.button>
 														<Link href={`/play/${game.id}/setup`} className="flex-1">
-															<button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1 min-h-[44px]">
+															<button 
+																onClick={() => trackGamePlay(game.id, game.title)}
+																className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 sm:py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1 min-h-[44px] sm:min-h-[40px]"
+															>
 																<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
 																	<path d="M8 5v14l11-7z" />
 																</svg>
 																<span>Play</span>
 															</button>
 														</Link>
-														
-														{/* Secondary Actions Dropdown */}
-														<div className="relative">
-															<button
-																onClick={(e) => {
-																	e.preventDefault();
-																	const dropdownId = `dropdown-${game.id}`;
-																	const dropdown = document.getElementById(dropdownId);
-																	if (dropdown) {
-																		dropdown.classList.toggle('hidden');
-																	}
-																}}
-																className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center min-h-[44px] min-w-[44px]"
-																aria-label="More actions"
-															>
-																<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																	<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-																</svg>
-															</button>
-															
-															{/* Dropdown Menu */}
-															<div
-																id={`dropdown-${game.id}`}
-																className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-10 hidden"
-															>
-																<button
-																	onClick={(e) => {
-																		e.preventDefault();
-																		setShareModalGame(game);
-																		// Close dropdown
-																		const dropdown = document.getElementById(`dropdown-${game.id}`);
-																		if (dropdown) dropdown.classList.add('hidden');
-																	}}
-																	className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 rounded-t-lg"
-																>
-																	<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-																	</svg>
-																	<span>Share</span>
-																</button>
-																<Link 
-																	href={`/create/question-set?edit=${game.id}`}
-																	onClick={() => {
-																		// Close dropdown
-																		const dropdown = document.getElementById(`dropdown-${game.id}`);
-																		if (dropdown) dropdown.classList.add('hidden');
-																	}}
-																>
-																	<div className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 rounded-b-lg cursor-pointer">
-																		<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-																		</svg>
-																		<span>Edit</span>
-																	</div>
-																</Link>
-															</div>
-														</div>
 													</div>
 												</div>
 											</motion.div>
-										);
-									})}
-								</div>
-							) : (
-								<div className="text-center py-12 sm:py-16">
-									<div className="max-w-md mx-auto px-4">
-										<div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-											<svg className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-											</svg>
-										</div>
-										<h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">No games yet</h3>
-										<p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">Create your first Jeopardy game to get started.</p>
-										<Link href="/create/question-set">
-											<motion.button
-												whileHover={{ scale: 1.02 }}
-												whileTap={{ scale: 0.98 }}
-												className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto text-sm sm:text-base"
-											>
-												<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-												</svg>
-												<span>Create Game</span>
-											</motion.button>
-										</Link>
+										))}
 									</div>
-								</div>
-							)}
-						</div>
-					)}
-
-					{activeTab === 'create' && (
-						<div className="text-center py-16">
-							<div className="max-w-md mx-auto">
-								<div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-									<svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-									</svg>
-								</div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-4">Ready to Create Educational Games?</h3>
-								<p className="text-gray-600 mb-8">Choose from our game templates and start engaging your students.</p>
-								<Link href="/create">
-									<motion.button
-										whileHover={{ scale: 1.02 }}
-										whileTap={{ scale: 0.98 }}
-										className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
-									>
-										<span className="text-2xl">�</span>
-										<span>Go to Creator</span>
-									</motion.button>
-								</Link>
-							</div>
-						</div>
-					)}
-
-					{activeTab === 'play' && (
-						<div>
-							{loadingGames ? (
-								<div className="flex items-center justify-center py-16">
-									<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-								</div>
-							) : games.length > 0 ? (
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-									{games.map((game) => {
-										const completedQuestions = game.data.categories.reduce((total, cat) => 
-											total + cat.questions.filter(q => q.question && q.answer).length, 0
-										);
-										const isPlayable = completedQuestions > 0;
-										
-										return (
-											<motion.div
-												key={game.id}
-												whileHover={{ scale: 1.02 }}
-												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
-											>
-												<div className="p-6">
-													<div className="w-full h-32 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-4 flex items-center justify-center">
-														<div className="text-5xl">🎯</div>
-													</div>
-													<h3 className="font-semibold text-gray-900 mb-2 text-lg">
-														{game.title}
-													</h3>
-													<div className="text-sm text-gray-600 mb-4">
-														<div>Categories: {game.data.categories.length}</div>
-														<div>Point Values: {game.data.customValues.join(', ')}</div>
-													</div>
-													{isPlayable ? (
-														<Link href={`/play/${game.id}/setup`} className="w-full">
-															<button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
-																<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-																	<path d="M8 5v14l11-7z" />
-																</svg>
-																<span>Play Game</span>
-															</button>
-														</Link>
-													) : (
-														<div className="text-center">
-															<p className="text-gray-500 text-sm mb-3">This game needs questions to be playable</p>
-															<Link href={`/create/question-set?edit=${game.id}`}>
-																<button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
-																	Add Questions
-																</button>
-															</Link>
-														</div>
-													)}
-												</div>
-											</motion.div>
-										);
-									})}
-								</div>
-							) : (
-								<div className="text-center py-16">
-									<div className="max-w-md mx-auto">
-										<div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-											<svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-												<path d="M8 5v14l11-7z" />
-											</svg>
-										</div>
-										<h3 className="text-xl font-semibold text-gray-900 mb-4">No games to play yet</h3>
-										<p className="text-gray-600 mb-8">Create your first game to start playing!</p>
-										<Link href="/create/question-set">
-											<motion.button
-												whileHover={{ scale: 1.02 }}
-												whileTap={{ scale: 0.98 }}
-												className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 mx-auto"
-											>
-												<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-												</svg>
-												<span>Create Game</span>
-											</motion.button>
-										</Link>
-									</div>
-								</div>
-							)}
-						</div>
-					)}
-
-					{activeTab === 'discover' && (
-						<div>
-							{/* Search and Filters */}
-							<div className="mb-6 space-y-4">
-								{/* Search Bar */}
-								<div className="relative">
-									<input
-										type="text"
-										placeholder="Search games to discover..."
-										value={marketSearch}
-										onChange={(e) => {
-											const value = e.target.value;
-											setMarketSearch(value);
-											// Track search after user stops typing for 1 second
-											if (value.length > 2) {
-												setTimeout(() => trackSearch(value), 1000);
-											}
-										}}
-										className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-									/>
-									<svg
-										className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-										/>
-									</svg>
-								</div>
-
-								{/* Filters */}
-								<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-									<select
-										value={marketFilters.subject}
-										onChange={(e) => setMarketFilters({...marketFilters, subject: e.target.value})}
-										className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-									>
-										<option value="">All Subjects</option>
-										<option value="math">Math</option>
-										<option value="science">Science</option>
-										<option value="history">History</option>
-										<option value="english">English</option>
-										<option value="geography">Geography</option>
-										<option value="art">Art</option>
-									</select>
-
-									<select
-										value={marketFilters.gradeLevel}
-										onChange={(e) => setMarketFilters({...marketFilters, gradeLevel: e.target.value})}
-										className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-									>
-										<option value="">All Grades</option>
-										<option value="K-2">K-2</option>
-										<option value="3-5">3-5</option>
-										<option value="6-8">6-8</option>
-										<option value="9-12">9-12</option>
-										<option value="college">College</option>
-									</select>
-
-									<select
-										value={marketFilters.difficulty}
-										onChange={(e) => setMarketFilters({...marketFilters, difficulty: e.target.value})}
-										className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-									>
-										<option value="">All Difficulties</option>
-										<option value="beginner">Beginner</option>
-										<option value="intermediate">Intermediate</option>
-										<option value="advanced">Advanced</option>
-									</select>
-
-									<select
-										value={marketFilters.sortBy}
-										onChange={(e) => setMarketFilters({...marketFilters, sortBy: e.target.value})}
-										className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-									>
-										<option value="newest">Newest</option>
-										<option value="popular">Most Popular</option>
-										<option value="downloads">Most Downloaded</option>
-										<option value="rating">Highest Rated</option>
-									</select>
-								</div>
-							</div>
-
-							{/* Games Grid */}
-							{loadingPublicGames ? (
-								<div className="flex items-center justify-center py-16">
-									<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-								</div>
-							) : publicGames.length > 0 ? (
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-									{publicGames.map((game) => (
-										<motion.div
-											key={game.id}
-											whileHover={{ scale: 1.02 }}
-											className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
-										>
-											<div className="p-4 sm:p-6">
-												<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg mb-3 sm:mb-4 flex items-center justify-center">
-													<div className="text-2xl sm:text-4xl">🌟</div>
-												</div>
-												
-												<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base">
-													{game.title}
-												</h3>
-												
-												{game.description && (
-													<p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">
-														{game.description}
-													</p>
-												)}
-
-												<div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
-													{game.subject && (
-														<span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-															{game.subject}
-														</span>
-													)}
-													{game.gradeLevel && (
-														<span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-															{game.gradeLevel}
-														</span>
-													)}
-													{game.difficulty && (
-														<span className="inline-block px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-															{game.difficulty}
-														</span>
-													)}
-												</div>
-
-												<div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-													<span className="truncate">By {game.author.name}</span>
-													<div className="flex items-center space-x-2">
-														{game.avgRating > 0 && (
-															<div className="flex items-center">
-																<span>⭐</span>
-																<span className="ml-1">{game.avgRating}</span>
-																<span className="text-gray-400 hidden sm:inline">({game.ratingsCount})</span>
-															</div>
-														)}
-													</div>
-												</div>
-
-												<div className="flex items-center justify-between text-xs text-gray-500 mb-3 sm:mb-4">
-													<span>🎮 {game.plays}</span>
-													<span>📥 {game.downloads}</span>
-													<span>❤️ {game.favoritesCount}</span>
-												</div>
-
-												<div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-2">
-													<motion.button
-														onClick={() => handleFavoriteGame(game.id)}
-														disabled={savingGames.has(game.id)}
-														whileHover={{ scale: savingGames.has(game.id) ? 1 : 1.05 }}
-														whileTap={{ scale: savingGames.has(game.id) ? 1 : 0.95 }}
-														animate={{ 
-															backgroundColor: savedGames.has(game.id) ? '#fef2f2' : '#f3f4f6',
-															color: savedGames.has(game.id) ? '#b91c1c' : '#374151'
-														}}
-														transition={{ duration: 0.2 }}
-														className={`flex-1 py-3 sm:py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1 border-2 min-h-[44px] sm:min-h-[40px] ${
-															savedGames.has(game.id)
-																? 'border-red-200 shadow-md'
-																: 'border-gray-200 hover:border-gray-300'
-														} ${savingGames.has(game.id) ? 'cursor-not-allowed opacity-75' : 'hover:shadow-sm'}`}
-													>
-														{savingGames.has(game.id) ? (
-															<>
-																<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-																<span>Saving...</span>
-															</>
-														) : (
-															<>
-																<motion.span
-																	animate={{ 
-																		scale: savedGames.has(game.id) ? [1, 1.2, 1] : 1,
-																		rotate: savedGames.has(game.id) ? [0, 10, -10, 0] : 0
-																	}}
-																	transition={{ duration: 0.3 }}
-																>
-																	{savedGames.has(game.id) ? '❤️' : '🤍'}
-																</motion.span>
-																<span className="font-semibold">
-																	{savedGames.has(game.id) ? 'Saved!' : 'Save'}
-																</span>
-															</>
-														)}
-													</motion.button>
-													<Link href={`/play/${game.id}/setup`} className="flex-1">
-														<button 
-															onClick={() => trackGamePlay(game.id, game.title)}
-															className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 sm:py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1 min-h-[44px] sm:min-h-[40px]"
-														>
-															<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-																<path d="M8 5v14l11-7z" />
-															</svg>
-															<span>Play</span>
-														</button>
-													</Link>
-												</div>
-											</div>
-										</motion.div>
-									))}
-								</div>
-							) : (
-								<div className="text-center py-16">
-									<div className="max-w-md mx-auto">
-										<div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-											<svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-												<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-											</svg>
-										</div>
-										<h3 className="text-xl font-semibold text-gray-900 mb-4">No games found</h3>
-										<p className="text-gray-600">Try adjusting your search or filters to discover games.</p>
-									</div>
-								</div>
-							)}
-						</div>
-					)}
-
-					{activeTab === 'saved' && (
-						<div>
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-								{savedGamesList.length > 0 ? (
-									savedGamesList.map((game) => (
-										<motion.div
-											key={game.id}
-											whileHover={{ scale: 1.02 }}
-											className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
-										>
-											<div className="p-4">
-												<div className="w-full h-32 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-4 flex items-center justify-center">
-													<div className="text-4xl">🎯</div>
-												</div>
-												
-												<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-													{game.title}
-												</h3>
-												
-												{game.description && (
-													<p className="text-sm text-gray-600 mb-3 line-clamp-2">
-														{game.description}
-													</p>
-												)}
-
-												<div className="space-y-2 mb-4">
-													{game.subject && (
-														<span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-															{game.subject}
-														</span>
-													)}
-													{game.gradeLevel && (
-														<span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full ml-1">
-															{game.gradeLevel}
-														</span>
-													)}
-													{game.difficulty && (
-														<span className="inline-block px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full ml-1">
-															{game.difficulty}
-														</span>
-													)}
-												</div>
-
-												<div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-													<span>By {game.author.name}</span>
-													<div className="flex items-center space-x-2">
-														{game.avgRating > 0 && (
-															<div className="flex items-center">
-																<span>⭐</span>
-																<span className="ml-1">{game.avgRating}</span>
-																<span className="text-gray-400">({game.ratingsCount})</span>
-															</div>
-														)}
-													</div>
-												</div>
-
-												<div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-													<span>🎮 {game.plays} plays</span>
-													<span>📥 {game.downloads} downloads</span>
-													<span>❤️ {game.favoritesCount}</span>
-												</div>
-
-												<div className="flex items-center space-x-2">
-													<motion.button
-														onClick={() => handleFavoriteGame(game.id)}
-														disabled={savingGames.has(game.id)}
-														whileHover={{ scale: savingGames.has(game.id) ? 1 : 1.05 }}
-														whileTap={{ scale: savingGames.has(game.id) ? 1 : 0.95 }}
-														animate={{ 
-															backgroundColor: '#fef2f2',
-															color: '#b91c1c'
-														}}
-														transition={{ duration: 0.2 }}
-														className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-1 border-2 border-red-200 shadow-md ${
-															savingGames.has(game.id) ? 'cursor-not-allowed opacity-75' : 'hover:shadow-sm'
-														}`}
-													>
-														{savingGames.has(game.id) ? (
-															<>
-																<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-																<span>Saving...</span>
-															</>
-														) : (
-															<>
-																<motion.span
-																	animate={{ 
-																		scale: [1, 1.2, 1],
-																		rotate: [0, 10, -10, 0]
-																	}}
-																	transition={{ duration: 0.3 }}
-																>
-																	❤️
-																</motion.span>
-																<span className="font-semibold">
-																	Remove
-																</span>
-															</>
-														)}
-													</motion.button>
-													<Link href={`/play/${game.id}/setup`} className="flex-1">
-														<button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1">
-															<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-																<path d="M8 5v14l11-7z" />
-															</svg>
-															<span>Play</span>
-														</button>
-													</Link>
-												</div>
-											</div>
-										</motion.div>
-									))
 								) : (
-									<div className="col-span-full text-center py-12 sm:py-16">
-										<div className="max-w-md mx-auto px-4">
-											<div className="w-16 h-16 sm:w-24 sm:h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-												<svg className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-													<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+									<div className="text-center py-16">
+										<div className="max-w-md mx-auto">
+											<div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+												<svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+													<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 												</svg>
 											</div>
-											<h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">No saved games yet</h3>
-											<p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">Browse the marketplace to find and save games you like.</p>
-											<button
-												onClick={() => setActiveTab('discover')}
-												className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors inline-flex items-center space-x-2 text-sm sm:text-base"
-											>
-												<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-													<path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1z" />
-												</svg>
-												<span>Discover Games</span>
-											</button>
+											<h3 className="text-xl font-semibold text-gray-900 mb-4">No games found</h3>
+											<p className="text-gray-600">Try adjusting your search or filters to discover games.</p>
 										</div>
 									</div>
 								)}
 							</div>
-						</div>
-					)}
+						)}
 
-					{activeTab !== 'my-sets' && activeTab !== 'play' && activeTab !== 'discover' && activeTab !== 'saved' && (
-						<div className="text-center py-16">
-							<div className="max-w-md mx-auto">
-								<div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-									<svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-									</svg>
+						{activeTab === 'saved' && (
+							<div className="space-y-6">
+								<div className="flex justify-between items-center">
+									<h2 className="text-2xl font-bold text-gray-900">Saved Games</h2>
 								</div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-4">Coming Soon</h3>
-								<p className="text-gray-600">This feature is currently under development.</p>
+
+								{savedGames && savedGames.length > 0 ? (
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+										{savedGames.map((game) => (
+											<motion.div
+												key={game.id}
+												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+												initial={{ opacity: 0, y: 20 }}
+												animate={{ opacity: 1, y: 0 }}
+												whileHover={{ y: -5 }}
+											>
+												{/* Display Image */}
+												<div className="w-full h-48 bg-gradient-to-br from-green-100 to-blue-100 rounded-t-lg overflow-hidden">
+													{game.data?.displayImage ? (
+														<img 
+															src={game.data.displayImage} 
+															alt={game.title}
+															className="w-full h-full object-cover"
+														/>
+													) : (
+														<div className="w-full h-full flex items-center justify-center">
+															<div className="text-6xl opacity-50">⭐</div>
+														</div>
+													)}
+												</div>
+												<div className="p-4">
+													<div className="flex items-start justify-between mb-3">
+														<div className="flex-1">
+															<h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
+																{game.title}
+															</h3>
+															<p className="text-sm text-gray-600 mb-2">
+																by {game.author.name}
+															</p>
+														</div>
+													</div>
+
+													<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+														<div className="flex items-center space-x-4">
+															<span className="flex items-center">
+																<svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+																	<path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+																	<path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
+																</svg>
+																{game.plays || 0}
+															</span>
+															<span className="flex items-center">
+																<svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+																	<path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd"/>
+																</svg>
+																{game.saves || 0}
+															</span>
+														</div>
+													</div>
+
+													<div className="flex space-x-2">
+														<Link
+															href={`/play/${game.id}/setup`}
+															className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center"
+														>
+															Play Game
+														</Link>
+														<button
+															onClick={() => handleFavoriteGame(game.id)}
+															className="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors duration-200"
+														>
+															Remove
+														</button>
+													</div>
+												</div>
+											</motion.div>
+										))}
+									</div>
+								) : (
+									<div className="text-center py-16">
+										<svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+										</svg>
+										<h3 className="text-lg font-medium text-gray-900 mb-2">No Saved Games</h3>
+										<p className="text-gray-600 mb-4">You haven&apos;t saved any games yet.</p>
+										<Link
+											href="#"
+											onClick={() => setActiveTab('discover')}
+											className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+										>
+											Discover Games to Save
+										</Link>
+									</div>
+								)}
 							</div>
-						</div>
-					)}
+						)}
+					</div>
 				</div>
 			</div>
 
@@ -1138,20 +797,56 @@ export default function Dashboard() {
 					onClose={() => setShareModalGame(null)}
 					onSuccess={() => {
 						// Refresh games list to show updated sharing status
-						const loadGames = async () => {
-							try {
-								const response = await fetch(getApiUrl('/api/games'));
-								if (response.ok) {
-									const data = await response.json();
-									setGames(data.games || []);
-								}
-							} catch (error) {
-								console.error('Error reloading games:', error);
-							}
-						};
 						loadGames();
 					}}
 				/>
+			)}
+
+			{/* Game Info Modal */}
+			{selectedGameInfo && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="text-lg font-semibold text-gray-900">Game Information</h3>
+							<button
+								onClick={() => setSelectedGameInfo(null)}
+								className="text-gray-400 hover:text-gray-600 transition-colors"
+							>
+								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
+						
+						<div className="space-y-4">
+							<div>
+								<span className="font-medium text-gray-700">Title:</span>
+								<p className="text-gray-900">{selectedGameInfo.data.gameTitle}</p>
+							</div>
+							
+							{selectedGameInfo.data.categories && selectedGameInfo.data.categories.length > 0 && (
+								<div>
+									<span className="font-medium text-gray-700">Categories:</span>
+									<ul className="text-gray-900 ml-4 list-disc">
+										{selectedGameInfo.data.categories.map((cat, index) => (
+											<li key={index}>{cat.name || `Category ${index + 1}`}</li>
+										))}
+									</ul>
+								</div>
+							)}
+							
+							<div>
+								<span className="font-medium text-gray-700">Created:</span>
+								<p className="text-gray-900">{new Date(selectedGameInfo.createdAt).toLocaleDateString()}</p>
+							</div>
+							
+							<div>
+								<span className="font-medium text-gray-700">Last Updated:</span>
+								<p className="text-gray-900">{new Date(selectedGameInfo.updatedAt).toLocaleDateString()}</p>
+							</div>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);

@@ -13,6 +13,35 @@ interface Team {
 	score: number;
 }
 
+interface BoardColors {
+	textColor: string;
+	categoryTextColor: string;
+	questionTextColor: string;
+	tileBackground: string;
+	tileBorder: string;
+	tileHover: string;
+	defaultTileBackground: string;
+	categoryBackground: string;
+	individualTileColors: { [key: string]: string };
+	defaultTileImage: string;
+	categoryBackgroundImage: string;
+	individualTileImages: { [key: string]: string };
+	tileOpacity: number;
+}
+
+interface BoardTypography {
+	fontFamily: string;
+	categoryFontSize: string;
+	questionFontSize: string;
+	fontWeight: string;
+	categoryFontWeight: string;
+}
+
+interface BoardCustomizations {
+	colors: BoardColors;
+	typography: BoardTypography;
+}
+
 interface SavedGame {
 	id: string;
 	title: string;
@@ -22,6 +51,9 @@ interface SavedGame {
 		gameTitle: string;
 		categories: Category[];
 		customValues: number[];
+		displayImage?: string;
+		boardBackground?: string;
+		boardCustomizations?: BoardCustomizations;
 	};
 	isPublic: boolean;
 	tags: string[];
@@ -268,6 +300,93 @@ export default function PlayGamePage() {
 		setCurrentQuestion(null);
 	};
 
+	// Helper function to get tile styling based on customizations
+	const getTileStyle = (categoryIndex: number, questionIndex: number, question: Question, isAnswered: boolean) => {
+		const customizations = game?.data.boardCustomizations;
+		if (!customizations) {
+			// Default styles when no customizations
+			return {
+				backgroundColor: isAnswered 
+					? '#d1d5db' // gray-300
+					: !question.question || !question.answer
+					? '#e5e7eb' // gray-200
+					: '#dbeafe', // blue-50
+				color: isAnswered 
+					? '#6b7280' // gray-500
+					: !question.question || !question.answer
+					? '#9ca3af' // gray-400
+					: '#1d4ed8' // blue-700
+			};
+		}
+
+		const tileKey = `tile-${categoryIndex}-${questionIndex}`;
+		const individualTileColor = customizations.colors.individualTileColors?.[tileKey];
+		const individualTileImage = customizations.colors.individualTileImages?.[tileKey];
+		
+		let backgroundColor = customizations.colors.tileBackground;
+		let backgroundImage = 'none';
+		
+		if (isAnswered) {
+			backgroundColor = '#d1d5db'; // gray-300 for answered questions
+		} else if (!question.question || !question.answer) {
+			backgroundColor = '#e5e7eb'; // gray-200 for empty questions
+		} else {
+			// Use individual tile color if available, otherwise default
+			backgroundColor = individualTileColor || customizations.colors.defaultTileBackground || customizations.colors.tileBackground;
+			
+			// Use individual tile image if available, otherwise default
+			const tileImageUrl = individualTileImage || customizations.colors.defaultTileImage;
+			if (tileImageUrl && tileImageUrl.trim() !== '') {
+				backgroundImage = `url("${tileImageUrl.trim()}")`;
+			}
+		}
+
+		return {
+			backgroundColor,
+			backgroundImage,
+			backgroundSize: 'cover',
+			backgroundPosition: 'center',
+			color: isAnswered 
+				? '#6b7280' // gray-500
+				: !question.question || !question.answer
+				? '#9ca3af' // gray-400
+				: customizations.colors.questionTextColor,
+			borderColor: customizations.colors.tileBorder,
+			opacity: customizations.colors.tileOpacity / 100,
+			fontFamily: customizations.typography.fontFamily,
+			fontSize: customizations.typography.questionFontSize + 'px',
+			fontWeight: customizations.typography.fontWeight
+		};
+	};
+
+	// Helper function to get category header styling
+	const getCategoryStyle = (categoryIndex: number) => {
+		const customizations = game?.data.boardCustomizations;
+		if (!customizations) {
+			return {
+				backgroundColor: '#2563eb', // blue-600
+				color: '#ffffff'
+			};
+		}
+
+		let backgroundImage = 'none';
+		if (customizations.colors.categoryBackgroundImage && customizations.colors.categoryBackgroundImage.trim() !== '') {
+			backgroundImage = `url("${customizations.colors.categoryBackgroundImage.trim()}")`;
+		}
+
+		return {
+			backgroundColor: customizations.colors.categoryBackground,
+			backgroundImage,
+			backgroundSize: 'cover',
+			backgroundPosition: 'center',
+			color: customizations.colors.categoryTextColor,
+			opacity: customizations.colors.tileOpacity / 100,
+			fontFamily: customizations.typography.fontFamily,
+			fontSize: customizations.typography.categoryFontSize + 'px',
+			fontWeight: customizations.typography.categoryFontWeight
+		};
+	};
+
 	if (loading || loadingGame) {
 		return (
 			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -323,7 +442,12 @@ export default function PlayGamePage() {
 			{/* Game Content - Takes full screen space */}
 			<div className="flex-1 flex flex-col">
 				{gameState === 'board' && (
-					<div className="flex-1 flex flex-col">
+					<div className="flex-1 flex flex-col" style={{
+						backgroundImage: game.data.boardBackground ? `url(${game.data.boardBackground})` : 'none',
+						backgroundSize: 'cover',
+						backgroundPosition: 'center',
+						backgroundRepeat: 'no-repeat'
+					}}>
 						{/* Game Board - Full height grid with no padding */}
 						<div className="flex-1">
 							<div className="h-full grid" style={{ 
@@ -332,9 +456,19 @@ export default function PlayGamePage() {
 								gap: '0px'
 							}}>
 								{/* Category Headers */}
-								{game.data.categories.map((category) => (
-									<div key={category.id} className="bg-blue-600 text-white flex items-center justify-center font-bold text-lg md:text-xl lg:text-2xl border-r border-white last:border-r-0">
-										{category.name || 'Category'}
+								{game.data.categories.map((category, categoryIndex) => (
+									<div 
+										key={category.id} 
+										className="flex items-center justify-center font-bold text-lg md:text-xl lg:text-2xl border-r border-white last:border-r-0 relative overflow-hidden"
+										style={getCategoryStyle(categoryIndex)}
+									>
+										<span style={{
+											textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+											position: 'relative',
+											zIndex: 1
+										}}>
+											{category.name || 'Category'}
+										</span>
 									</div>
 								))}
 
@@ -345,20 +479,23 @@ export default function PlayGamePage() {
 										if (!question) return <div key={`${categoryIndex}-${rowIndex}`} className="border-r border-b border-white bg-gray-200 last:border-r-0" />;
 										
 										const isAnswered = questionsAnswered.has(question.id);
+										const tileStyle = getTileStyle(categoryIndex, rowIndex, question, isAnswered);
+										
 										return (
 											<button
 												key={question.id}
 												onClick={() => selectQuestion(categoryIndex, rowIndex)}
 												disabled={isAnswered || !question.question || !question.answer}
-												className={`relative flex flex-col items-center justify-center text-2xl md:text-3xl lg:text-4xl font-bold border-r border-b border-white last:border-r-0 transition-all touch-manipulation ${
-													isAnswered 
-														? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-														: !question.question || !question.answer
-														? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-														: 'bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer active:bg-blue-200'
-												}`}
+												className="relative flex flex-col items-center justify-center text-2xl md:text-3xl lg:text-4xl font-bold border-r border-b border-white last:border-r-0 transition-all touch-manipulation cursor-pointer active:scale-95 overflow-hidden"
+												style={tileStyle}
 											>
-												<span>${question.value}</span>
+												<span style={{
+													textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+													position: 'relative',
+													zIndex: 1
+												}}>
+													${question.value}
+												</span>
 												
 												{/* Media Indicators */}
 												{question.media && (

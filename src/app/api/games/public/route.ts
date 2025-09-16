@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
 				title: game.title,
 				description: game.description,
 				type: game.type,
+				data: game.data as any, // Include the game data with displayImage
 				tags: game.tags,
 				subject: game.subject,
 				gradeLevel: game.gradeLevel,
@@ -110,6 +111,7 @@ export async function GET(request: NextRequest) {
 				publishedAt: game.publishedAt,
 				downloads: game.downloads,
 				plays: game.plays,
+				saves: game._count.favorites, // Use favorites count as saves
 				avgRating: Math.round(avgRating * 10) / 10,
 				ratingsCount: game._count.ratings,
 				favoritesCount: game._count.favorites,
