@@ -26,7 +26,7 @@ export async function POST(req: Request) {
                 // Resend confirmation email to pending subscribers
                 const confirmationUrl = `${process.env.NEXTAUTH_URL}/api/newsletter/confirm?token=${existingSubscriber.id}`;
                 await resend.emails.send({
-                    from: 'onboarding@resend.dev',
+                    from: 'noreply@compyy.org',
                     to: email,
                     subject: '🎮 Confirm Your Email - Compyy',
                     html: `
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
         // Send confirmation email using Resend
         await resend.emails.send({
-            from: 'onboarding@resend.dev',
+            from: 'noreply@compyy.org',
             to: email,
             subject: 'Confirm Your Email - Compyy',
             html: `

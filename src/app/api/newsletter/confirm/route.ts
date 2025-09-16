@@ -35,7 +35,7 @@ export async function GET(req: Request) {
                 
                 // Send new confirmation email
                 await resend.emails.send({
-                    from: 'onboarding@resend.dev',
+                    from: 'noreply@compyy.org',
                     to: subscriber.email,
                     subject: '🎮 New Confirmation Link - Compyy',
                     html: `
