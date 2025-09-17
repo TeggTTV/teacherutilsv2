@@ -11,9 +11,10 @@ interface GameCardProps {
 	onShare: (game: SavedGame) => void;
 	onInfo: (game: SavedGame) => void;
 	onPlay: (game: SavedGame) => void;
+	onDelete: (game: SavedGame) => void;
 }
 
-export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: GameCardProps) {
+export default function GameCard({ game, onEdit, onShare, onInfo, onPlay, onDelete }: GameCardProps) {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -63,9 +64,9 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 					whileTap={{ scale: 0.9 }}
 					className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
 				>
-					<motion.svg 
-						className="w-4 h-4 text-gray-600" 
-						fill="currentColor" 
+					<motion.svg
+						className="w-4 h-4 text-gray-600"
+						fill="currentColor"
 						viewBox="0 0 24 24"
 						animate={{ rotate: isDropdownOpen ? 90 : 0 }}
 						transition={{ duration: 0.2 }}
@@ -73,7 +74,7 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
 					</motion.svg>
 				</motion.button>
-				
+
 				{/* Animated Dropdown Menu */}
 				<AnimatePresence>
 					{isDropdownOpen && (
@@ -81,14 +82,17 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 							initial={{ opacity: 0, scale: 0.95, y: -10 }}
 							animate={{ opacity: 1, scale: 1, y: 0 }}
 							exit={{ opacity: 0, scale: 0.95, y: -10 }}
-							transition={{ duration: 0.15, ease: "easeOut" }}
+							transition={{ duration: 0.15, ease: 'easeOut' }}
 							className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden"
-							style={{ 
-								boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+							style={{
+								boxShadow:
+									'0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 							}}
 						>
 							<motion.button
-								whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+								whileHover={{
+									backgroundColor: 'rgba(59, 130, 246, 0.05)',
+								}}
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
@@ -96,14 +100,26 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 								}}
 								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
 							>
-								<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+									/>
 								</svg>
 								<span className="font-medium">Edit Game</span>
 							</motion.button>
-							
+
 							<motion.button
-								whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+								whileHover={{
+									backgroundColor: 'rgba(59, 130, 246, 0.05)',
+								}}
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
@@ -111,14 +127,28 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 								}}
 								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
 							>
-								<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+									/>
 								</svg>
-								<span className="font-medium">Share</span>
+								<span className="font-medium">
+									Manage Sharing
+								</span>
 							</motion.button>
-							
+
 							<motion.button
-								whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+								whileHover={{
+									backgroundColor: 'rgba(59, 130, 246, 0.05)',
+								}}
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
@@ -126,10 +156,47 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 								}}
 								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
 							>
-								<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+									/>
 								</svg>
 								<span className="font-medium">Info</span>
+							</motion.button>
+
+							<motion.button
+								whileHover={{
+									backgroundColor: 'rgba(239, 68, 68, 0.05)',
+								}}
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleMenuAction(() => onDelete(game));
+								}}
+								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
+							>
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+									/>
+								</svg>
+								<span className="font-medium">Delete</span>
 							</motion.button>
 						</motion.div>
 					)}
@@ -141,7 +208,11 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 				{/* Public status indicator */}
 				{game.isPublic && (
 					<div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 shadow-lg">
-						<svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+						<svg
+							className="w-3 h-3"
+							fill="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
 						</svg>
 						<span>Public</span>
@@ -162,7 +233,9 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 					<div className="flex items-center justify-center h-full">
 						<div className="text-white text-center">
 							<div className="text-3xl mb-2">🎮</div>
-							<div className="text-sm font-medium">Jeopardy Game</div>
+							<div className="text-sm font-medium">
+								Jeopardy Game
+							</div>
 						</div>
 					</div>
 				)}
@@ -173,12 +246,12 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 				<h3 className="font-semibold text-gray-900 mb-2 text-lg leading-tight line-clamp-2">
 					{game.data.gameTitle || 'Untitled Game'}
 				</h3>
-				
+
 				<div className="flex items-center justify-between mt-4">
 					<div className="text-xs text-gray-500">
 						{new Date(game.createdAt).toLocaleDateString()}
 					</div>
-					
+
 					<Link href={`/play/${game.id}/setup`}>
 						<motion.button
 							whileHover={{ scale: 1.05 }}
@@ -189,7 +262,11 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay }: Game
 							}}
 							className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors inline-flex items-center space-x-1"
 						>
-							<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+							<svg
+								className="w-4 h-4"
+								fill="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path d="M8 5v14l11-7z" />
 							</svg>
 							<span>Play</span>

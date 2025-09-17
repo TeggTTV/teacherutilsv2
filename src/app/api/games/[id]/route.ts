@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../../generated/prisma';
 import jwt from 'jsonwebtoken';
+import { decrementTagUsage } from '@/lib/tagUsage';
 
 const prisma = new PrismaClient();
 
@@ -111,16 +112,32 @@ export async function DELETE(
 		const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET!) as { userId: string };
 		const userId = decoded.userId;
 
-		const game = await prisma.game.deleteMany({
+		// First, get the game to check if it's public and get its tags
+		const gameToDelete = await prisma.game.findFirst({
 			where: { 
 				id: id,
 				userId // Ensure user owns the game
 			}
 		});
 
-		if (game.count === 0) {
+		if (!gameToDelete) {
 			return NextResponse.json({ error: 'Game not found' }, { status: 404 });
 		}
+
+		// Decrement tag usage if game is public
+		if (gameToDelete.isPublic && gameToDelete.tags && gameToDelete.tags.length > 0) {
+			try {
+				await decrementTagUsage(gameToDelete.tags);
+				console.log('[Game Delete] Decremented tag usage for tags:', gameToDelete.tags);
+			} catch (error) {
+				console.error('[Game Delete] Error decrementing tag usage:', error);
+			}
+		}
+
+		// Delete the game
+		await prisma.game.delete({
+			where: { id: id }
+		});
 
 		return NextResponse.json({ 
 			success: true,

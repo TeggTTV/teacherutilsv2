@@ -5,8 +5,8 @@ import { getApiUrl } from '@/lib/config';
 import TagSelector from './TagSelector';
 import Modal from './Modal';
 
-interface ShareModalProps {
-	game: {
+interface TemplateShareModalProps {
+	template: {
 		id: string;
 		title: string;
 		description?: string;
@@ -21,14 +21,19 @@ interface ShareModalProps {
 	onSuccess: () => void;
 }
 
-export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareModalProps) {
+export default function TemplateShareModal({
+	template,
+	isOpen,
+	onClose,
+	onSuccess,
+}: TemplateShareModalProps) {
 	const [formData, setFormData] = useState({
-		isPublic: game.isPublic,
-		description: game.description || '',
-		tags: game.tags,
-		subject: game.subject || '',
-		gradeLevel: game.gradeLevel || '',
-		difficulty: game.difficulty || ''
+		isPublic: template.isPublic,
+		description: template.description || '',
+		tags: template.tags,
+		subject: template.subject || '',
+		gradeLevel: template.gradeLevel || '',
+		difficulty: template.difficulty || '',
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showSuccess, setShowSuccess] = useState(false);
@@ -38,26 +43,29 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 		setIsSubmitting(true);
 
 		try {
-			const response = await fetch(getApiUrl(`/api/games/${game.id}/share`), {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				credentials: 'include',
-				body: JSON.stringify({
-					...formData,
-					tags: formData.tags
-				}),
-			});
+			const response = await fetch(
+				getApiUrl(`/api/templates/${template.id}/share`),
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify(formData),
+				}
+			);
 
 			if (response.ok) {
 				setShowSuccess(true);
 			} else {
 				const error = await response.json();
-				console.error('Error updating sharing settings:', error.error || 'Failed to update sharing settings');
+				console.error(
+					'Error updating template sharing settings:',
+					error.error || 'Failed to update sharing settings'
+				);
 			}
 		} catch (error) {
-			console.error('Error updating sharing settings:', error);
+			console.error('Error updating template sharing settings:', error);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -78,18 +86,29 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 				<Modal isOpen={showSuccess} onClose={handleSuccessClose}>
 					<div className="text-center space-y-4">
 						<div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
-							<svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+							<svg
+								className="w-6 h-6 text-green-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M5 13l4 4L19 7"
+								/>
 							</svg>
 						</div>
 						<h3 className="text-lg font-medium text-gray-900">
-							{formData.isPublic ? 'Game Published Successfully!' : 'Game Made Private Successfully!'}
+							{formData.isPublic
+								? 'Template Published Successfully!'
+								: 'Template Made Private Successfully!'}
 						</h3>
 						<p className="text-sm text-gray-600">
-							{formData.isPublic 
-								? 'Your game is now visible to other teachers in the marketplace.'
-								: 'Your game is now private and only visible to you.'
-							}
+							{formData.isPublic
+								? 'Your template is now visible to other teachers in the marketplace.'
+								: 'Your template is now private and only visible to you.'}
 						</p>
 						<button
 							onClick={handleSuccessClose}
@@ -101,11 +120,17 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 				</Modal>
 			)}
 
-			{/* Main Share Modal */}
+			{/* Main Template Share Modal */}
 			{isOpen && !showSuccess && (
-				<Modal isOpen={isOpen && !showSuccess} onClose={onClose} maxWidth="2xl">
+				<Modal
+					isOpen={isOpen && !showSuccess}
+					onClose={onClose}
+					maxWidth="2xl"
+				>
 					<div className="flex justify-between items-center mb-6">
-						<h2 className="text-xl font-bold">Share Game: {game.title}</h2>
+						<h2 className="text-xl font-bold">
+							Share Template: {template.title}
+						</h2>
 						<button
 							onClick={onClose}
 							className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -118,14 +143,24 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 						{/* Public Toggle */}
 						<div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
 							<div>
-								<h3 className="font-semibold text-gray-900">Make Public</h3>
-								<p className="text-sm text-gray-600">Allow other teachers to discover and play your game</p>
+								<h3 className="font-semibold text-gray-900">
+									Make Public
+								</h3>
+								<p className="text-sm text-gray-600">
+									Allow other teachers to discover and
+									download your template
+								</p>
 							</div>
 							<label className="relative inline-flex items-center cursor-pointer">
 								<input
 									type="checkbox"
 									checked={formData.isPublic}
-									onChange={(e) => setFormData({...formData, isPublic: e.target.checked})}
+									onChange={(e) =>
+										setFormData({
+											...formData,
+											isPublic: e.target.checked,
+										})
+									}
 									className="sr-only peer"
 								/>
 								<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -141,10 +176,15 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 									</label>
 									<textarea
 										value={formData.description}
-										onChange={(e) => setFormData({...formData, description: e.target.value})}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												description: e.target.value,
+											})
+										}
 										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 										rows={3}
-										placeholder="Describe your game to help other teachers find it..."
+										placeholder="Describe your template to help other teachers find it..."
 									/>
 								</div>
 
@@ -155,15 +195,24 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 									</label>
 									<select
 										value={formData.subject}
-										onChange={(e) => setFormData({...formData, subject: e.target.value})}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												subject: e.target.value,
+											})
+										}
 										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
 									>
-										<option value="">(Subject not provided)</option>
+										<option value="">
+											(Subject not provided)
+										</option>
 										<option value="math">Math</option>
 										<option value="science">Science</option>
 										<option value="history">History</option>
 										<option value="english">English</option>
-										<option value="geography">Geography</option>
+										<option value="geography">
+											Geography
+										</option>
 										<option value="art">Art</option>
 									</select>
 								</div>
@@ -175,10 +224,17 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 									</label>
 									<select
 										value={formData.gradeLevel}
-										onChange={(e) => setFormData({...formData, gradeLevel: e.target.value})}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												gradeLevel: e.target.value,
+											})
+										}
 										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
 									>
-										<option value="">(Grade level not provided)</option>
+										<option value="">
+											(Grade level not provided)
+										</option>
 										<option value="K-2">K-2</option>
 										<option value="3-5">3-5</option>
 										<option value="6-8">6-8</option>
@@ -194,13 +250,26 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 									</label>
 									<select
 										value={formData.difficulty}
-										onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												difficulty: e.target.value,
+											})
+										}
 										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
 									>
-										<option value="">(Difficulty not provided)</option>
-										<option value="beginner">Beginner</option>
-										<option value="intermediate">Intermediate</option>
-										<option value="advanced">Advanced</option>
+										<option value="">
+											(Difficulty not provided)
+										</option>
+										<option value="beginner">
+											Beginner
+										</option>
+										<option value="intermediate">
+											Intermediate
+										</option>
+										<option value="advanced">
+											Advanced
+										</option>
 									</select>
 								</div>
 
@@ -211,11 +280,14 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 									</label>
 									<TagSelector
 										selectedTags={formData.tags}
-										onTagsChange={(tags) => setFormData({...formData, tags})}
-										placeholder="Select or create tags to help others find your game..."
+										onTagsChange={(tags) =>
+											setFormData({ ...formData, tags })
+										}
+										placeholder="Select or create tags to help others find your template..."
 									/>
 									<p className="text-xs text-gray-500 mt-1">
-										Tags help other teachers find your game
+										Tags help other teachers find your
+										template
 									</p>
 								</div>
 							</>
@@ -238,7 +310,11 @@ export default function ShareModal({ game, isOpen, onClose, onSuccess }: ShareMo
 								{isSubmitting ? (
 									<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
 								) : null}
-								<span>{formData.isPublic ? 'Publish Game' : 'Make Private'}</span>
+								<span>
+									{formData.isPublic
+										? 'Publish Template'
+										: 'Make Private'}
+								</span>
 							</button>
 						</div>
 					</form>

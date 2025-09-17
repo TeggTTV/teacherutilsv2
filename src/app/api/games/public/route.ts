@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
 		const page = parseInt(searchParams.get('page') || '1');
 		const limit = parseInt(searchParams.get('limit') || '12');
 		const search = searchParams.get('search') || '';
+		const tags = searchParams.get('tags') || ''; // New: comma-separated tags
 		const subject = searchParams.get('subject') || '';
 		const gradeLevel = searchParams.get('gradeLevel') || '';
 		const difficulty = searchParams.get('difficulty') || '';
@@ -22,12 +23,34 @@ export async function GET(request: NextRequest) {
 			publishedAt: { not: null }
 		};
 
-		if (search) {
-			where.OR = [
-				{ title: { contains: search, mode: 'insensitive' } },
-				{ description: { contains: search, mode: 'insensitive' } },
-				{ tags: { has: search } }
-			];
+		// Enhanced search functionality
+		if (search || tags) {
+			const searchConditions: Prisma.GameWhereInput[] = [];
+
+			// Text search across title, description, and tags
+			if (search) {
+				searchConditions.push(
+					{ title: { contains: search, mode: 'insensitive' } },
+					{ description: { contains: search, mode: 'insensitive' } },
+					{ tags: { has: search } } // Search for exact tag match
+				);
+			}
+
+			// Tag-specific search (multiple tags)
+			if (tags) {
+				const tagList = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+				if (tagList.length > 0) {
+					// Create OR conditions for each tag (any tag match)
+					const tagConditions = tagList.map(tag => ({
+						tags: { has: tag }
+					}));
+					searchConditions.push(...tagConditions);
+				}
+			}
+
+			if (searchConditions.length > 0) {
+				where.OR = searchConditions;
+			}
 		}
 
 		if (subject) {

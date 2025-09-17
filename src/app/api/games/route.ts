@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../generated/prisma';
+import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
 	try {
@@ -27,8 +25,56 @@ export async function GET(request: NextRequest) {
 
 		const userId = decoded.userId;
 
+		// Parse search parameters
+		const { searchParams } = new URL(request.url);
+		const search = searchParams.get('search') || '';
+		const tags = searchParams.get('tags') || '';
+		const isPublic = searchParams.get('isPublic');
+
+		// Build where clause
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const where: any = { userId };
+
+		// Add public/private filter
+		if (isPublic === 'true') {
+			where.isPublic = true;
+		} else if (isPublic === 'false') {
+			where.isPublic = false;
+		}
+
+		// Enhanced search functionality
+		if (search || tags) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const searchConditions: any[] = [];
+
+			// Text search across title, description, and tags
+			if (search) {
+				searchConditions.push(
+					{ title: { contains: search, mode: 'insensitive' } },
+					{ description: { contains: search, mode: 'insensitive' } },
+					{ tags: { has: search } } // Search for exact tag match
+				);
+			}
+
+			// Tag-specific search (multiple tags)
+			if (tags) {
+				const tagList = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+				if (tagList.length > 0) {
+					// Create OR conditions for each tag (any tag match)
+					const tagConditions = tagList.map(tag => ({
+						tags: { has: tag }
+					}));
+					searchConditions.push(...tagConditions);
+				}
+			}
+
+			if (searchConditions.length > 0) {
+				where.OR = searchConditions;
+			}
+		}
+
 		const games = await prisma.game.findMany({
-			where: { userId },
+			where,
 			orderBy: { updatedAt: 'desc' },
 			select: {
 				id: true,
@@ -60,8 +106,6 @@ export async function GET(request: NextRequest) {
 			},
 			{ status: 500 }
 		);
-	} finally {
-		await prisma.$disconnect();
 	}
 }
 
@@ -187,7 +231,5 @@ export async function POST(request: NextRequest) {
 			},
 			{ status: 500 }
 		);
-	} finally {
-		await prisma.$disconnect();
 	}
 }

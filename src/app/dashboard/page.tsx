@@ -6,6 +6,9 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import ShareModal from '@/components/ShareModal';
+import TemplateShareModal from '@/components/TemplateShareModal';
+import DashboardSearch, { SearchFilters } from '@/components/DashboardSearch';
+import AdvancedSearch from '@/components/AdvancedSearch';
 import Modal from '@/components/Modal';
 import { getApiUrl } from '@/lib/config';
 import { trackGamePlay, trackSearch } from '@/lib/analytics';
@@ -94,14 +97,34 @@ function DashboardContent() {
 	const [publicGames, setPublicGames] = useState<PublicGame[]>([]);
 	const [loadingGames, setLoadingGames] = useState(true);
 	const [loadingPublicGames, setLoadingPublicGames] = useState(false);
-	const [marketSearch, setMarketSearch] = useState('');
 	const [marketFilters, setMarketFilters] = useState<MarketFilters>({
 		subject: '',
 		gradeLevel: '',
 		difficulty: '',
 		sortBy: 'newest'
 	});
+	
+	// Advanced search states
+	const [discoverSelectedTags, setDiscoverSelectedTags] = useState<string[]>([]);
+	const [discoverSearchTerm, setDiscoverSearchTerm] = useState('');
+	const [marketSelectedTags, setMarketSelectedTags] = useState<string[]>([]);
+	const [marketSearchTerm, setMarketSearchTerm] = useState('');
+	const [gameSearchFilters, setGameSearchFilters] = useState<SearchFilters>({
+		searchTerm: '',
+		tags: [],
+		subject: '',
+		gradeLevel: '',
+		difficulty: ''
+	});
+	const [templateSearchFilters, setTemplateSearchFilters] = useState<SearchFilters>({
+		searchTerm: '',
+		tags: [],
+		subject: '',
+		gradeLevel: '',
+		difficulty: ''
+	});
 	const [shareModalGame, setShareModalGame] = useState<SavedGame | null>(null);
+	const [templateShareModal, setTemplateShareModal] = useState<Template | null>(null);
 	const [selectedGameInfo, setSelectedGameInfo] = useState<SavedGame | null>(null);
 
 	const [savedGames, setSavedGames] = useState<PublicGame[]>([]);
@@ -116,6 +139,11 @@ function DashboardContent() {
 		templateId: '',
 		templateTitle: ''
 	});
+	const [gameDeleteConfirmModal, setGameDeleteConfirmModal] = useState<{ isOpen: boolean; gameId: string; gameTitle: string }>({
+		isOpen: false,
+		gameId: '',
+		gameTitle: ''
+	});
 	const [downloadedTemplateIds, setDownloadedTemplateIds] = useState<Set<string>>(new Set());
 	const [downloadingTemplateId, setDownloadingTemplateId] = useState<string | null>(null);
 	const [templateUseModal, setTemplateUseModal] = useState<{ isOpen: boolean; template: Template | null }>({
@@ -123,7 +151,6 @@ function DashboardContent() {
 		template: null
 	});
 	// Loading states
-	const [shareLoadingId, setShareLoadingId] = useState<string | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const [saveLoadingId, setSaveLoadingId] = useState<string | null>(null);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -135,6 +162,87 @@ function DashboardContent() {
 		const newUrl = `${pathname}?tab=${tabId}`;
 		window.history.pushState({}, '', newUrl);
 	};
+
+	// Search and filtering functions
+	const filterGamesBySearch = (games: PublicGame[], searchTerm: string, selectedTags: string[]) => {
+		if (!searchTerm && selectedTags.length === 0) return games;
+
+		return games.filter(game => {
+			// Search term filtering (check title, description, and tags)
+			const matchesSearch = !searchTerm || 
+				game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				(game.description && game.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+				(game.tags && game.tags.some((gameTag: string) => gameTag.toLowerCase().includes(searchTerm.toLowerCase())));
+
+			// Tag filtering (AND logic - must have ALL selected tags)
+			const matchesTags = selectedTags.length === 0 || 
+				(game.tags && selectedTags.every(tag => 
+					game.tags.some((gameTag: string) => gameTag.toLowerCase() === tag.toLowerCase())
+				));
+
+			return matchesSearch && matchesTags;
+		}).sort((a, b) => {
+			// Prioritize exact matches in title
+			if (searchTerm) {
+				const aExactMatch = a.title.toLowerCase().includes(searchTerm.toLowerCase());
+				const bExactMatch = b.title.toLowerCase().includes(searchTerm.toLowerCase());
+				
+				if (aExactMatch && !bExactMatch) return -1;
+				if (!aExactMatch && bExactMatch) return 1;
+				
+				// If both have exact matches, check if one starts with the search term
+				const aStartsWithSearch = a.title.toLowerCase().startsWith(searchTerm.toLowerCase());
+				const bStartsWithSearch = b.title.toLowerCase().startsWith(searchTerm.toLowerCase());
+				
+				if (aStartsWithSearch && !bStartsWithSearch) return -1;
+				if (!aStartsWithSearch && bStartsWithSearch) return 1;
+			}
+			
+			return 0; // Keep original order for equal matches
+		});
+	};
+
+	const filterTemplatesBySearch = (templates: Template[], searchTerm: string, selectedTags: string[]) => {
+		if (!searchTerm && selectedTags.length === 0) return templates;
+
+		return templates.filter(template => {
+			// Search term filtering (check title, description, and tags)
+			const matchesSearch = !searchTerm || 
+				template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				(template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+				(template.tags && template.tags.some((templateTag: string) => templateTag.toLowerCase().includes(searchTerm.toLowerCase())));
+
+			// Tag filtering (AND logic - must have ALL selected tags)
+			const matchesTags = selectedTags.length === 0 || 
+				(template.tags && selectedTags.every(tag => 
+					template.tags.some((templateTag: string) => templateTag.toLowerCase() === tag.toLowerCase())
+				));
+
+			return matchesSearch && matchesTags;
+		}).sort((a, b) => {
+			// Prioritize exact matches in title
+			if (searchTerm) {
+				const aExactMatch = a.title.toLowerCase().includes(searchTerm.toLowerCase());
+				const bExactMatch = b.title.toLowerCase().includes(searchTerm.toLowerCase());
+				
+				if (aExactMatch && !bExactMatch) return -1;
+				if (!aExactMatch && bExactMatch) return 1;
+				
+				// If both have exact matches, check if one starts with the search term
+				const aStartsWithSearch = a.title.toLowerCase().startsWith(searchTerm.toLowerCase());
+				const bStartsWithSearch = b.title.toLowerCase().startsWith(searchTerm.toLowerCase());
+				
+				if (aStartsWithSearch && !bStartsWithSearch) return -1;
+				if (!aStartsWithSearch && bStartsWithSearch) return 1;
+			}
+			
+			return 0; // Keep original order for equal matches
+		});
+	};
+
+	// Get filtered data
+	const filteredPublicGames = filterGamesBySearch(publicGames, discoverSearchTerm, discoverSelectedTags);
+	const filteredMarketTemplates = filterTemplatesBySearch(templates, marketSearchTerm, marketSelectedTags);
 
 	// Listen for URL changes (browser back/forward)
 	useEffect(() => {
@@ -309,6 +417,83 @@ function DashboardContent() {
 		}
 	};
 
+	// Filter functions for games and templates
+	const filterGames = (games: SavedGame[], filters: SearchFilters): SavedGame[] => {
+		return games.filter(game => {
+			// Search term filter
+			if (filters.searchTerm) {
+				const searchLower = filters.searchTerm.toLowerCase();
+				const matchesTitle = game.title.toLowerCase().includes(searchLower);
+				const matchesDescription = game.description?.toLowerCase().includes(searchLower);
+				const matchesTags = game.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+				
+				if (!matchesTitle && !matchesDescription && !matchesTags) {
+					return false;
+				}
+			}
+			
+			// Tags filter (all selected tags must be present)
+			if (filters.tags.length > 0) {
+				const gameTags = game.tags || [];
+				const hasAllTags = filters.tags.every(filterTag => 
+					gameTags.some(gameTag => gameTag.toLowerCase().includes(filterTag.toLowerCase()))
+				);
+				if (!hasAllTags) return false;
+			}
+			
+			// Note: SavedGame doesn't have subject, gradeLevel, difficulty properties
+			// These filters are only available for PublicGame in the market
+			
+			return true;
+		});
+	};
+
+	const filterTemplates = (templates: Template[], filters: SearchFilters): Template[] => {
+		return templates.filter(template => {
+			// Search term filter
+			if (filters.searchTerm) {
+				const searchLower = filters.searchTerm.toLowerCase();
+				const matchesTitle = template.title.toLowerCase().includes(searchLower);
+				const matchesDescription = template.description?.toLowerCase().includes(searchLower);
+				const matchesTags = template.tags?.some(tag => tag.toLowerCase().includes(searchLower));
+				
+				if (!matchesTitle && !matchesDescription && !matchesTags) {
+					return false;
+				}
+			}
+			
+			// Tags filter (all selected tags must be present)
+			if (filters.tags.length > 0) {
+				const templateTags = template.tags || [];
+				const hasAllTags = filters.tags.every(filterTag => 
+					templateTags.some(templateTag => templateTag.toLowerCase().includes(filterTag.toLowerCase()))
+				);
+				if (!hasAllTags) return false;
+			}
+			
+			// Subject filter
+			if (filters.subject && template.subject !== filters.subject) {
+				return false;
+			}
+			
+			// Grade level filter
+			if (filters.gradeLevel && template.gradeLevel !== filters.gradeLevel) {
+				return false;
+			}
+			
+			// Difficulty filter
+			if (filters.difficulty && template.difficulty !== filters.difficulty) {
+				return false;
+			}
+			
+			return true;
+		});
+	};
+
+	// Get filtered data
+	const filteredGames = filterGames(games, gameSearchFilters);
+	const filteredTemplates = filterTemplates(myTemplates, templateSearchFilters);
+	
 	// Search functionality (currently unused but kept for future implementation)
 	// const handleSearch = (searchTerm: string) => {
 	// 	setMarketSearch(searchTerm);
@@ -343,32 +528,24 @@ function DashboardContent() {
 	}, [openTemplateDropdown]);
 
 	// Template actions
-	const handleShareTemplate = async (templateId: string) => {
-		// Set loading state
-		setShareLoadingId(templateId);
-		
-		try {
-			const template = myTemplates.find(t => t.id === templateId);
-			if (!template) return;
+	const handleShareTemplate = (templateId: string) => {
+		const template = myTemplates.find(t => t.id === templateId);
+		if (template) {
+			setTemplateShareModal(template);
+			setOpenTemplateDropdown(null);
+		}
+	};
 
-			const response = await fetch(`/api/templates/${templateId}/share`, {
-				method: template.isPublic ? 'DELETE' : 'POST',
-			});
-			
-			if (response.ok) {
-				// Refresh the templates list
-				const refreshResponse = await fetch('/api/templates/my');
-				if (refreshResponse.ok) {
-					const data = await refreshResponse.json();
-					setMyTemplates(data.templates || []);
-				}
-				// Close the dropdown
-				setOpenTemplateDropdown(null);
+	const handleTemplateShareSuccess = async () => {
+		// Refresh the templates list after sharing
+		try {
+			const refreshResponse = await fetch('/api/templates/my');
+			if (refreshResponse.ok) {
+				const data = await refreshResponse.json();
+				setMyTemplates(data.templates || []);
 			}
 		} catch (error) {
-			console.error('Error toggling template share status:', error);
-		} finally {
-			setShareLoadingId(null);
+			console.error('Error refreshing templates:', error);
 		}
 	};
 
@@ -437,6 +614,35 @@ function DashboardContent() {
 		} finally {
 			setDeleteLoading(false);
 			setDeleteConfirmModal({ isOpen: false, templateId: '', templateTitle: '' });
+		}
+	};
+
+	const handleDeleteGame = async (game: SavedGame) => {
+		setGameDeleteConfirmModal({
+			isOpen: true,
+			gameId: game.id,
+			gameTitle: game.data.gameTitle || game.title || 'Untitled Game'
+		});
+	};
+
+	const confirmDeleteGame = async () => {
+		// Set loading state
+		setDeleteLoading(true);
+		
+		try {
+			const response = await fetch(`/api/games/${gameDeleteConfirmModal.gameId}`, {
+				method: 'DELETE',
+			});
+			
+			if (response.ok) {
+				// Remove from local state
+				setGames(prev => prev.filter(g => g.id !== gameDeleteConfirmModal.gameId));
+			}
+		} catch (error) {
+			console.error('Error deleting game:', error);
+		} finally {
+			setDeleteLoading(false);
+			setGameDeleteConfirmModal({ isOpen: false, gameId: '', gameTitle: '' });
 		}
 	};
 
@@ -617,14 +823,28 @@ function DashboardContent() {
 								initial={{ opacity: 0, y: 20 }}
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ duration: 0.6, delay: 0.2 }}
+								className="space-y-6"
 							>
+								<div className="flex justify-between items-center">
+									<h2 className="text-2xl font-bold text-gray-900">My Games</h2>
+								</div>
+
+								{/* Search Component */}
+								<DashboardSearch
+									onFiltersChange={setGameSearchFilters}
+									placeholder="Search your games..."
+									showTagFilter={true}
+									initialFilters={gameSearchFilters}
+								/>
+
 								<MySetsTab
-									games={games}
+									games={filteredGames}
 									loadingGames={loadingGames}
 									onEditGame={handleEditGame}
 									onShareGame={handleShareGame}
 									onGameInfo={handleGameInfo}
 									onPlayGame={handlePlayGame}
+									onDeleteGame={handleDeleteGame}
 								/>
 							</motion.div>
 						)}
@@ -751,13 +971,29 @@ function DashboardContent() {
 									<h2 className="text-2xl font-bold text-gray-900">Game Templates Market</h2>
 								</div>
 
+								{/* Advanced Search */}
+								<div className="mb-6">
+									<AdvancedSearch
+										onSearchChange={setMarketSearchTerm}
+										onSearch={(searchTerm) => {
+											setMarketSearchTerm(searchTerm);
+											if (searchTerm.length > 2) {
+												setTimeout(() => trackSearch(searchTerm), 1000);
+											}
+										}}
+										onTagsChange={setMarketSelectedTags}
+										selectedTags={marketSelectedTags}
+										placeholder="Search templates in marketplace..."
+									/>
+								</div>
+
 								{loadingTemplates ? (
 									<div className="flex items-center justify-center py-16">
 										<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
 									</div>
-								) : templates.length > 0 ? (
+								) : filteredMarketTemplates.length > 0 ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-										{templates.map((template) => (
+										{filteredMarketTemplates.map((template) => (
 											<motion.div
 												key={template.id}
 												initial={{ opacity: 0, y: 20 }}
@@ -788,25 +1024,19 @@ function DashboardContent() {
 													</div>
 													
 													<p className="text-sm text-gray-600 mb-3 line-clamp-2">
-														{template.description}
+														{template.description || "(Description not provided)"}
 													</p>
 													
 													<div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-														{template.subject && (
-															<span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
-																{template.subject}
-															</span>
-														)}
-														{template.difficulty && (
-															<span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">
-																{template.difficulty}
-															</span>
-														)}
-														{template.gradeLevel && (
-															<span className="bg-green-50 text-green-700 px-2 py-1 rounded">
-																{template.gradeLevel}
-															</span>
-														)}
+														<span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
+															{template.subject || "(Subject not provided)"}
+														</span>
+														<span className="bg-gray-50 text-gray-700 px-2 py-1 rounded">
+															{template.difficulty || "(Difficulty not provided)"}
+														</span>
+														<span className="bg-green-50 text-green-700 px-2 py-1 rounded">
+															{template.gradeLevel || "(Grade level not provided)"}
+														</span>
 													</div>
 													
 													<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
@@ -857,8 +1087,15 @@ function DashboardContent() {
 													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 												</svg>
 											</div>
-											<h3 className="text-xl font-semibold text-gray-900 mb-3">No templates yet</h3>
-											<p className="text-gray-600">Templates will appear here when they become available. Create your own to share with the community!</p>
+											<h3 className="text-xl font-semibold text-gray-900 mb-3">
+												{templates.length === 0 ? 'No templates yet' : 'No templates found'}
+											</h3>
+											<p className="text-gray-600">
+												{templates.length === 0 
+													? 'Templates will appear here when they become available. Create your own to share with the community!'
+													: 'Try adjusting your search or filters to find templates.'
+												}
+											</p>
 										</div>
 									</div>
 								)}
@@ -867,90 +1104,20 @@ function DashboardContent() {
 
 						{activeTab === 'discover' && (
 							<div>
-								{/* Search and Filters */}
-								<div className="mb-6 space-y-4">
-									{/* Search Bar */}
-									<div className="relative">
-										<input
-											type="text"
-											placeholder="Search games to discover..."
-											value={marketSearch}
-											onChange={(e) => {
-												const value = e.target.value;
-												setMarketSearch(value);
-												// Track search after user stops typing for 1 second
-												if (value.length > 2) {
-													setTimeout(() => trackSearch(value), 1000);
-												}
-											}}
-											className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-										/>
-										<svg
-											className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-											/>
-										</svg>
-									</div>
-
-									{/* Filters */}
-									<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-										<select
-											value={marketFilters.subject}
-											onChange={(e) => setMarketFilters({...marketFilters, subject: e.target.value})}
-											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-										>
-											<option value="">All Subjects</option>
-											<option value="math">Math</option>
-											<option value="science">Science</option>
-											<option value="history">History</option>
-											<option value="english">English</option>
-											<option value="geography">Geography</option>
-											<option value="art">Art</option>
-										</select>
-
-										<select
-											value={marketFilters.gradeLevel}
-											onChange={(e) => setMarketFilters({...marketFilters, gradeLevel: e.target.value})}
-											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-										>
-											<option value="">All Grades</option>
-											<option value="K-2">K-2</option>
-											<option value="3-5">3-5</option>
-											<option value="6-8">6-8</option>
-											<option value="9-12">9-12</option>
-											<option value="college">College</option>
-										</select>
-
-										<select
-											value={marketFilters.difficulty}
-											onChange={(e) => setMarketFilters({...marketFilters, difficulty: e.target.value})}
-											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-										>
-											<option value="">All Difficulties</option>
-											<option value="beginner">Beginner</option>
-											<option value="intermediate">Intermediate</option>
-											<option value="advanced">Advanced</option>
-										</select>
-
-										<select
-											value={marketFilters.sortBy}
-											onChange={(e) => setMarketFilters({...marketFilters, sortBy: e.target.value})}
-											className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-										>
-											<option value="newest">Newest</option>
-											<option value="popular">Most Popular</option>
-											<option value="downloads">Most Downloaded</option>
-											<option value="rating">Highest Rated</option>
-										</select>
-									</div>
+								{/* Advanced Search */}
+								<div className="mb-6">
+									<AdvancedSearch
+										onSearchChange={setDiscoverSearchTerm}
+										onSearch={(searchTerm) => {
+											setDiscoverSearchTerm(searchTerm);
+											if (searchTerm.length > 2) {
+												setTimeout(() => trackSearch(searchTerm), 1000);
+											}
+										}}
+										onTagsChange={setDiscoverSelectedTags}
+										selectedTags={discoverSelectedTags}
+										placeholder="Search games to discover..."
+									/>
 								</div>
 
 								{/* Games Grid */}
@@ -958,16 +1125,16 @@ function DashboardContent() {
 									<div className="flex items-center justify-center py-16">
 										<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
 									</div>
-								) : publicGames.length > 0 ? (
+								) : filteredPublicGames.length > 0 ? (
 									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-										{publicGames.map((game) => (
+										{filteredPublicGames.map((game) => (
 											<motion.div
 												key={game.id}
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
 											>
 												<div className="p-4 sm:p-6">
-													{/* Display Image */}
-													<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+													{/* Display Image with Stats Overlay */}
+													<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg mb-3 sm:mb-4 overflow-hidden relative">
 														{game.data?.displayImage ? (
 															<img 
 																src={game.data.displayImage} 
@@ -979,15 +1146,41 @@ function DashboardContent() {
 																<div className="text-2xl sm:text-4xl opacity-50">🌟</div>
 															</div>
 														)}
+														
+														{/* Stats Overlay - Top Right Corner, Stacked Vertically */}
+														<div className="absolute top-2 right-2 flex flex-col space-y-1">
+															<div className="bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
+																<span className="mr-1">🎮</span>
+																<span>{game.plays}</span>
+															</div>
+															{/* <div className="bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
+																<span className="mr-1">📥</span>
+																<span>{game.downloads}</span>
+															</div> */}
+															<div className="bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
+																<span className="mr-1">❤️</span>
+																<span>{game.favoritesCount}</span>
+															</div>
+															{game.avgRating > 0 && (
+																<div className="bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
+																	<span className="mr-1">⭐</span>
+																	<span>{game.avgRating.toFixed(1)}</span>
+																</div>
+															)}
+														</div>
 													</div>
 													
 													<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base">
 														{game.title}
 													</h3>
 													
-													{game.description && (
+													{game.description ? (
 														<p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">
 															{game.description}
+														</p>
+													) : (
+														<p className="text-xs sm:text-sm text-gray-500 mb-3 line-clamp-2 italic">
+															(Description not provided)
 														</p>
 													)}
 
@@ -1011,21 +1204,11 @@ function DashboardContent() {
 
 													<div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
 														<span className="truncate">By {game.author.name}</span>
-														<div className="flex items-center space-x-2">
-															{game.avgRating > 0 && (
-																<div className="flex items-center">
-																	<span>⭐</span>
-																	<span className="ml-1">{game.avgRating}</span>
-																	<span className="text-gray-400 hidden sm:inline">({game.ratingsCount})</span>
-																</div>
-															)}
-														</div>
-													</div>
-
-													<div className="flex items-center justify-between text-xs text-gray-500 mb-3 sm:mb-4">
-														<span>🎮 {game.plays}</span>
-														<span>📥 {game.downloads}</span>
-														<span>❤️ {game.favoritesCount}</span>
+														{game.avgRating > 0 && (
+															<div className="flex items-center">
+																<span className="text-gray-400 text-xs">({game.ratingsCount} reviews)</span>
+															</div>
+														)}
 													</div>
 
 													<div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-2">
@@ -1113,6 +1296,14 @@ function DashboardContent() {
 									<h2 className="text-2xl font-bold text-gray-900">My Templates</h2>
 								</div>
 
+								{/* Search Component */}
+								<DashboardSearch
+									onFiltersChange={setTemplateSearchFilters}
+									placeholder="Search your templates..."
+									showTagFilter={true}
+									initialFilters={templateSearchFilters}
+								/>
+
 								{loadingMyTemplates ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 										{[...Array(6)].map((_, i) => (
@@ -1126,9 +1317,9 @@ function DashboardContent() {
 											</div>
 										))}
 									</div>
-								) : myTemplates && myTemplates.length > 0 ? (
+								) : filteredTemplates && filteredTemplates.length > 0 ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-visible">
-										{myTemplates.map((template) => (
+										{filteredTemplates.map((template) => (
 											<motion.div
 												key={template.id}
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible hover:shadow-lg transition-shadow duration-200 relative"
@@ -1196,43 +1387,12 @@ function DashboardContent() {
 																				e.stopPropagation();
 																				handleShareTemplate(template.id);
 																			}}
-																			disabled={shareLoadingId === template.id}
-																			className={`w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600 ${shareLoadingId === template.id ? 'opacity-75 cursor-not-allowed' : ''}`}
+																			className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
 																		>
-																			{shareLoadingId === template.id ? (
-																				<>
-																					<motion.div
-																						animate={{ rotate: 360 }}
-																						transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-																						className="w-4 h-4"
-																					>
-																						<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-																							<path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
-																						</svg>
-																					</motion.div>
-																					<span className="font-medium">
-																						{template.isPublic ? 'Unsharing...' : 'Sharing...'}
-																					</span>
-																				</>
-																			) : (
-																				<>
-																					{template.isPublic ? (
-																						<>
-																							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878a3 3 0 013.128-3.128M9.878 9.878l-3.29-3.29m7.532 7.532a3 3 0 01-3.128 3.128M9.878 9.878l3.29-3.29m4.243 4.243a3 3 0 013.128-3.128m-5.5 13.5a2.5 2.5 0 10-4.33-2.5 2.5 2.5 0 002.17 2.83z" />
-																							</svg>
-																							<span className="font-medium">Unshare</span>
-																						</>
-																					) : (
-																						<>
-																							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-																							</svg>
-																							<span className="font-medium">Share to Market</span>
-																						</>
-																					)}
-																				</>
-																			)}
+																			<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+																			</svg>
+																			<span className="font-medium">Manage Sharing</span>
 																		</motion.button>
 																		
 																		<motion.button
@@ -1242,6 +1402,7 @@ function DashboardContent() {
 																				e.stopPropagation();
 																				handleDeleteTemplate(template.id);
 																			}}
+																			
 																			className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
 																		>
 																			<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1255,7 +1416,7 @@ function DashboardContent() {
 														</div>
 													</div>
 
-													<p className="text-gray-600 text-sm mb-4 line-clamp-2">{template.description}</p>
+													<p className="text-gray-600 text-sm mb-4 line-clamp-2">{template.description || "(Description not provided)"}</p>
 
 													<div className="flex flex-col space-y-3">
 														<div className="flex items-center justify-between">
@@ -1300,17 +1461,26 @@ function DashboardContent() {
 								) : (
 									<div className="text-center py-12">
 										<div className="text-6xl mb-4 opacity-50">📄</div>
-										<h3 className="text-xl font-semibold text-gray-900 mb-2">No templates yet</h3>
-										<p className="text-gray-600 mb-6">Create question sets and save them as templates to share with others.</p>
-										<Link 
-											href="/create" 
-											className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-										>
-											<svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-											</svg>
-											Create Your First Template
-										</Link>
+										{myTemplates.length === 0 ? (
+											<>
+												<h3 className="text-xl font-semibold text-gray-900 mb-2">No templates yet</h3>
+												<p className="text-gray-600 mb-6">Create question sets and save them as templates to share with others.</p>
+												<Link 
+													href="/create" 
+													className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+												>
+													<svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+													</svg>
+													Create Your First Template
+												</Link>
+											</>
+										) : (
+											<>
+												<h3 className="text-xl font-semibold text-gray-900 mb-2">No templates found</h3>
+												<p className="text-gray-600">Try adjusting your search or filters to find templates.</p>
+											</>
+										)}
 									</div>
 								)}
 							</div>
@@ -1449,6 +1619,16 @@ function DashboardContent() {
 				/>
 			)}
 
+			{/* Template Share Modal */}
+			{templateShareModal && (
+				<TemplateShareModal
+					template={templateShareModal}
+					isOpen={!!templateShareModal}
+					onClose={() => setTemplateShareModal(null)}
+					onSuccess={handleTemplateShareSuccess}
+				/>
+			)}
+
 			{/* Game Info Modal */}
 			{selectedGameInfo && (
 				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1550,6 +1730,60 @@ function DashboardContent() {
 				</div>
 			</Modal>
 
+			{/* Game Delete Confirmation Modal */}
+			<Modal 
+				isOpen={gameDeleteConfirmModal.isOpen} 
+				onClose={() => setGameDeleteConfirmModal({ isOpen: false, gameId: '', gameTitle: '' })}
+				maxWidth="sm"
+			>
+				<div className="text-center">
+					<div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+						<svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+						</svg>
+					</div>
+					<h3 className="text-lg font-medium text-gray-900 mb-2">Delete Game</h3>
+					<p className="text-sm text-gray-500 mb-6">
+						Are you sure you want to delete &ldquo;<strong>{gameDeleteConfirmModal.gameTitle}</strong>&rdquo;? This action cannot be undone.
+					</p>
+					<div className="flex space-x-3 justify-center">
+						<motion.button
+							whileHover={{ scale: deleteLoading ? 1 : 1.05 }}
+							whileTap={{ scale: deleteLoading ? 1 : 0.95 }}
+							onClick={() => setGameDeleteConfirmModal({ isOpen: false, gameId: '', gameTitle: '' })}
+							disabled={deleteLoading}
+							className={`px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium ${deleteLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+						>
+							Cancel
+						</motion.button>
+						<motion.button
+							whileHover={{ scale: deleteLoading ? 1 : 1.05 }}
+							whileTap={{ scale: deleteLoading ? 1 : 0.95 }}
+							onClick={confirmDeleteGame}
+							disabled={deleteLoading}
+							className={`px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center space-x-2 ${deleteLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+						>
+							{deleteLoading ? (
+								<>
+									<motion.div
+										animate={{ rotate: 360 }}
+										transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+										className="w-4 h-4"
+									>
+										<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+											<path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+										</svg>
+									</motion.div>
+									<span>Deleting...</span>
+								</>
+							) : (
+								<span>Delete</span>
+							)}
+						</motion.button>
+					</div>
+				</div>
+			</Modal>
+
 			{/* Template Use Confirmation Modal */}
 			{templateUseModal.isOpen && templateUseModal.template && (
 				<Modal isOpen={templateUseModal.isOpen} onClose={() => setTemplateUseModal({ isOpen: false, template: null })} maxWidth="lg">
@@ -1608,12 +1842,39 @@ function DashboardContent() {
 							<button
 								onClick={() => {
 									// Store template in session storage and navigate
-									try {
-										TemplateService.storeTemplate(templateUseModal.template);
-										window.open('/create/question-set?useTemplate=true', '_blank');
-									} catch (error) {
-										console.error('Failed to store template:', error);
-										alert('Failed to load template. Please try again.');
+									if (templateUseModal.template) {
+										try {
+											// Transform Template to TemplateData format
+											const templateData = {
+												id: templateUseModal.template.id,
+												title: templateUseModal.template.title,
+												type: templateUseModal.template.type,
+												data: templateUseModal.template.data as {
+													categories: Array<{
+														id: string;
+														name: string;
+														questions: Array<{
+															id: string;
+															value: number;
+															question: string;
+															answer: string;
+															isAnswered: boolean;
+															media?: unknown;
+															timer?: number;
+															difficulty?: string;
+														}>;
+													}>;
+													displayImage?: string;
+													boardBackground?: string;
+													boardCustomizations?: unknown;
+												}
+											};
+											TemplateService.storeTemplate(templateData);
+											window.open('/create/question-set?useTemplate=true', '_blank');
+										} catch (error) {
+											console.error('Failed to store template:', error);
+											alert('Failed to load template. Please try again.');
+										}
 									}
 									setTemplateUseModal({ isOpen: false, template: null });
 								}}

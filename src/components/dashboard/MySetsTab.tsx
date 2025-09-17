@@ -12,6 +12,7 @@ interface MySetsTabProps {
 	onShareGame: (game: SavedGame) => void;
 	onGameInfo: (game: SavedGame) => void;
 	onPlayGame: (game: SavedGame) => void;
+	onDeleteGame: (game: SavedGame) => void;
 }
 
 export default function MySetsTab({
@@ -20,7 +21,8 @@ export default function MySetsTab({
 	onEditGame,
 	onShareGame,
 	onGameInfo,
-	onPlayGame
+	onPlayGame,
+	onDeleteGame
 }: MySetsTabProps) {
 	if (loadingGames) {
 		return (
@@ -92,6 +94,7 @@ export default function MySetsTab({
 						onShare={onShareGame}
 						onInfo={onGameInfo}
 						onPlay={onPlayGame}
+						onDelete={onDeleteGame}
 					/>
 				))}
 			</div>

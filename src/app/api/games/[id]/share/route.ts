@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
 import { verifyAuth } from '@/lib/auth';
+import { updateTagUsage, decrementTagUsage, updateTagUsageFromChanges } from '@/lib/tagUsage';
 
 const prisma = new PrismaClient();
 
@@ -60,6 +61,41 @@ export async function POST(
 				}
 			}
 		});
+
+		// Handle tag usage tracking based on visibility change
+		const updatedTags = tags || [];
+		const previousTags = existingGame.tags || [];
+		
+		if (isPublic && !existingGame.isPublic) {
+			// Game is being made public - increment tag usage
+			if (updatedTags.length > 0) {
+				try {
+					await updateTagUsage(updatedTags);
+					console.log('[Game Share] Updated tag usage for tags:', updatedTags);
+				} catch (error) {
+					console.error('[Game Share] Error updating tag usage:', error);
+				}
+			}
+		} else if (!isPublic && existingGame.isPublic) {
+			// Game is being made private - decrement tag usage for previous tags
+			if (previousTags.length > 0) {
+				try {
+					await decrementTagUsage(previousTags);
+					console.log('[Game Share] Decremented tag usage for tags:', previousTags);
+				} catch (error) {
+					console.error('[Game Share] Error decrementing tag usage:', error);
+				}
+			}
+		} else if (isPublic && existingGame.isPublic) {
+			// Game is staying public but tags might have changed
+			// Only update tags that actually changed
+			try {
+				await updateTagUsageFromChanges(previousTags, updatedTags);
+				console.log('[Game Share] Efficiently updated tag changes');
+			} catch (error) {
+				console.error('[Game Share] Error updating tag changes:', error);
+			}
+		}
 
 		return NextResponse.json({ 
 			success: true, 

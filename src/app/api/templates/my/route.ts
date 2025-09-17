@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
         }
 
         const { searchParams } = new URL(request.url);
+        const search = searchParams.get('search') || '';
+        const tags = searchParams.get('tags') || '';
         const type = searchParams.get('type');
         const subject = searchParams.get('subject');
         const page = parseInt(searchParams.get('page') || '1');
@@ -32,6 +34,54 @@ export async function GET(request: NextRequest) {
                 } // Templates downloaded by user
             ]
         };
+
+        // Enhanced search functionality
+        if (search || tags) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const searchConditions: any[] = [];
+
+            // Text search across title, description, and tags
+            if (search) {
+                searchConditions.push(
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } },
+                    { tags: { has: search } } // Search for exact tag match
+                );
+            }
+
+            // Tag-specific search (multiple tags)
+            if (tags) {
+                const tagList = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+                if (tagList.length > 0) {
+                    // Create OR conditions for each tag (any tag match)
+                    const tagConditions = tagList.map(tag => ({
+                        tags: { has: tag }
+                    }));
+                    searchConditions.push(...tagConditions);
+                }
+            }
+
+            if (searchConditions.length > 0) {
+                // Combine user filter with search conditions
+                where.AND = [
+                    {
+                        OR: [
+                            { userId: userId },
+                            { 
+                                templateDownloads: {
+                                    some: { userId: userId }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        OR: searchConditions
+                    }
+                ];
+                // Remove the original OR since we're now using AND
+                delete where.OR;
+            }
+        }
 
         if (type) {
             where.type = type;

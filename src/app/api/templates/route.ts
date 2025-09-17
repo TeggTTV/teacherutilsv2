@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
+import { updateTagUsage } from '@/lib/tagUsage';
 
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
+        const search = searchParams.get('search') || '';
+        const tags = searchParams.get('tags') || '';
         const type = searchParams.get('type');
         const featured = searchParams.get('featured');
         const subject = searchParams.get('subject');
@@ -18,6 +21,37 @@ export async function GET(request: NextRequest) {
         const where: any = {
             isPublic: true,
         };
+
+        // Enhanced search functionality
+        if (search || tags) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const searchConditions: any[] = [];
+
+            // Text search across title, description, and tags
+            if (search) {
+                searchConditions.push(
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } },
+                    { tags: { has: search } } // Search for exact tag match
+                );
+            }
+
+            // Tag-specific search (multiple tags)
+            if (tags) {
+                const tagList = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+                if (tagList.length > 0) {
+                    // Create OR conditions for each tag (any tag match)
+                    const tagConditions = tagList.map(tag => ({
+                        tags: { has: tag }
+                    }));
+                    searchConditions.push(...tagConditions);
+                }
+            }
+
+            if (searchConditions.length > 0) {
+                where.OR = searchConditions;
+            }
+        }
 
         if (type) {
             where.type = type;
@@ -166,6 +200,11 @@ export async function POST(request: NextRequest) {
                 }
             }
         });
+
+        // Update tag usage counts
+        if (tags && Array.isArray(tags) && tags.length > 0) {
+            await updateTagUsage(tags);
+        }
 
         return NextResponse.json({
             id: template.id,

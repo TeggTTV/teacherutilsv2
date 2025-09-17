@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
+import { decrementTagUsage } from '@/lib/tagUsage';
 
 export async function POST(
     request: NextRequest,
@@ -216,6 +217,16 @@ export async function DELETE(
                 { error: 'You can only delete your own templates' },
                 { status: 403 }
             );
+        }
+
+        // Decrement tag usage if template is public
+        if (template.isPublic && template.tags && template.tags.length > 0) {
+            try {
+                await decrementTagUsage(template.tags);
+                console.log('[Template Delete] Decremented tag usage for tags:', template.tags);
+            } catch (error) {
+                console.error('[Template Delete] Error decrementing tag usage:', error);
+            }
         }
 
         // Delete the template (this will cascade delete related records)

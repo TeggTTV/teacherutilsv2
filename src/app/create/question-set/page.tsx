@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Modal from '@/components/Modal';
+import TagSelector from '@/components/TagSelector';
 import { useSearchParams, useRouter } from 'next/navigation';
 import TemplateService from '@/lib/services/templateService';
 import { getApiUrl } from '@/lib/config';
@@ -170,6 +171,9 @@ function QuestionSetContent() {
 	const [showTemplateSuccessModal, setShowTemplateSuccessModal] = useState(false);
 	const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);
 
+	// Tags state
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
 	// Template loading state
 	const [userTemplates, setUserTemplates] = useState<GameTemplate[]>([]);
 	const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -185,17 +189,20 @@ function QuestionSetContent() {
 					credentials: 'include',
 				});
 				if (response.ok) {
-					const data = await response.json();
-					const game = data.game;
-					setGameTitle(game.title);
-					setCategories(game.data.categories);
-					setSavedGameId(game.id);
-					
-					// Load image settings
-					setDisplayImage(game.data.displayImage || '');
-					setBoardBackground(game.data.boardBackground || '');
-					
-					// Load board customizations
+				const data = await response.json();
+				const game = data.game;
+				setGameTitle(game.title);
+				setCategories(game.data.categories);
+				setSavedGameId(game.id);
+				
+				// Load tags
+				if (game.tags && Array.isArray(game.tags)) {
+					setSelectedTags(game.tags);
+				}
+				
+				// Load image settings
+				setDisplayImage(game.data.displayImage || '');
+				setBoardBackground(game.data.boardBackground || '');					// Load board customizations
 					if (game.data.boardCustomizations) {
 						setBoardCustomizations(game.data.boardCustomizations);
 					}
@@ -483,16 +490,14 @@ function QuestionSetContent() {
 					data: {
 						gameTitle: gameTitle.trim(),
 						categories,
-						customValues,
-						displayImage: displayImage || undefined,
-						boardBackground: boardBackground || undefined,
-						boardCustomizations
-					},
-					isPublic: false,
-					tags: []
-				};
-
-				const response = await fetch(getApiUrl(`/api/games/${savedGameId}`), {
+					customValues,
+					displayImage: displayImage || undefined,
+					boardBackground: boardBackground || undefined,
+					boardCustomizations
+				},
+				isPublic: false,
+				tags: selectedTags
+			};				const response = await fetch(getApiUrl(`/api/games/${savedGameId}`), {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(gameData)
@@ -513,7 +518,7 @@ function QuestionSetContent() {
 		}, 3000); // Auto-save every 3 seconds after changes
 
 		return () => clearTimeout(autoSaveTimer);
-	}, [categories, gameTitle, savedGameId, customValues, displayImage, boardBackground, boardCustomizations]);
+	}, [categories, gameTitle, savedGameId, customValues, displayImage, boardBackground, boardCustomizations, selectedTags]);
 
 	const saveGame = async () => {
 		setSaveError(null);
@@ -542,7 +547,7 @@ function QuestionSetContent() {
 						boardCustomizations
 					},
 					isPublic: false,
-					tags: []
+					tags: selectedTags
 				};			const url = savedGameId ? `/api/games/${savedGameId}` : '/api/games';
 			const method = savedGameId ? 'PUT' : 'POST';
 
@@ -765,6 +770,7 @@ function QuestionSetContent() {
 		// Reset all state to initial values
 		setGameTitle('');
 		setSavedGameId(null);
+		setSelectedTags([]);
 		setDisplayImage('');
 		setBoardBackground('');
 		setSaveError(null);
@@ -1730,6 +1736,20 @@ function QuestionSetContent() {
 					<p className="text-base text-gray-700 leading-relaxed">
 						Add categories and questions to create your educational game. Click on any cell to edit questions and answers.
 					</p>
+				</motion.div>
+
+				{/* Tags Section */}
+				<motion.div 
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.6, delay: 0.6 }}
+					className="mb-6"
+				>
+					<TagSelector 
+						selectedTags={selectedTags}
+						onTagsChange={setSelectedTags}
+						placeholder="Add tags to help others discover your game..."
+					/>
 				</motion.div>
 
 				{/* Game Board */}
