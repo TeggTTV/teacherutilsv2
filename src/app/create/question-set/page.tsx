@@ -8,6 +8,7 @@ import Modal from '@/components/Modal';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/config';
 import { motion } from 'framer-motion';
+import html2canvas from 'html2canvas';
 
 interface Category {
 	id: string;
@@ -39,10 +40,8 @@ interface BoardColors {
 	tileHover: string;
 	defaultTileBackground: string;
 	categoryBackground: string;
-	individualTileColors: { [key: string]: string };
 	defaultTileImage: string;
 	categoryBackgroundImage: string;
-	individualTileImages: { [key: string]: string };
 	tileOpacity: number;
 }
 
@@ -102,15 +101,13 @@ function QuestionSetContent() {
 			textColor: '#ffffff',
 			categoryTextColor: '#ffffff', 
 			questionTextColor: '#000000',
-			tileBackground: '#1e40af',
+			tileBackground: '#e5e7eb',
 			tileBorder: '#3b82f6',
-			tileHover: '#1d4ed8',
+			tileHover: '#d1d5db',
 			defaultTileBackground: '#e5e7eb',
 			categoryBackground: '#3b82f6',
-			individualTileColors: {},
 			defaultTileImage: '',
 			categoryBackgroundImage: '',
-			individualTileImages: {},
 			tileOpacity: 100
 		},
 		typography: {
@@ -130,6 +127,21 @@ function QuestionSetContent() {
 		type: null,
 		currentValue: ''
 	});
+
+	// Template saving state
+	const [showTemplateModal, setShowTemplateModal] = useState(false);
+	const [templateSaving, setTemplateSaving] = useState(false);
+	const [templateForm, setTemplateForm] = useState({
+		title: '',
+		description: '',
+		type: 'theme' as 'theme' | 'layout' | 'complete'
+	});
+	const [showTemplateSuccessModal, setShowTemplateSuccessModal] = useState(false);
+	const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);
+
+	// Template loading state
+	const [userTemplates, setUserTemplates] = useState<any[]>([]);
+	const [loadingTemplates, setLoadingTemplates] = useState(false);
 
 	// Load existing game if editing
 	useEffect(() => {
@@ -166,6 +178,30 @@ function QuestionSetContent() {
 
 		loadGame();
 	}, [editGameId, user]);
+
+	// Load user templates
+	useEffect(() => {
+		const loadUserTemplates = async () => {
+			if (!user) return;
+
+			setLoadingTemplates(true);
+			try {
+				const response = await fetch(`/api/templates/my`, {
+					credentials: 'include',
+				});
+				if (response.ok) {
+					const data = await response.json();
+					setUserTemplates(data.templates || []);
+				}
+			} catch (error) {
+				console.error('Error loading user templates:', error);
+			} finally {
+				setLoadingTemplates(false);
+			}
+		};
+
+		loadUserTemplates();
+	}, [user]);
 
 	// Initialize with empty categories if not editing
 	useEffect(() => {
@@ -437,6 +473,131 @@ function QuestionSetContent() {
 		}
 	};
 
+	// Save current game as template
+	const saveAsTemplate = async () => {
+		if (!templateForm.title.trim() || !templateForm.description.trim()) return;
+
+		setTemplateSaving(true);
+		try {
+			// Capture board preview if side preview is visible
+			let previewImage = null;
+			if (sidePreviewMode) {
+				previewImage = await captureBoardPreview();
+			}
+
+			const templateData = {
+				gameTitle: gameTitle.trim(),
+				categories: [],
+				customValues,
+				displayImage: displayImage || undefined,
+				boardBackground: boardBackground || undefined,
+				boardCustomizations
+			};
+
+			const response = await fetch('/api/templates', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					title: templateForm.title.trim(),
+					description: templateForm.description.trim(),
+					type: 'JEOPARDY',
+					data: templateData,
+					subject: 'general',
+					difficulty: 'intermediate',
+					gradeLevel: 'all',
+					tags: ['custom', 'user-created', `template-type-${templateForm.type}`],
+					previewImage: previewImage // Add the captured preview image
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const result = await response.json();
+			console.log('Template saved successfully:', result);
+
+			// Reset form and close modal
+			setTemplateForm({ title: '', description: '', type: 'theme' });
+			setShowTemplateModal(false);
+			
+			// Show success modal instead of alert
+			setShowTemplateSuccessModal(true);
+			
+			// Reload user templates to include the new one
+			if (user) {
+				try {
+					const templatesResponse = await fetch(`/api/templates/my`, {
+						credentials: 'include',
+					});
+					if (templatesResponse.ok) {
+						const templatesData = await templatesResponse.json();
+						setUserTemplates(templatesData.templates || []);
+					}
+				} catch (error) {
+					console.error('Error reloading templates:', error);
+				}
+			}
+		} catch (error) {
+			console.error('Error saving template:', error);
+			setTemplateSaveError('Failed to save template. Please try again.');
+		} finally {
+			setTemplateSaving(false);
+		}
+	};
+
+	// Apply template to current game
+	const applyTemplate = (template: { id: string; title: string; data: any }) => {
+		try {
+			const templateData = template.data;
+			
+			// Apply display image if available
+			if (templateData.displayImage) {
+				setDisplayImage(templateData.displayImage);
+			}
+			
+			// Apply board background if available
+			if (templateData.boardBackground) {
+				setBoardBackground(templateData.boardBackground);
+			}
+			
+			// Apply board customizations if available
+			if (templateData.boardCustomizations) {
+				setBoardCustomizations(templateData.boardCustomizations);
+			}
+			
+			console.log('Template applied successfully:', template.title);
+			
+		} catch (error) {
+			console.error('Error applying template:', error);
+		}
+	};
+
+	// Capture board preview as base64 image
+	const captureBoardPreview = async (): Promise<string | null> => {
+		try {
+			const element = document.getElementById('board-preview-capture');
+			if (!element) {
+				console.warn('Board preview element not found');
+				return null;
+			}
+
+			const canvas = await html2canvas(element, {
+				scale: 2, // Higher quality
+				useCORS: true,
+				allowTaint: true,
+				backgroundColor: '#ffffff'
+			});
+
+			return canvas.toDataURL('image/png');
+		} catch (error) {
+			console.error('Error capturing board preview:', error);
+			return null;
+		}
+	};
+
 	// Reset game to initial state
 	const resetGame = () => {
 		// Reset all state to initial values
@@ -468,16 +629,14 @@ function QuestionSetContent() {
 				textColor: '#ffffff',
 				categoryTextColor: '#ffffff', 
 				questionTextColor: '#000000',
-				tileBackground: '#1e40af',
+				tileBackground: '#e5e7eb',
 				tileBorder: '#3b82f6',
-				tileHover: '#1d4ed8',
-				defaultTileBackground: '#1e40af',
-				categoryBackground: '#1e40af',
-				individualTileColors: {},
+				tileHover: '#d1d5db',
+				defaultTileBackground: '#e5e7eb',
+				categoryBackground: '#3b82f6',
 				defaultTileImage: '',
 				categoryBackgroundImage: '',
-				individualTileImages: {},
-				tileOpacity: 1
+				tileOpacity: 100
 			},
 			typography: {
 				fontFamily: 'Arial, sans-serif',
@@ -895,9 +1054,25 @@ function QuestionSetContent() {
 										</div>
 									</div>
 									
-									{/* Tile Colors */}
+									{/* Background Colors */}
 									<div className="space-y-3">
-										<h4 className="font-medium text-gray-700">Tile Colors</h4>
+										<h4 className="font-medium text-gray-700">Background Colors</h4>
+										
+										<div className="space-y-2">
+											<label className="block text-sm text-gray-600">Category Background</label>
+											<div className="flex items-center gap-2">
+												<input
+													type="color"
+													value={boardCustomizations.colors.categoryBackground}
+													onChange={(e) => setBoardCustomizations(prev => ({
+														...prev,
+														colors: { ...prev.colors, categoryBackground: e.target.value }
+													}))}
+													className="w-12 h-8 rounded border border-gray-300"
+												/>
+												<span className="text-sm text-gray-600">{boardCustomizations.colors.categoryBackground}</span>
+											</div>
+										</div>
 										
 										<div className="space-y-2">
 											<label className="block text-sm text-gray-600">Tile Background</label>
@@ -914,6 +1089,11 @@ function QuestionSetContent() {
 												<span className="text-sm text-gray-600">{boardCustomizations.colors.tileBackground}</span>
 											</div>
 										</div>
+									</div>
+									
+									{/* Border & Effects */}
+									<div className="space-y-3">
+										<h4 className="font-medium text-gray-700">Border & Effects</h4>
 										
 										<div className="space-y-2">
 											<label className="block text-sm text-gray-600">Tile Border</label>
@@ -930,11 +1110,6 @@ function QuestionSetContent() {
 												<span className="text-sm text-gray-600">{boardCustomizations.colors.tileBorder}</span>
 											</div>
 										</div>
-									</div>
-									
-									{/* Hover Effects */}
-									<div className="space-y-3">
-										<h4 className="font-medium text-gray-700">Hover Effects</h4>
 										
 										<div className="space-y-2">
 											<label className="block text-sm text-gray-600">Tile Hover Color</label>
@@ -973,255 +1148,10 @@ function QuestionSetContent() {
 										</div>
 									</div>
 								</div>
-								
-								{/* Color Preview */}
-								<div className="mt-6 p-4 border rounded-lg bg-gray-50">
-									<h5 className="font-medium text-gray-700 mb-3">Preview</h5>
-									<div className="space-y-2">
-										<div 
-											className="p-3 rounded border-2 text-center font-bold"
-											style={{
-												backgroundColor: boardCustomizations.colors.tileBackground,
-												borderColor: boardCustomizations.colors.tileBorder,
-												color: boardCustomizations.colors.categoryTextColor
-											}}
-										>
-											Category Name
-										</div>
-										<div 
-											className="p-2 rounded border text-center text-sm"
-											style={{
-												backgroundColor: boardCustomizations.colors.tileBackground,
-												borderColor: boardCustomizations.colors.tileBorder,
-												color: boardCustomizations.colors.questionTextColor
-											}}
-										>
-											$200
-										</div>
-									</div>
-								</div>
 							</div>
 						)}
 						
-						{/* Tile Backgrounds Section - Added to Colors Tab */}
-						{activeCustomizationTab === 'colors' && (
-							<div className="mt-8 space-y-6">
-								<div className="border-t pt-6">
-									<h3 className="text-lg font-medium text-gray-800 mb-4">Individual Tile Backgrounds</h3>
-									<div className={`grid grid-cols-1 ${sidePreviewMode ? '' : 'md:grid-cols-2'} gap-6`}>
-										{/* Default Backgrounds */}
-										<div className="space-y-4">
-											<h4 className="font-medium text-gray-700">Default Backgrounds</h4>
-											
-											<div className="space-y-2">
-												<label className="block text-sm text-gray-600">Default Tile Background</label>
-												<div className="flex items-center gap-2">
-													<input
-														type="color"
-														value={boardCustomizations.colors.defaultTileBackground}
-														onChange={(e) => setBoardCustomizations(prev => ({
-															...prev,
-															colors: { ...prev.colors, defaultTileBackground: e.target.value }
-														}))}
-														className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
-													/>
-													<span className="text-sm text-gray-600">{boardCustomizations.colors.defaultTileBackground}</span>
-												</div>
-											</div>
-											
-											<div className="space-y-2">
-												<label className="block text-sm text-gray-600">Category Header Background</label>
-												<div className="flex items-center gap-2">
-													<input
-														type="color"
-														value={boardCustomizations.colors.categoryBackground}
-														onChange={(e) => setBoardCustomizations(prev => ({
-															...prev,
-															colors: { ...prev.colors, categoryBackground: e.target.value }
-														}))}
-														className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
-													/>
-													<span className="text-sm text-gray-600">{boardCustomizations.colors.categoryBackground}</span>
-												</div>
-											</div>
-										</div>
-										
-										{/* Individual Tile Instructions */}
-										<div className="space-y-4">
-											<h4 className="font-medium text-gray-700">Individual Tile Colors</h4>
-											<div className="text-sm text-gray-600 space-y-2">
-												<p>Enable side preview to see your individual tile color customizations in real-time.</p>
-												<div className="p-3 bg-blue-50 rounded-md border border-blue-200">
-													<p className="text-xs text-blue-700">
-														💡 <strong>Tip:</strong> Use the &quot;Side Preview&quot; button to open a live preview panel where you can see all your customizations applied in real-time.
-													</p>
-												</div>
-											</div>
-										</div>
-									</div>
-									
-									{/* Tile Background Images Section */}
-									<div className="mt-8 space-y-6 border-t pt-6">
-										<h3 className="text-lg font-medium text-gray-800 mb-4">Tile Background Images</h3>
-										<div className={`grid grid-cols-1 ${sidePreviewMode ? '' : 'md:grid-cols-2'} gap-6`}>
-											{/* Default Images */}
-											<div className="space-y-4">
-												<h4 className="font-medium text-gray-700">Default Images</h4>
-												
-												<div className="space-y-2">
-													<label className="block text-sm text-gray-600">Default Tile Background Image</label>
-													<div className="flex items-center gap-2">
-														<input
-															type="url"
-															value={boardCustomizations.colors.defaultTileImage}
-															onChange={(e) => setBoardCustomizations(prev => ({
-																...prev,
-																colors: { ...prev.colors, defaultTileImage: e.target.value }
-															}))}
-															placeholder="Enter image URL or leave blank for color only"
-															className="flex-1 p-2 border border-gray-300 rounded-md text-sm"
-														/>
-														<button
-															onClick={() => setImageModal({
-																isOpen: true,
-																type: 'defaultTile',
-																currentValue: boardCustomizations.colors.defaultTileImage
-															})}
-															className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-														>
-															Browse
-														</button>
-													</div>
-													{boardCustomizations.colors.defaultTileImage && (
-														<div className="mt-2">
-															<img 
-																src={boardCustomizations.colors.defaultTileImage} 
-																alt="Default tile background preview"
-																className="w-16 h-10 object-cover rounded border"
-																onError={(e) => {
-																	e.currentTarget.style.display = 'none';
-																}}
-															/>
-														</div>
-													)}
-												</div>
-												
-												<div className="space-y-2">
-													<label className="block text-sm text-gray-600">Category Header Background Image</label>
-													<div className="flex items-center gap-2">
-														<input
-															type="url"
-															value={boardCustomizations.colors.categoryBackgroundImage}
-															onChange={(e) => setBoardCustomizations(prev => ({
-																...prev,
-																colors: { ...prev.colors, categoryBackgroundImage: e.target.value }
-															}))}
-															placeholder="Enter image URL or leave blank for color only"
-															className="flex-1 p-2 border border-gray-300 rounded-md text-sm"
-														/>
-														<button
-															onClick={() => setImageModal({
-																isOpen: true,
-																type: 'categoryImage',
-																currentValue: boardCustomizations.colors.categoryBackgroundImage
-															})}
-															className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-														>
-															Browse
-														</button>
-													</div>
-													{boardCustomizations.colors.categoryBackgroundImage && (
-														<div className="mt-2">
-															<img 
-																src={boardCustomizations.colors.categoryBackgroundImage} 
-																alt="Category background preview"
-																className="w-16 h-10 object-cover rounded border"
-																onError={(e) => {
-																	e.currentTarget.style.display = 'none';
-																}}
-															/>
-														</div>
-													)}
-												</div>
-											</div>
-											
-											{/* Bulk Actions */}
-											<div className="space-y-4">
-												<h4 className="font-medium text-gray-700">Bulk Actions</h4>
-												
-												<div className="space-y-2">
-													<label className="block text-sm text-gray-600">Apply Image to All Question Tiles</label>
-													<div className="flex items-center gap-2">
-														<input
-															type="url"
-															placeholder="Enter image URL to apply to all question tiles"
-															className="flex-1 p-2 border border-gray-300 rounded-md text-sm"
-															id="bulkTileImage"
-														/>
-														<button
-															onClick={() => {
-																const input = document.getElementById('bulkTileImage') as HTMLInputElement;
-																const imageUrl = input.value.trim();
-																if (imageUrl) {
-																	setBoardCustomizations(prev => {
-																		const newIndividualImages: { [key: string]: string } = {};
-																		// Apply to all tiles (4 rows x 4 cols)
-																		for (let row = 1; row <= 4; row++) {
-																			for (let col = 1; col <= 4; col++) {
-																				newIndividualImages[`tile-${row}-${col}`] = imageUrl;
-																			}
-																		}
-																		return {
-																			...prev,
-																			colors: { 
-																				...prev.colors, 
-																				individualTileImages: {
-																					...prev.colors.individualTileImages,
-																					...newIndividualImages
-																				}
-																			}
-																		};
-																	});
-																	input.value = '';
-																}
-															}}
-															className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-														>
-															Apply All
-														</button>
-													</div>
-												</div>
-												
-												<div className="space-y-2">
-													<button
-														onClick={() => {
-															setBoardCustomizations(prev => ({
-																...prev,
-																colors: { 
-																	...prev.colors, 
-																	individualTileImages: {},
-																	defaultTileImage: '',
-																	categoryBackgroundImage: ''
-																}
-															}));
-														}}
-														className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
-													>
-														Clear All Tile Images
-													</button>
-												</div>
-												
-												<div className="p-3 bg-amber-50 rounded-md border border-amber-200">
-													<p className="text-xs text-amber-700">
-														🖼️ <strong>Image Tips:</strong> Right-click tiles in the preview below to add individual images. Images will overlay colors, so you can combine both for best results.
-													</p>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
+
 						
 						{/* Typography Tab */}
 						{activeCustomizationTab === 'typography' && (
@@ -1368,64 +1298,135 @@ function QuestionSetContent() {
 								transition={{ duration: 0.6 }}
 								className="space-y-8"
 							>
-								<div className="text-center py-12">
-									<motion.div 
-										initial={{ opacity: 0, scale: 0.9 }}
-										animate={{ opacity: 1, scale: 1 }}
-										transition={{ duration: 0.6, delay: 0.1 }}
-										className="max-w-md mx-auto px-4"
+								{/* Save as Template Button */}
+								<div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+									<div>
+										<h3 className="text-lg font-semibold text-gray-900 mb-1">Save Current Design as Template</h3>
+										<p className="text-sm text-gray-600">Share your customizations with the community</p>
+									</div>
+									<motion.button
+										onClick={() => setShowTemplateModal(true)}
+										whileHover={{ scale: 1.02 }}
+										whileTap={{ scale: 0.98 }}
+										className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
 									>
-										<div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-											<svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-												<path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-											</svg>
+										<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
+										</svg>
+										<span>Save as Template</span>
+									</motion.button>
+								</div>
+
+								{/* User Templates Section */}
+								<div>
+									<h4 className="text-lg font-semibold text-gray-900 mb-4">Your Templates</h4>
+									
+									{loadingTemplates ? (
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											{[...Array(4)].map((_, i) => (
+												<div key={i} className="p-4 border border-gray-200 rounded-lg">
+													<div className="animate-pulse space-y-3">
+														<div className="h-4 bg-gray-200 rounded w-3/4"></div>
+														<div className="h-3 bg-gray-200 rounded w-full"></div>
+														<div className="h-3 bg-gray-200 rounded w-1/2"></div>
+													</div>
+												</div>
+											))}
 										</div>
-										<h3 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">No Templates Downloaded</h3>
-										<p className="text-gray-600 mb-6 text-lg leading-relaxed">
-											Browse the Market to download templates that you can apply to your games.
-										</p>
-										<div className="space-y-4 text-left bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
-											<p className="text-base font-semibold text-gray-900">Templates will include:</p>
-											<ul className="text-gray-700 space-y-3 text-base leading-relaxed">
-												<li className="flex items-center gap-2">
-													<div className="w-2 h-2 bg-green-400 rounded-full"></div>
-													Pre-designed board layouts
-												</li>
-												<li className="flex items-center gap-2">
-													<div className="w-2 h-2 bg-green-400 rounded-full"></div>
-													Color scheme packages
-												</li>
-												<li className="flex items-center gap-2">
-													<div className="w-2 h-2 bg-green-400 rounded-full"></div>
-													Typography combinations
-												</li>
-												<li className="flex items-center gap-2">
-													<div className="w-2 h-2 bg-green-400 rounded-full"></div>
-													Background image sets
-												</li>
-											</ul>
+									) : userTemplates && userTemplates.length > 0 ? (
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											{userTemplates.map((template) => (
+												<motion.div
+													key={template.id}
+													className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
+													whileHover={{ scale: 1.02 }}
+													onClick={() => applyTemplate(template)}
+												>
+													<div className="flex items-start justify-between mb-2">
+														<h5 className="font-semibold text-gray-900 line-clamp-1">{template.title}</h5>
+														<span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+															{template.isPublic ? 'Public' : 'Private'}
+														</span>
+													</div>
+													<p className="text-sm text-gray-600 mb-3 line-clamp-2">{template.description}</p>
+													<div className="flex items-center justify-between text-xs text-gray-500">
+														<span>Created {new Date(template.createdAt).toLocaleDateString()}</span>
+														<motion.button
+															whileHover={{ scale: 1.1 }}
+															whileTap={{ scale: 0.9 }}
+															className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+															onClick={(e) => {
+																e.stopPropagation();
+																applyTemplate(template);
+															}}
+														>
+															Apply
+														</motion.button>
+													</div>
+												</motion.div>
+											))}
 										</div>
-										<div className="flex flex-col sm:flex-row gap-2 mt-6">
-											<button
-												onClick={() => window.open('/dashboard?tab=market', '_blank')}
-												className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center justify-center space-x-2 text-sm"
+									) : (
+										<div className="text-center py-12">
+											<motion.div 
+												initial={{ opacity: 0, scale: 0.9 }}
+												animate={{ opacity: 1, scale: 1 }}
+												transition={{ duration: 0.6, delay: 0.1 }}
+												className="max-w-md mx-auto px-4"
 											>
-												<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-													<path d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H19M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
-												</svg>
-												<span>Browse Market</span>
-											</button>
-											<button
-												onClick={() => setActiveCustomizationTab('images')}
-												className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center justify-center space-x-2 text-sm"
-											>
-												<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-													<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-												</svg>
-												<span>Customize Manually</span>
-											</button>
+												<div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+													<svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+														<path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+													</svg>
+												</div>
+												<h3 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">No Templates Yet</h3>
+												<p className="text-gray-600 mb-6 text-lg leading-relaxed">
+													You haven&apos;t saved any templates yet. Create your first template by customizing your game and clicking &quot;Save as Template&quot; above.
+												</p>
+												<div className="space-y-4 text-left bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+													<p className="text-base font-semibold text-gray-900">Templates will include:</p>
+													<ul className="text-gray-700 space-y-3 text-base leading-relaxed">
+														<li className="flex items-center gap-2">
+															<div className="w-2 h-2 bg-green-400 rounded-full"></div>
+															Your custom color schemes
+														</li>
+														<li className="flex items-center gap-2">
+															<div className="w-2 h-2 bg-green-400 rounded-full"></div>
+															Background images
+														</li>
+														<li className="flex items-center gap-2">
+															<div className="w-2 h-2 bg-green-400 rounded-full"></div>
+															Typography settings
+														</li>
+														<li className="flex items-center gap-2">
+															<div className="w-2 h-2 bg-green-400 rounded-full"></div>
+															Board customizations
+														</li>
+													</ul>
+												</div>
+												<div className="flex flex-col sm:flex-row gap-2 mt-6">
+													<button
+														onClick={() => window.open('/dashboard?tab=market', '_blank')}
+														className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center justify-center space-x-2 text-sm"
+													>
+														<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+															<path d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H19M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
+														</svg>
+														<span>Browse Market</span>
+													</button>
+													<button
+														onClick={() => setActiveCustomizationTab('images')}
+														className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center justify-center space-x-2 text-sm"
+													>
+														<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+															<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+														</svg>
+														<span>Customize Manually</span>
+													</button>
+												</div>
+											</motion.div>
 										</div>
-									</motion.div>
+									)}
 								</div>
 							</motion.div>
 						)}
@@ -1442,6 +1443,7 @@ function QuestionSetContent() {
 									
 									{/* Live Board Preview */}
 									<div 
+										id="board-preview-capture"
 										className="rounded-lg border-2 border-gray-200 p-3"
 										style={{
 											backgroundImage: boardBackground ? `url(${boardBackground})` : 'none',
@@ -1484,9 +1486,8 @@ function QuestionSetContent() {
 											{/* Question Tiles */}
 											{[100, 200, 300, 400, 500].map((value, rowIndex) => (
 												[1, 2, 3, 4].map((colIndex) => {
-													const tileKey = `tile-${colIndex - 1}-${rowIndex}`;
-													const tileColor = boardCustomizations.colors.individualTileColors?.[tileKey] || boardCustomizations.colors.defaultTileBackground;
-													const tileImage = boardCustomizations.colors.individualTileImages?.[tileKey] || boardCustomizations.colors.defaultTileImage;
+													const tileColor = boardCustomizations.colors.tileBackground;
+													const tileImage = boardCustomizations.colors.defaultTileImage;
 													
 													return (
 														<div 
@@ -1660,9 +1661,8 @@ function QuestionSetContent() {
 
 								{/* Questions */}
 								{category.questions.map((question, questionIndex) => {
-									const tileKey = `tile-${categoryIndex}-${questionIndex}`;
-									const tileColor = boardCustomizations.colors.individualTileColors?.[tileKey] || boardCustomizations.colors.defaultTileBackground;
-									const tileImage = boardCustomizations.colors.individualTileImages?.[tileKey] || boardCustomizations.colors.defaultTileImage;
+									const tileColor = boardCustomizations.colors.tileBackground;
+									const tileImage = boardCustomizations.colors.defaultTileImage;
 									
 									return (
 									<button
@@ -1872,213 +1872,217 @@ function QuestionSetContent() {
 				</div>
 			</Modal>
 
-			{/* Question Editor Modal */}
-			{editingQuestion && (
-				<div className="fixed inset-0 flex items-center justify-center z-50">
-					<div className="bg-white rounded-lg shadow-xl max-w-2xl w-full m-4 max-h-[90vh] overflow-auto">
-						<div className="p-6">
-							<div className="flex justify-between items-center mb-4">
-								<h2 className="text-xl font-bold">
-									Edit Question: {categories[editingQuestion.categoryIndex]?.name || `Category ${editingQuestion.categoryIndex + 1}`} - ${editingQuestion.question.value}
-								</h2>
-								<button
-									onClick={() => setEditingQuestion(null)}
-									className="text-gray-500 hover:text-gray-700 text-2xl"
-								>
-									×
-								</button>
-							</div>
+		{/* Question Editor Modal */}
+		{editingQuestion && (
+			<Modal 
+				isOpen={!!editingQuestion}
+				onClose={() => setEditingQuestion(null)}
+				maxWidth="2xl"
+			>
+				<div className="p-6">
+					<div className="flex justify-between items-center mb-6">
+						<h3 className="text-xl font-bold text-gray-900">
+							Edit Question: {categories[editingQuestion.categoryIndex]?.name || `Category ${editingQuestion.categoryIndex + 1}`} - {editingQuestion.question.value}
+						</h3>
+					</div>
 
-							<div className="space-y-4">
-								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Question
-									</label>
-									<textarea
-										value={editingQuestion.question.question}
+					<div className="space-y-6">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">
+								Question
+							</label>
+							<textarea
+								value={editingQuestion.question.question}
+								onChange={(e) => {
+									updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'question', e.target.value);
+								}}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								rows={3}
+								placeholder="Enter your question..."
+							/>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">
+								Answer
+							</label>
+							<textarea
+								value={editingQuestion.question.answer}
+								onChange={(e) => {
+									updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'answer', e.target.value);
+								}}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								rows={3}
+								placeholder="Enter the answer..."
+							/>
+						</div>
+
+						{/* Media Support */}
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">
+								Media (Optional)
+							</label>
+							<div className="space-y-3">
+								<div className="flex gap-2">
+									<select
+										value={editingQuestion.question.media?.type || ''}
 										onChange={(e) => {
-											updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'question', e.target.value);
-										}}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-										rows={3}
-										placeholder="Enter the question..."
-									/>
-								</div>
-
-								{/* Media Support */}
-								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Media (Optional)
-									</label>
-									<div className="space-y-3">
-										<div className="flex gap-2">
-											<select
-												value={editingQuestion.question.media?.type || ''}
-												onChange={(e) => {
-													const type = e.target.value as 'image' | 'audio' | 'video' | '';
-													if (type) {
-														updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', {
-															type,
-															url: editingQuestion.question.media?.url || '',
-															alt: editingQuestion.question.media?.alt || ''
-														});
-													} else {
-														updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', undefined);
-													}
-												}}
-												className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-											>
-												<option value="">No Media</option>
-												<option value="image">🖼️ Image</option>
-												<option value="audio">🎵 Audio</option>
-												<option value="video">🎬 Video</option>
-											</select>
-											
-											{editingQuestion.question.media && (
-												<input
-													type="url"
-													value={editingQuestion.question.media.url}
-													onChange={(e) => {
-														updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', {
-															...editingQuestion.question.media!,
-															url: e.target.value
-														});
-													}}
-													placeholder="Enter media URL..."
-													className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-												/>
-											)}
-										</div>
-										
-										{editingQuestion.question.media?.type === 'image' && editingQuestion.question.media.url && (
-											<div className="border rounded-lg p-2">
-												<Image 
-													src={editingQuestion.question.media.url} 
-													alt={editingQuestion.question.media.alt || 'Question media'}
-													width={300}
-													height={128}
-													className="max-w-full h-32 object-cover rounded"
-													onError={(e) => {
-														e.currentTarget.style.display = 'none';
-													}}
-												/>
-											</div>
-										)}
-										
-										{editingQuestion.question.media?.type === 'audio' && editingQuestion.question.media.url && (
-											<div className="border rounded-lg p-2">
-												<audio controls className="w-full">
-													<source src={editingQuestion.question.media.url} />
-													Your browser does not support the audio element.
-												</audio>
-											</div>
-										)}
-										
-										{editingQuestion.question.media?.type === 'video' && editingQuestion.question.media.url && (
-											<div className="border rounded-lg p-2">
-												<video controls className="w-full max-h-40">
-													<source src={editingQuestion.question.media.url} />
-													Your browser does not support the video element.
-												</video>
-											</div>
-										)}
-									</div>
-								</div>
-
-								{/* Advanced Options */}
-								<div className="border-t pt-4">
-									<h4 className="text-sm font-medium text-gray-700 mb-3">Advanced Options</h4>
-									<div className="grid grid-cols-2 gap-4">
-										<div>
-											<label className="block text-sm text-gray-600 mb-1">
-												Custom Timer (seconds)
-											</label>
-											<input
-												type="number"
-												value={editingQuestion.question.timer || ''}
-												onChange={(e) => {
-													const timer = e.target.value ? parseInt(e.target.value) : undefined;
-													updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'timer', timer);
-												}}
-												min="5"
-												max="120"
-												placeholder="30"
-												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-											/>
-										</div>
-										
-										<div>
-											<label className="block text-sm text-gray-600 mb-1">
-												Difficulty
-											</label>
-											<select
-												value={editingQuestion.question.difficulty || ''}
-												onChange={(e) => {
-													const difficulty = e.target.value as 'easy' | 'medium' | 'hard' | '';
-													updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'difficulty', difficulty || undefined);
-												}}
-												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-											>
-												<option value="">Auto</option>
-												<option value="easy">🟢 Easy</option>
-												<option value="medium">🟡 Medium</option>
-												<option value="hard">🔴 Hard</option>
-											</select>
-										</div>
-									</div>
-								</div>
-
-								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-2">
-										Answer
-									</label>
-									<textarea
-										value={editingQuestion.question.answer}
-										onChange={(e) => {
-											updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'answer', e.target.value);
-										}}
-										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-										rows={3}
-										placeholder="Enter the answer..."
-									/>
-								</div>
-							</div>
-
-							<div className="flex justify-end gap-3 mt-6">
-								<button
-									onClick={() => setEditingQuestion(null)}
-									className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-								>
-									Cancel
-								</button>
-								<button
-									onClick={() => {
-										console.log('Save & Close clicked');
-										console.log('Current editing question:', editingQuestion);
-										console.log('Current categories state:', categories);
-										
-										// The changes are already saved in real-time via onChange handlers
-										// Just close the modal and provide user feedback
-										setEditingQuestion(null);
-										
-										// Optional: Show a brief success message
-										if (editingQuestion) {
-											const hasContent = editingQuestion.question.question.trim() && editingQuestion.question.answer.trim();
-											console.log('Has content:', hasContent);
-											if (hasContent) {
-												console.log('Question saved successfully');
+											const type = e.target.value as 'image' | 'audio' | 'video' | '';
+											if (type) {
+												updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', {
+													type,
+													url: editingQuestion.question.media?.url || '',
+													alt: editingQuestion.question.media?.alt || ''
+												});
+											} else {
+												updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', undefined);
 											}
-										}
-									}}
-									className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-								>
-									Save & Close
-								</button>
+										}}
+										className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									>
+										<option value="">No Media</option>
+										<option value="image">🖼️ Image</option>
+										<option value="audio">🎵 Audio</option>
+										<option value="video">🎬 Video</option>
+									</select>
+									
+									{editingQuestion.question.media && (
+										<input
+											type="url"
+											value={editingQuestion.question.media.url}
+											onChange={(e) => {
+												updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', {
+													...editingQuestion.question.media!,
+													url: e.target.value
+												});
+											}}
+											placeholder="Enter media URL..."
+											className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										/>
+									)}
+								</div>
+								
+								{editingQuestion.question.media?.type === 'image' && editingQuestion.question.media.url && (
+									<div className="border rounded-lg p-2">
+										<Image 
+											src={editingQuestion.question.media.url} 
+											alt={editingQuestion.question.media.alt || 'Question media'}
+											width={300}
+											height={128}
+											className="max-w-full h-32 object-cover rounded"
+											onError={(e) => {
+												e.currentTarget.style.display = 'none';
+											}}
+										/>
+									</div>
+								)}
+								
+								{editingQuestion.question.media?.type === 'audio' && editingQuestion.question.media.url && (
+									<div className="border rounded-lg p-2">
+										<audio controls className="w-full">
+											<source src={editingQuestion.question.media.url} />
+											Your browser does not support the audio element.
+										</audio>
+									</div>
+								)}
+								
+								{editingQuestion.question.media?.type === 'video' && editingQuestion.question.media.url && (
+									<div className="border rounded-lg p-2">
+										<video controls className="w-full max-h-40">
+											<source src={editingQuestion.question.media.url} />
+											Your browser does not support the video element.
+										</video>
+									</div>
+								)}
+
+								{editingQuestion.question.media?.type === 'image' && (
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">
+											Alt Text (Optional)
+										</label>
+										<input
+											type="text"
+											value={editingQuestion.question.media.alt || ''}
+											onChange={(e) => {
+												const currentMedia = editingQuestion.question.media;
+												if (currentMedia) {
+													updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'media', {
+														...currentMedia,
+														alt: e.target.value
+													});
+												}
+											}}
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+											placeholder="Describe the image..."
+										/>
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Advanced Options */}
+						<div className="border-t pt-4">
+							<h4 className="text-sm font-medium text-gray-700 mb-3">Advanced Options</h4>
+							<div className="grid grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm text-gray-600 mb-1">
+										Custom Timer (seconds)
+									</label>
+									<input
+										type="number"
+										value={editingQuestion.question.timer || ''}
+										onChange={(e) => {
+											const timer = e.target.value ? parseInt(e.target.value) : undefined;
+											updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'timer', timer);
+										}}
+										min="5"
+										max="300"
+										placeholder="30"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									/>
+									<p className="mt-1 text-xs text-gray-500">
+										How long players have to answer this question
+									</p>
+								</div>
+								
+								<div>
+									<label className="block text-sm text-gray-600 mb-1">
+										Difficulty Level
+									</label>
+									<select
+										value={editingQuestion.question.difficulty || 'medium'}
+										onChange={(e) => {
+											const difficulty = e.target.value as 'easy' | 'medium' | 'hard';
+											updateQuestion(editingQuestion.categoryIndex, editingQuestion.questionIndex, 'difficulty', difficulty);
+										}}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									>
+										<option value="easy">🟢 Easy</option>
+										<option value="medium">🟡 Medium</option>
+										<option value="hard">🔴 Hard</option>
+									</select>
+								</div>
 							</div>
 						</div>
 					</div>
+
+					<div className="flex justify-end gap-3 mt-6">
+						<button
+							onClick={() => setEditingQuestion(null)}
+							className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+						>
+							Cancel
+						</button>
+						<button
+							onClick={() => setEditingQuestion(null)}
+							className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+						>
+							Save & Close
+						</button>
+					</div>
 				</div>
-			)}
+			</Modal>
+		)}
 
 			{/* Reset Confirmation Modal */}
 			{showResetModal && (
@@ -2133,6 +2137,162 @@ function QuestionSetContent() {
 						</div>
 					</motion.div>
 				</div>
+			)}
+
+			{/* Template Save Modal */}
+			{showTemplateModal && (
+				<Modal isOpen={showTemplateModal} onClose={() => setShowTemplateModal(false)}>
+					<div className="max-w-md mx-auto">
+						<div className="flex items-center justify-between mb-6">
+							<div>
+								<h2 className="text-xl font-bold text-gray-900">Save as Template</h2>
+								<p className="text-sm text-gray-600">Share your design with the community</p>
+							</div>
+						</div>
+
+						<div className="space-y-4">
+							<div>
+								<label htmlFor="template-title" className="block text-sm font-medium text-gray-700 mb-2">
+									Template Title *
+								</label>
+								<input
+									id="template-title"
+									type="text"
+									value={templateForm.title}
+									onChange={(e) => setTemplateForm(prev => ({ ...prev, title: e.target.value }))}
+									placeholder="e.g., Math Quiz Blue Theme"
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								/>
+							</div>
+
+							<div>
+								<label htmlFor="template-description" className="block text-sm font-medium text-gray-700 mb-2">
+									Description *
+								</label>
+								<textarea
+									id="template-description"
+									value={templateForm.description}
+									onChange={(e) => setTemplateForm(prev => ({ ...prev, description: e.target.value }))}
+									placeholder="Describe your template design and what makes it special..."
+									rows={3}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+								/>
+							</div>
+
+							<div>
+								<label htmlFor="template-type" className="block text-sm font-medium text-gray-700 mb-2">
+									Template Type
+								</label>
+								<select
+									id="template-type"
+									value={templateForm.type}
+									onChange={(e) => setTemplateForm(prev => ({ ...prev, type: e.target.value as 'theme' | 'layout' | 'complete' }))}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								>
+									<option value="theme">Theme (Colors & Styling)</option>
+									<option value="layout">Layout (Structure & Design)</option>
+									<option value="complete">Complete (Everything)</option>
+								</select>
+							</div>
+						</div>
+
+						<div className="flex justify-end gap-3 mt-6">
+							<button
+								onClick={() => setShowTemplateModal(false)}
+								className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={saveAsTemplate}
+								disabled={!templateForm.title.trim() || !templateForm.description.trim() || templateSaving}
+								className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+							>
+								{templateSaving && (
+									<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+								)}
+								<span>{templateSaving ? 'Saving...' : 'Save Template'}</span>
+							</button>
+						</div>
+					</div>
+				</Modal>
+			)}
+
+			{/* Template Success Modal */}
+			{showTemplateSuccessModal && (
+				<Modal isOpen={showTemplateSuccessModal} onClose={() => setShowTemplateSuccessModal(false)} maxWidth="md">
+					<div className="text-center">
+						<div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+							<motion.div
+								initial={{ scale: 0 }}
+								animate={{ scale: 1 }}
+								transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+							>
+								<svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+								</svg>
+							</motion.div>
+						</div>
+						<motion.h3 
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							className="text-xl font-semibold text-gray-900 mb-2"
+						>
+							Awesome! Template Saved! 🎉
+						</motion.h3>
+						<motion.p 
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.1 }}
+							className="text-gray-600 mb-6"
+						>
+							Your template has been saved to your private library. You can share it to the market from your dashboard whenever you&apos;re ready!
+						</motion.p>
+						<div className="flex justify-center gap-3">
+							<motion.button
+								whileHover={{ scale: 1.05 }}
+								whileTap={{ scale: 0.95 }}
+								onClick={() => setShowTemplateSuccessModal(false)}
+								className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+							>
+								Continue Creating
+							</motion.button>
+							<Link href="/dashboard?tab=my-templates">
+								<motion.button
+									whileHover={{ scale: 1.05 }}
+									whileTap={{ scale: 0.95 }}
+									className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
+								>
+									<span>View My Templates</span>
+									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+									</svg>
+								</motion.button>
+							</Link>
+						</div>
+					</div>
+				</Modal>
+			)}
+
+			{/* Template Error Modal */}
+			{templateSaveError && (
+				<Modal isOpen={!!templateSaveError} onClose={() => setTemplateSaveError(null)} maxWidth="md">
+					<div className="text-center">
+						<div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+							<svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+							</svg>
+						</div>
+						<h3 className="text-xl font-semibold text-gray-900 mb-2">Oops! Something went wrong</h3>
+						<p className="text-gray-600 mb-6">{templateSaveError}</p>
+						<button
+							onClick={() => setTemplateSaveError(null)}
+							className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+						>
+							Try Again
+						</button>
+					</div>
+				</Modal>
 			)}
 		</div>
 	);

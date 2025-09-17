@@ -7,10 +7,8 @@ export interface BoardColors {
 	tileHover: string;
 	defaultTileBackground: string;
 	categoryBackground: string;
-	individualTileColors: { [key: string]: string };
 	defaultTileImage: string;
 	categoryBackgroundImage: string;
-	individualTileImages: { [key: string]: string };
 	tileOpacity: number;
 }
 

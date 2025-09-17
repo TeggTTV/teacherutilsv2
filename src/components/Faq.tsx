@@ -6,24 +6,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 const faqs = [
     {
         question: "Is Compyy free to use?",
-        answer: "Yes! Compyy offers a generous free tier that includes access to basic templates and features. Premium features are available with our Pro subscription, starting at $9.99/month.",
+        answer: "Yes! Compyy is a free-to-use platform that allows educators to create and share customizable games. For a monthly subscription, teachers will access premium features like other game types, styles, and templates. ",
         icon: "💰"
     },
     {
         question: "Do I need technical skills to use Compyy?",
-        answer: "Not at all! Our platform is designed to be user-friendly. If you can use PowerPoint, you can use Compyy to create engaging educational games.",
+        answer: "Compyy uses an intuitive UI to make sure that anyone can create engaging educational games without any design experience.",
         icon: "🎯"
     },
-    {
-        question: "How do students access the games?",
-        answer: "Students can access games through a simple link or code - no registration required. They can play on any device with a web browser, including smartphones and tablets.",
-        icon: "📱"
-    },
-    {
-        question: "What types of games can I create?",
-        answer: "Compyy supports various game types including quiz shows, flashcards, memory games, word searches, crosswords, and more. Premium users get access to advanced game templates like escape rooms and interactive storytelling.",
-        icon: "🎮"
-    }
+    // {
+    //     question: "How do students access the games?",
+    //     answer: "Students can access games through a simple link or code - no registration required. They can play on any device with a web browser, including smartphones and tablets.",
+    //     icon: "📱"
+    // },
+    // {
+    //     question: "What types of games can I create?",
+    //     answer: "Compyy supports various game types including quiz shows, flashcards, memory games, word searches, crosswords, and more. Premium users get access to advanced game templates like escape rooms and interactive storytelling.",
+    //     icon: "🎮"
+    // }
 ];
 
 export default function Faq() {

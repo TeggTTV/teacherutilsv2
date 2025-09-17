@@ -22,10 +22,8 @@ interface BoardColors {
 	tileHover: string;
 	defaultTileBackground: string;
 	categoryBackground: string;
-	individualTileColors: { [key: string]: string };
 	defaultTileImage: string;
 	categoryBackgroundImage: string;
-	individualTileImages: { [key: string]: string };
 	tileOpacity: number;
 }
 
@@ -301,7 +299,7 @@ export default function PlayGamePage() {
 	};
 
 	// Helper function to get tile styling based on customizations
-	const getTileStyle = (categoryIndex: number, questionIndex: number, question: Question, isAnswered: boolean) => {
+	const getTileStyle = (questionIndex: number, question: Question, isAnswered: boolean) => {
 		const customizations = game?.data.boardCustomizations;
 		if (!customizations) {
 			// Default styles when no customizations
@@ -319,9 +317,6 @@ export default function PlayGamePage() {
 			};
 		}
 
-		const tileKey = `tile-${categoryIndex}-${questionIndex}`;
-		const individualTileColor = customizations.colors.individualTileColors?.[tileKey];
-		const individualTileImage = customizations.colors.individualTileImages?.[tileKey];
 		
 		let backgroundColor = customizations.colors.tileBackground;
 		let backgroundImage = 'none';
@@ -331,11 +326,11 @@ export default function PlayGamePage() {
 		} else if (!question.question || !question.answer) {
 			backgroundColor = '#e5e7eb'; // gray-200 for empty questions
 		} else {
-			// Use individual tile color if available, otherwise default
-			backgroundColor = individualTileColor || customizations.colors.defaultTileBackground || customizations.colors.tileBackground;
+			// Use the main tile background color
+			backgroundColor = customizations.colors.tileBackground;
 			
-			// Use individual tile image if available, otherwise default
-			const tileImageUrl = individualTileImage || customizations.colors.defaultTileImage;
+			// Use default tile image if available
+			const tileImageUrl = customizations.colors.defaultTileImage;
 			if (tileImageUrl && tileImageUrl.trim() !== '') {
 				backgroundImage = `url("${tileImageUrl.trim()}")`;
 			}
@@ -360,7 +355,7 @@ export default function PlayGamePage() {
 	};
 
 	// Helper function to get category header styling
-	const getCategoryStyle = (categoryIndex: number) => {
+	const getCategoryStyle = () => {
 		const customizations = game?.data.boardCustomizations;
 		if (!customizations) {
 			return {
@@ -456,11 +451,11 @@ export default function PlayGamePage() {
 								gap: '0px'
 							}}>
 								{/* Category Headers */}
-								{game.data.categories.map((category, categoryIndex) => (
+								{game.data.categories.map((category) => (
 									<div 
 										key={category.id} 
 										className="flex items-center justify-center font-bold text-lg md:text-xl lg:text-2xl border-r border-white last:border-r-0 relative overflow-hidden"
-										style={getCategoryStyle(categoryIndex)}
+										style={getCategoryStyle()}
 									>
 										<span style={{
 											textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
@@ -479,14 +474,14 @@ export default function PlayGamePage() {
 										if (!question) return <div key={`${categoryIndex}-${rowIndex}`} className="border-r border-b border-white bg-gray-200 last:border-r-0" />;
 										
 										const isAnswered = questionsAnswered.has(question.id);
-										const tileStyle = getTileStyle(categoryIndex, rowIndex, question, isAnswered);
+										const tileStyle = getTileStyle(rowIndex, question, isAnswered);
 										
 										return (
 											<button
 												key={question.id}
 												onClick={() => selectQuestion(categoryIndex, rowIndex)}
 												disabled={isAnswered || !question.question || !question.answer}
-												className="relative flex flex-col items-center justify-center text-2xl md:text-3xl lg:text-4xl font-bold border-r border-b border-white last:border-r-0 transition-all touch-manipulation cursor-pointer active:scale-95 overflow-hidden"
+												className="relative flex flex-col items-center justify-center text-2xl md:text-3xl lg:text-4xl font-bold border-r border-b border-white last:border-r-0 transition-all touch-manipulation cursor-pointer overflow-hidden"
 												style={tileStyle}
 											>
 												<span style={{
@@ -496,43 +491,6 @@ export default function PlayGamePage() {
 												}}>
 													${question.value}
 												</span>
-												
-												{/* Media Indicators */}
-												{question.media && (
-													<div className="absolute top-2 right-2 flex gap-1">
-														{question.media.type === 'image' && (
-															<span className="text-xs bg-purple-500 text-white px-1 py-0.5 rounded">🖼️</span>
-														)}
-														{question.media.type === 'audio' && (
-															<span className="text-xs bg-green-500 text-white px-1 py-0.5 rounded">🎵</span>
-														)}
-														{question.media.type === 'video' && (
-															<span className="text-xs bg-red-500 text-white px-1 py-0.5 rounded">🎬</span>
-														)}
-													</div>
-												)}
-												
-												{/* Difficulty & Timer Indicators */}
-												{(question.difficulty || question.timer) && (
-													<div className="absolute bottom-1 left-1 flex gap-1">
-														{question.difficulty && (
-															<span className={`text-xs px-1 py-0.5 rounded ${
-																question.difficulty === 'easy' ? 'bg-green-500 text-white' :
-																question.difficulty === 'medium' ? 'bg-yellow-500 text-white' :
-																'bg-red-500 text-white'
-															}`}>
-																{question.difficulty === 'easy' && '🟢'}
-																{question.difficulty === 'medium' && '🟡'}
-																{question.difficulty === 'hard' && '🔴'}
-															</span>
-														)}
-														{question.timer && (
-															<span className="text-xs bg-blue-500 text-white px-1 py-0.5 rounded">
-																⏱️{question.timer}s
-															</span>
-														)}
-													</div>
-												)}
 											</button>
 										);
 									})
@@ -569,17 +527,6 @@ export default function PlayGamePage() {
 							<div className="bg-blue-600 text-white p-8 text-center">
 								<div className="text-lg opacity-90 mb-3">
 									{game.data.categories[currentQuestion.categoryIndex]?.name} - ${currentQuestion.question.value}
-									{currentQuestion.question.difficulty && (
-										<span className={`ml-2 px-2 py-1 rounded text-sm ${
-											currentQuestion.question.difficulty === 'easy' ? 'bg-green-500' :
-											currentQuestion.question.difficulty === 'medium' ? 'bg-yellow-500' :
-											'bg-red-500'
-										}`}>
-											{currentQuestion.question.difficulty === 'easy' && '🟢 Easy'}
-											{currentQuestion.question.difficulty === 'medium' && '🟡 Medium'}
-											{currentQuestion.question.difficulty === 'hard' && '🔴 Hard'}
-										</span>
-									)}
 								</div>
 								<div className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
 									{currentQuestion.question.question}
