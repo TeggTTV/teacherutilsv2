@@ -2,7 +2,7 @@
 
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import ShareModal from '@/components/ShareModal';
@@ -67,6 +67,14 @@ const isGameComplete = (gameData: Record<string, unknown>): boolean => {
 };
 
 export default function Dashboard() {
+	return (
+		<Suspense fallback={<div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+			<DashboardContent />
+		</Suspense>
+	);
+}
+
+function DashboardContent() {
 	const { user, loading } = useAuthGuard();
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -1383,7 +1391,7 @@ export default function Dashboard() {
 																// Use saved game as template
 																const templateData = encodeURIComponent(JSON.stringify({
 																	title: `Template: ${game.title}`,
-																	type: game.data?.gameType || 'QUIZ',
+																	type: 'JEOPARDY', // Default to jeopardy since this is the question-set creator
 																	data: game.data
 																}));
 																window.open(`/create/question-set?template=${templateData}`, '_blank');
@@ -1555,7 +1563,7 @@ export default function Dashboard() {
 						<div className="bg-gray-50 rounded-lg p-4">
 							<h3 className="font-semibold text-gray-900 mb-3">This template will apply:</h3>
 							<div className="space-y-2 text-sm text-gray-700">
-								{templateUseModal.template.data?.boardCustomizations && (
+								{!!(templateUseModal.template.data as Record<string, unknown>)?.boardCustomizations && (
 									<div className="flex items-center space-x-2">
 										<svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
 											<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1563,7 +1571,7 @@ export default function Dashboard() {
 										<span>Custom color scheme and styling</span>
 									</div>
 								)}
-								{templateUseModal.template.data?.boardBackground && (
+								{!!(templateUseModal.template.data as Record<string, unknown>)?.boardBackground && (
 									<div className="flex items-center space-x-2">
 										<svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
 											<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1571,7 +1579,7 @@ export default function Dashboard() {
 										<span>Custom board background</span>
 									</div>
 								)}
-								{templateUseModal.template.data?.displayImage && (
+								{!!(templateUseModal.template.data as Record<string, unknown>)?.displayImage && (
 									<div className="flex items-center space-x-2">
 										<svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
 											<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

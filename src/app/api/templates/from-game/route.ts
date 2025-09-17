@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
                 title,
                 description,
                 type: game.type,
-                data: game.data, // Copy the game structure
+                data: game.data || {}, // Copy the game structure, fallback to empty object
                 tags,
                 difficulty: difficulty || game.difficulty,
                 gradeLevel: gradeLevel || game.gradeLevel,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	try {
 		const userId = await verifyAuth(request);
 		if (!userId) {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 			);
 		}
 
-		const gameId = params.id;
+		const { id: gameId } = await params;
 
 		// Check if game exists and is public
 		const game = await prisma.game.findUnique({
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 	}
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	try {
 		const userId = await verifyAuth(request);
 		if (!userId) {
@@ -71,7 +71,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 			);
 		}
 
-		const gameId = params.id;
+		const { id: gameId } = await params;
 
 		// Delete favorite if it exists
 		await prisma.gameFavorite.deleteMany({

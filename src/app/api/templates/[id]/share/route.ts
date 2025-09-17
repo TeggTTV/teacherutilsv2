@@ -4,7 +4,7 @@ import { verifyAuth } from '@/lib/auth';
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const userId = await verifyAuth(request);
@@ -16,7 +16,7 @@ export async function POST(
             );
         }
 
-        const templateId = params.id;
+        const { id: templateId } = await params;
 
         // Find the template and verify ownership
         const template = await prisma.template.findUnique({
@@ -70,7 +70,7 @@ export async function POST(
 // Unshare template (make it private again)
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const userId = await verifyAuth(request);
@@ -82,7 +82,7 @@ export async function DELETE(
             );
         }
 
-        const templateId = params.id;
+        const { id: templateId } = await params;
 
         // Find the template and verify ownership
         const template = await prisma.template.findUnique({
