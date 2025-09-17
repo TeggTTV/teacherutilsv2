@@ -15,7 +15,7 @@ export default function DashboardSidebar({
 	sidebarOpen,
 	setSidebarOpen,
 	sidebarItems,
-	activeTab,
+	// activeTab, // Currently unused but kept for future active state highlighting
 	onTabChange
 }: DashboardSidebarProps) {
 	return (

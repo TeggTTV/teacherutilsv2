@@ -53,6 +53,30 @@ interface BoardTypography {
 	categoryFontWeight: string;
 }
 
+interface GameTemplate {
+	id: string;
+	title: string;
+	description?: string;
+	isPublic?: boolean;
+	createdAt?: string;
+	data: {
+		title: string;
+		displayImage?: string;
+		boardBackground?: string;
+		boardCustomizations?: BoardCustomizations;
+		categories: Category[];
+		colors: BoardColors;
+		typography: BoardTypography;
+		gameSettings: {
+			timer: number;
+			allowSkip: boolean;
+			showAnswerAfterReveal: boolean;
+			backgroundImage?: string;
+			backgroundOpacity: number;
+		};
+	};
+}
+
 interface BoardCustomizations {
 	colors: BoardColors;
 	typography: BoardTypography;
@@ -140,7 +164,7 @@ function QuestionSetContent() {
 	const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);
 
 	// Template loading state
-	const [userTemplates, setUserTemplates] = useState<any[]>([]);
+	const [userTemplates, setUserTemplates] = useState<GameTemplate[]>([]);
 	const [loadingTemplates, setLoadingTemplates] = useState(false);
 
 	// Load existing game if editing
@@ -549,7 +573,7 @@ function QuestionSetContent() {
 	};
 
 	// Apply template to current game
-	const applyTemplate = (template: { id: string; title: string; data: any }) => {
+	const applyTemplate = (template: GameTemplate) => {
 		try {
 			const templateData = template.data;
 			
@@ -585,10 +609,9 @@ function QuestionSetContent() {
 			}
 
 			const canvas = await html2canvas(element, {
-				scale: 2, // Higher quality
 				useCORS: true,
 				allowTaint: true,
-				backgroundColor: '#ffffff'
+				background: '#ffffff'
 			});
 
 			return canvas.toDataURL('image/png');
@@ -1350,7 +1373,7 @@ function QuestionSetContent() {
 													</div>
 													<p className="text-sm text-gray-600 mb-3 line-clamp-2">{template.description}</p>
 													<div className="flex items-center justify-between text-xs text-gray-500">
-														<span>Created {new Date(template.createdAt).toLocaleDateString()}</span>
+														<span>Created {template.createdAt ? new Date(template.createdAt).toLocaleDateString() : 'Unknown'}</span>
 														<motion.button
 															whileHover={{ scale: 1.1 }}
 															whileTap={{ scale: 0.9 }}

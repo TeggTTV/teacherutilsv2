@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 				title: game.title,
 				description: game.description,
 				type: game.type,
-				data: game.data as any, // Include the game data with displayImage
+				data: game.data as Record<string, unknown>, // Include the game data with displayImage
 				tags: game.tags,
 				subject: game.subject,
 				gradeLevel: game.gradeLevel,

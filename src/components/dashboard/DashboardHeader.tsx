@@ -10,7 +10,6 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({
 	activeTab,
-	sidebarOpen,
 	setSidebarOpen
 }: DashboardHeaderProps) {
 	const getTabDetails = (tab: string) => {

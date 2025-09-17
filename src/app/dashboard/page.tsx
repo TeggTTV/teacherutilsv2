@@ -22,12 +22,13 @@ interface Template {
 	title: string;
 	description: string;
 	type: 'JEOPARDY' | 'QUIZ' | 'WORD_GAME';
-	data: any;
+	data: Record<string, unknown>;
 	previewImage?: string;
 	tags: string[];
 	difficulty?: string;
 	gradeLevel?: string;
 	subject?: string;
+	templateDownloads?: Array<unknown>;
 	downloads: number;
 	rating: number;
 	ratingCount: number;
@@ -42,11 +43,13 @@ interface Template {
 }
 
 // Game completion validation
-const isGameComplete = (gameData: any): boolean => {
+const isGameComplete = (gameData: Record<string, unknown>): boolean => {
 	if (!gameData || !gameData.categories) return false;
 	
+	const categories = gameData.categories as Array<{name?: string; questions?: Array<{question?: string; answer?: string}>}>;
+	
 	// Check if all categories are named and have questions
-	for (const category of gameData.categories) {
+	for (const category of categories) {
 		if (!category.name || category.name.trim() === '') return false;
 		
 		if (!category.questions || category.questions.length === 0) return false;
@@ -296,19 +299,21 @@ export default function Dashboard() {
 		}
 	};
 
-	const handleSearch = (searchTerm: string) => {
-		setMarketSearch(searchTerm);
-		if (searchTerm) {
-			trackSearch(searchTerm);
-		}
-	};
+	// Search functionality (currently unused but kept for future implementation)
+	// const handleSearch = (searchTerm: string) => {
+	// 	setMarketSearch(searchTerm);
+	// 	if (searchTerm) {
+	// 		trackSearch(searchTerm);
+	// 	}
+	// };
 
-	const handleFilterChange = (filterType: keyof MarketFilters, value: string) => {
-		setMarketFilters(prev => ({
-			...prev,
-			[filterType]: value
-		}));
-	};
+	// Filter functionality (currently unused but kept for future implementation)
+	// const handleFilterChange = (filterType: keyof MarketFilters, value: string) => {
+	// 	setMarketFilters(prev => ({
+	// 		...prev,
+	// 		[filterType]: value
+	// 	}));
+	// };
 
 	// Template dropdown management
 	const toggleTemplateDropdown = (templateId: string) => {
@@ -370,7 +375,7 @@ export default function Dashboard() {
 	};
 
 	// Check if template is layout-only (no visual customizations)
-	const isLayoutOnlyTemplate = (template: any) => {
+	const isLayoutOnlyTemplate = (template: Template) => {
 		// Check if template has tags indicating layout type
 		if (template.tags && (template.tags.includes('layout-only') || template.tags.includes('template-type-layout'))) {
 			return true;
@@ -378,12 +383,24 @@ export default function Dashboard() {
 		
 		// Check template data for visual customizations
 		if (template.data) {
-			const hasDisplayImage = template.data.displayImage;
-			const hasBoardBackground = template.data.boardBackground;
-			const hasCustomColors = template.data.boardCustomizations && 
-				(template.data.boardCustomizations.colors.categoryBackground !== '#3B82F6' ||
-				 template.data.boardCustomizations.colors.categoryTextColor !== '#FFFFFF' ||
-				 template.data.boardCustomizations.colors.tileBackground !== '#1E40AF');
+			const templateData = template.data as {
+				displayImage?: string;
+				boardBackground?: string;
+				boardCustomizations?: {
+					colors: {
+						categoryBackground: string;
+						categoryTextColor: string;
+						tileBackground: string;
+					};
+				};
+			};
+			
+			const hasDisplayImage = templateData.displayImage;
+			const hasBoardBackground = templateData.boardBackground;
+			const hasCustomColors = templateData.boardCustomizations && 
+				(templateData.boardCustomizations.colors.categoryBackground !== '#3B82F6' ||
+				 templateData.boardCustomizations.colors.categoryTextColor !== '#FFFFFF' ||
+				 templateData.boardCustomizations.colors.tileBackground !== '#1E40AF');
 			
 			// If no visual customizations, consider it layout-only
 			return !hasDisplayImage && !hasBoardBackground && !hasCustomColors;
