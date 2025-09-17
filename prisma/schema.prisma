@@ -25,6 +25,11 @@ model User {
   subject      String?
   role         String   @default("user")
   isVerified   Boolean  @default(false)
+  
+  // Password reset fields
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -66,6 +66,8 @@ const isGameComplete = (gameData: Record<string, unknown>): boolean => {
 	return true;
 };
 
+import TemplateService from '@/lib/services/templateService';
+
 export default function Dashboard() {
 	return (
 		<Suspense fallback={<div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
@@ -667,7 +669,6 @@ function DashboardContent() {
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
-												whileHover={{ y: -5 }}
 											>
 												{/* Display Image */}
 												<div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg overflow-hidden">
@@ -759,8 +760,6 @@ function DashboardContent() {
 										{templates.map((template) => (
 											<motion.div
 												key={template.id}
-												whileHover={{ scale: 1.02 }}
-												whileTap={{ scale: 0.98 }}
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
 												transition={{ duration: 0.3 }}
@@ -964,7 +963,6 @@ function DashboardContent() {
 										{publicGames.map((game) => (
 											<motion.div
 												key={game.id}
-												whileHover={{ scale: 1.02 }}
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
 											>
 												<div className="p-4 sm:p-6">
@@ -1136,7 +1134,6 @@ function DashboardContent() {
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible hover:shadow-lg transition-shadow duration-200 relative"
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
-												whileHover={{ y: -5 }}
 											>
 												{/* Preview Image */}
 												{!isLayoutOnlyTemplate(template) && (
@@ -1333,7 +1330,6 @@ function DashboardContent() {
 												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
 												initial={{ opacity: 0, y: 20 }}
 												animate={{ opacity: 1, y: 0 }}
-												whileHover={{ y: -5 }}
 											>
 												{/* Display Image */}
 												<div className="w-full h-48 bg-gradient-to-br from-green-100 to-blue-100 rounded-t-lg overflow-hidden">
@@ -1388,13 +1384,19 @@ function DashboardContent() {
 														</Link>
 														<button
 															onClick={() => {
-																// Use saved game as template
-																const templateData = encodeURIComponent(JSON.stringify({
-																	title: `Template: ${game.title}`,
-																	type: 'JEOPARDY', // Default to jeopardy since this is the question-set creator
-																	data: game.data
-																}));
-																window.open(`/create/question-set?template=${templateData}`, '_blank');
+																// Store game as template in session storage
+																try {
+																	const templateData = {
+																		title: `Template: ${game.title}`,
+																		type: 'JEOPARDY',
+																		data: game.data
+																	};
+																	TemplateService.storeTemplate(templateData);
+																	window.open('/create/question-set?useTemplate=true', '_blank');
+																} catch (error) {
+																	console.error('Failed to store template:', error);
+																	alert('Failed to load template. Please try again.');
+																}
 															}}
 															className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200"
 															title="Use as Template"
@@ -1605,9 +1607,14 @@ function DashboardContent() {
 							</button>
 							<button
 								onClick={() => {
-									// Navigate to create page with template
-									const templateData = encodeURIComponent(JSON.stringify(templateUseModal.template));
-									window.open(`/create/question-set?template=${templateData}`, '_blank');
+									// Store template in session storage and navigate
+									try {
+										TemplateService.storeTemplate(templateUseModal.template);
+										window.open('/create/question-set?useTemplate=true', '_blank');
+									} catch (error) {
+										console.error('Failed to store template:', error);
+										alert('Failed to load template. Please try again.');
+									}
 									setTemplateUseModal({ isOpen: false, template: null });
 								}}
 								className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getApiUrl } from '@/lib/config';
 import UnsubscribeModal from '@/components/UnsubscribeModal';
+import ChangePasswordForm from '@/components/ChangePasswordForm';
 
 export default function ProfilePage() {
 	const { user, loading } = useAuthGuard();
@@ -322,6 +323,11 @@ export default function ProfilePage() {
 								</button>
 							</div>
 						)}
+					</div>
+
+					{/* Change Password Section */}
+					<div className="mt-8 pt-8 border-t">
+						<ChangePasswordForm />
 					</div>
 
 					{/* Newsletter Subscription Section */}

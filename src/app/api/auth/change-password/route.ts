@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/services/authService';
+import { passwordChangeRateLimiter } from '@/middleware/rateLimiter';
+import { ServerPasswordEncryption } from '@/lib/serverEncryption';
 
 // POST /api/auth/change-password - Change user password
 export async function POST(request: NextRequest) {
 	try {
+		// Apply stricter rate limiting for password changes
+		const rateLimitResponse = passwordChangeRateLimiter(request);
+		if (rateLimitResponse) {
+			return rateLimitResponse;
+		}
+
 		// Get token from cookie
 		const token = request.cookies.get('auth-token')?.value;
 
@@ -31,6 +39,18 @@ export async function POST(request: NextRequest) {
 
 		const body = await request.json();
 
+		// Validate request body size
+		const bodyString = JSON.stringify(body);
+		if (bodyString.length > 1024) { // 1KB limit
+			return NextResponse.json(
+				{
+					success: false,
+					error: 'Request payload too large',
+				},
+				{ status: 413 }
+			);
+		}
+
 		// Validate required fields
 		if (!body.currentPassword) {
 			return NextResponse.json(
@@ -52,10 +72,59 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Validate field types and lengths
+		if (typeof body.currentPassword !== 'string' || typeof body.newPassword !== 'string') {
+			return NextResponse.json(
+				{
+					success: false,
+					error: 'Invalid field types',
+				},
+				{ status: 400 }
+			);
+		}
+
+		if (body.currentPassword.length > 255 || body.newPassword.length > 255) {
+			return NextResponse.json(
+				{
+					success: false,
+					error: 'Password length exceeds maximum allowed',
+				},
+				{ status: 400 }
+			);
+		}
+
+		// Decrypt passwords if encrypted
+		let decryptedCurrentPassword: string;
+		let decryptedNewPassword: string;
+		
+		try {
+			decryptedCurrentPassword = ServerPasswordEncryption.safeDecryptPassword(body.currentPassword);
+			decryptedNewPassword = ServerPasswordEncryption.safeDecryptPassword(body.newPassword);
+		} catch {
+			return NextResponse.json(
+				{
+					success: false,
+					error: 'Invalid password format',
+				},
+				{ status: 400 }
+			);
+		}
+
+		// Check that new password is different from current
+		if (decryptedCurrentPassword === decryptedNewPassword) {
+			return NextResponse.json(
+				{
+					success: false,
+					error: 'New password must be different from current password',
+				},
+				{ status: 400 }
+			);
+		}
+
 		await AuthService.changePassword(
 			user.id,
-			body.currentPassword,
-			body.newPassword
+			decryptedCurrentPassword,
+			decryptedNewPassword
 		);
 
 		return NextResponse.json({

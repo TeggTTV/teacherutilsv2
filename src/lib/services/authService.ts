@@ -49,10 +49,55 @@ const SALT_ROUNDS = 12;
 
 export class AuthService {
 	/**
+	 * Validate password strength
+	 */
+	static validatePasswordStrength(password: string): { isValid: boolean; errors: string[] } {
+		const errors: string[] = [];
+		
+		if (password.length < 8) {
+			errors.push('Password must be at least 8 characters long');
+		}
+		
+		if (!/[A-Z]/.test(password)) {
+			errors.push('Password must contain at least one uppercase letter');
+		}
+		
+		if (!/[a-z]/.test(password)) {
+			errors.push('Password must contain at least one lowercase letter');
+		}
+		
+		if (!/\d/.test(password)) {
+			errors.push('Password must contain at least one number');
+		}
+		
+		if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+			errors.push('Password must contain at least one special character');
+		}
+		
+		// Check for common patterns
+		const commonPatterns = [
+			/(.)\1{2,}/, // Three or more repeating characters
+			/123456|654321|password|qwerty/i, // Common sequences
+		];
+		
+		for (const pattern of commonPatterns) {
+			if (pattern.test(password)) {
+				errors.push('Password contains common patterns that are not secure');
+				break;
+			}
+		}
+		
+		return {
+			isValid: errors.length === 0,
+			errors,
+		};
+	}
+
+	/**
 	 * Hash a password
 	 */
 	static async hashPassword(password: string): Promise<string> {
-		return bcrypt.hash(password, SALT_ROUNDS);
+		return await bcrypt.hash(password, SALT_ROUNDS);
 	}
 
 	/**
@@ -62,7 +107,7 @@ export class AuthService {
 		password: string,
 		hash: string
 	): Promise<boolean> {
-		return bcrypt.compare(password, hash);
+		return await bcrypt.compare(password, hash);
 	}
 
 	/**
@@ -113,8 +158,9 @@ export class AuthService {
 			}
 
 			// Validate password strength
-			if (data.password.length < 6) {
-				throw new Error('Password must be at least 6 characters long');
+			const passwordValidation = this.validatePasswordStrength(data.password);
+			if (!passwordValidation.isValid) {
+				throw new Error(passwordValidation.errors.join('. '));
 			}
 
 			// Hash password
@@ -258,10 +304,9 @@ export class AuthService {
 			}
 
 			// Validate new password
-			if (newPassword.length < 6) {
-				throw new Error(
-					'New password must be at least 6 characters long'
-				);
+			const passwordValidation = this.validatePasswordStrength(newPassword);
+			if (!passwordValidation.isValid) {
+				throw new Error(passwordValidation.errors.join('. '));
 			}
 
 			// Hash new password
@@ -281,25 +326,133 @@ export class AuthService {
 	}
 
 	/**
-	 * Reset password (for future implementation with email verification)
+	 * Generate a secure password reset token
 	 */
-	static async initiatePasswordReset(email: string): Promise<void> {
+	static generatePasswordResetToken(): string {
+		// Generate a random token (32 bytes = 64 hex characters)
+		const token = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+			.map(b => b.toString(16).padStart(2, '0'))
+			.join('');
+		return token;
+	}
+
+	/**
+	 * Initiate password reset - generate token and store it
+	 */
+	static async initiatePasswordReset(email: string): Promise<{ token: string; user: AuthUser }> {
 		try {
 			const user = await prisma.user.findUnique({
-				where: { email },
+				where: { email: email.toLowerCase().trim() },
 			});
 
 			if (!user) {
-				// Don't reveal if email exists for security
-				return;
+				// For security, don't reveal if email exists
+				throw new Error('If an account with that email exists, we\'ll send a password reset link.');
 			}
 
-			// TODO: Implement email sending logic
-			// For now, just log to console
-			console.log(`Password reset initiated for ${email}`);
+			// Generate reset token
+			const resetToken = this.generatePasswordResetToken();
+			const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+			// Store token in database
+			await prisma.user.update({
+				where: { id: user.id },
+				data: {
+					passwordResetToken: resetToken,
+					passwordResetExpires: resetExpires,
+				},
+			});
+
+			// Remove password from response
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { password: _, ...userWithoutPassword } = user;
+
+			return {
+				token: resetToken,
+				user: userWithoutPassword,
+			};
 		} catch (error) {
-			// Silently handle errors for security
+			console.error('Password reset initiation error:', error);
+			if (error instanceof Error) {
+				throw error;
+			}
+			throw new Error('Failed to initiate password reset');
+		}
+	}
+
+	/**
+	 * Validate password reset token
+	 */
+	static async validatePasswordResetToken(token: string): Promise<AuthUser> {
+		try {
+			const user = await prisma.user.findFirst({
+				where: {
+					passwordResetToken: token,
+					passwordResetExpires: {
+						gt: new Date(), // Token not expired
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error('Password reset token is invalid or has expired');
+			}
+
+			// Remove password from response
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { password: _, ...userWithoutPassword } = user;
+			return userWithoutPassword;
+		} catch (error) {
+			if (error instanceof Error) {
+				throw error;
+			}
+			throw new Error('Invalid password reset token');
+		}
+	}
+
+	/**
+	 * Reset password using token
+	 */
+	static async resetPassword(token: string, newPassword: string): Promise<void> {
+		try {
+			// Validate token first
+			const user = await prisma.user.findFirst({
+				where: {
+					passwordResetToken: token,
+					passwordResetExpires: {
+						gt: new Date(), // Token not expired
+					},
+				},
+			});
+
+			if (!user) {
+				throw new Error('Password reset token is invalid or has expired');
+			}
+
+			// Validate new password strength
+			const passwordValidation = this.validatePasswordStrength(newPassword);
+			if (!passwordValidation.isValid) {
+				throw new Error(passwordValidation.errors.join('. '));
+			}
+
+			// Hash new password
+			const hashedNewPassword = await this.hashPassword(newPassword);
+
+			// Update password and clear reset token
+			await prisma.user.update({
+				where: { id: user.id },
+				data: {
+					password: hashedNewPassword,
+					passwordResetToken: null,
+					passwordResetExpires: null,
+				},
+			});
+		} catch (error) {
 			console.error('Password reset error:', error);
+			if (error instanceof Error) {
+				throw error;
+			}
+			throw new Error('Failed to reset password');
 		}
 	}
 

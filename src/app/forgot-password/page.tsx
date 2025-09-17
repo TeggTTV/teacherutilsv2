@@ -23,12 +23,22 @@ export default function ForgotPasswordPage() {
 		}
 
 		try {
-			// TODO: Implement actual password reset logic
-			// For now, just show a success message
-			await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-			
-			setMessage(`If an account with ${email} exists, you will receive a password reset email shortly.`);
-			setEmail('');
+			const response = await fetch('/api/auth/forgot-password', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ email }),
+			});
+
+			const data = await response.json();
+
+			if (data.success) {
+				setMessage(data.message);
+				setEmail('');
+			} else {
+				setError(data.error || 'An error occurred. Please try again.');
+			}
 		} catch {
 			setError('An error occurred. Please try again.');
 		} finally {
@@ -134,11 +144,11 @@ export default function ForgotPasswordPage() {
 					</div>
 
 					{/* Development Notice */}
-					{process.env.NODE_ENV === 'development' && (
-						<div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-							<p className="text-xs text-yellow-800">
-								<strong>Development Mode:</strong> Password reset functionality is not yet implemented. 
-								This is a placeholder for future development.
+					{process.env.NODE_ENV === 'development' && !message && (
+						<div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+							<p className="text-xs text-blue-800">
+								<strong>Development Mode:</strong> Password reset emails will be sent using Resend API. 
+								Make sure RESEND_API_KEY is set in your environment variables.
 							</p>
 						</div>
 					)}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Modal from '@/components/Modal';
 import { useSearchParams, useRouter } from 'next/navigation';
+import TemplateService from '@/lib/services/templateService';
 import { getApiUrl } from '@/lib/config';
 import { motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
@@ -87,10 +88,16 @@ function QuestionSetContent() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const editGameId = searchParams.get('edit');
+	const useTemplate = searchParams.get('useTemplate') === 'true';
 
 	// Core game state
 	const [gameTitle, setGameTitle] = useState('');
 	const [categories, setCategories] = useState<Category[]>([]);
+	
+	// Debug log for categories state changes
+	useEffect(() => {
+		console.log('Categories state updated:', categories.length, categories);
+	}, [categories]);
 	const [customValues] = useState<number[]>([100, 200, 300, 400, 500]);
 	const [savedGameId, setSavedGameId] = useState<string | null>(editGameId);
 	const [editingQuestion, setEditingQuestion] = useState<{
@@ -203,6 +210,119 @@ function QuestionSetContent() {
 		loadGame();
 	}, [editGameId, user]);
 
+	// Load template from session storage or initialize empty categories
+	useEffect(() => {
+		console.log('Template loading effect triggered:', { useTemplate, editGameId });
+		
+		const initializeData = async () => {
+			if (useTemplate && !editGameId) {
+				console.log('Attempting to load template from session storage...');
+				
+				const templateData = TemplateService.getTemplate();
+				
+				if (templateData) {
+					console.log('Template loaded successfully:', templateData);
+					
+					// Set game title
+					if (templateData.title) {
+						console.log('Setting game title:', templateData.title);
+						setGameTitle(templateData.title);
+					}
+					
+					// Load game data
+					const gameData = templateData.data;
+					if (gameData) {
+						console.log('Processing game data:', gameData);
+						
+						// Load categories and questions
+						if (gameData.categories && Array.isArray(gameData.categories)) {
+							console.log('Processing categories:', gameData.categories.length);
+							
+							// If categories array is empty, create empty categories but still apply styling
+							if (gameData.categories.length === 0) {
+								console.log('Categories array is empty, creating default empty categories with styling applied');
+								initializeEmptyCategories();
+							} else {
+								// Process categories with content
+								const processedCategories = gameData.categories.map((category, catIndex) => {
+									console.log(`Processing category ${catIndex}:`, category.name, 'questions:', category.questions?.length);
+									
+									return {
+										id: category.id || `category-${catIndex}`,
+										name: category.name || '',
+										questions: customValues.map((value, qIndex) => {
+											const templateQuestion = category.questions?.[qIndex];
+											return {
+												id: `question-${catIndex}-${qIndex}`,
+												value: value,
+												question: templateQuestion?.question || '',
+												answer: templateQuestion?.answer || '',
+												isAnswered: false,
+												media: templateQuestion?.media as { type: 'image' | 'audio' | 'video'; url: string; alt?: string } | undefined,
+												timer: templateQuestion?.timer,
+												difficulty: templateQuestion?.difficulty as 'easy' | 'medium' | 'hard' | undefined
+											};
+										})
+									};
+								});
+								
+								console.log('Setting processed categories:', processedCategories.length);
+								setCategories(processedCategories);
+							}
+						} else {
+							console.log('No categories found in game data, creating empty categories');
+							initializeEmptyCategories();
+						}
+						
+						// Load other game settings
+						if (gameData.displayImage) {
+							setDisplayImage(gameData.displayImage);
+						}
+						
+						if (gameData.boardBackground) {
+							setBoardBackground(gameData.boardBackground);
+						}
+						
+						if (gameData.boardCustomizations) {
+							setBoardCustomizations(gameData.boardCustomizations as BoardCustomizations);
+						}
+					}
+					
+					// Clear template from session storage after loading
+					TemplateService.clearTemplate();
+					
+				} else {
+					console.log('No template found in session storage, initializing empty categories');
+					initializeEmptyCategories();
+				}
+			} else if (!editGameId) {
+				console.log('No template requested, initializing empty categories');
+				initializeEmptyCategories();
+			} else {
+				console.log('Editing existing game, skipping template logic');
+			}
+		};
+
+		const initializeEmptyCategories = () => {
+			console.log('Creating empty categories...');
+			const initialCategories: Category[] = Array.from({ length: 6 }, (_, i) => ({
+				id: `category-${i}`,
+				name: '',
+				questions: customValues.map((value, j) => ({
+					id: `question-${i}-${j}`,
+					value,
+					question: '',
+					answer: '',
+					isAnswered: false
+				}))
+			}));
+			console.log('Setting empty categories:', initialCategories.length);
+			setCategories(initialCategories);
+		};
+
+		initializeData();
+	}, [useTemplate, editGameId, customValues]);
+
 	// Load user templates
 	useEffect(() => {
 		const loadUserTemplates = async () => {
@@ -226,24 +346,6 @@ function QuestionSetContent() {
 
 		loadUserTemplates();
 	}, [user]);
-
-	// Initialize with empty categories if not editing
-	useEffect(() => {
-		if (categories.length === 0 && !editGameId) {
-			const initialCategories: Category[] = Array.from({ length: 6 }, (_, i) => ({
-				id: `category-${i}`,
-				name: '',
-				questions: customValues.map((value, j) => ({
-					id: `question-${i}-${j}`,
-					value,
-					question: '',
-					answer: '',
-					isAnswered: false
-				}))
-			}));
-			setCategories(initialCategories);
-		}
-	}, [customValues, editGameId, categories.length]);
 
 	// Remove unused functions and clean up states
 	const updateCategory = (categoryIndex: number, name: string) => {
@@ -509,9 +611,12 @@ function QuestionSetContent() {
 				previewImage = await captureBoardPreview();
 			}
 
+			// Determine what to include based on template type
+			const includeContent = templateForm.type === 'complete' || templateForm.type === 'layout';
+			
 			const templateData = {
 				gameTitle: gameTitle.trim(),
-				categories: [],
+				categories: includeContent ? categories : [],
 				customValues,
 				displayImage: displayImage || undefined,
 				boardBackground: boardBackground || undefined,
@@ -577,6 +682,40 @@ function QuestionSetContent() {
 		try {
 			const templateData = template.data;
 			
+			// Apply game title if available
+			if (template.title && template.title !== gameTitle) {
+				setGameTitle(template.title);
+			}
+			
+			// Apply categories if available (for complete/layout templates)
+			if (templateData.categories && Array.isArray(templateData.categories)) {
+				console.log('Applying template categories:', templateData.categories.length);
+				
+				if (templateData.categories.length > 0) {
+					// Process categories with content
+					const processedCategories = templateData.categories.map((category: { id?: string; name?: string; questions?: { question?: string; answer?: string; media?: unknown; timer?: number; difficulty?: string }[] }, catIndex: number) => ({
+						id: category.id || `category-${catIndex}`,
+						name: category.name || '',
+						questions: customValues.map((value, qIndex) => {
+							const templateQuestion = category.questions?.[qIndex];
+							return {
+								id: `question-${catIndex}-${qIndex}`,
+								value: value,
+								question: templateQuestion?.question || '',
+								answer: templateQuestion?.answer || '',
+								isAnswered: false,
+								media: templateQuestion?.media as { type: 'image' | 'audio' | 'video'; url: string; alt?: string } | undefined,
+								timer: templateQuestion?.timer,
+								difficulty: templateQuestion?.difficulty as 'easy' | 'medium' | 'hard' | undefined
+							};
+						})
+					}));
+					
+					setCategories(processedCategories);
+				}
+				// If categories array is empty, keep existing categories but apply styling
+			}
+			
 			// Apply display image if available
 			if (templateData.displayImage) {
 				setDisplayImage(templateData.displayImage);
@@ -589,7 +728,7 @@ function QuestionSetContent() {
 			
 			// Apply board customizations if available
 			if (templateData.boardCustomizations) {
-				setBoardCustomizations(templateData.boardCustomizations);
+				setBoardCustomizations(templateData.boardCustomizations as BoardCustomizations);
 			}
 			
 			console.log('Template applied successfully:', template.title);
@@ -699,6 +838,16 @@ function QuestionSetContent() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+			{/* Debug Panel */}
+			<div className="bg-yellow-50 border-b border-yellow-200 p-2">
+				<div className="max-w-7xl mx-auto px-4 text-sm text-yellow-800 font-mono">
+					<strong>🐛 Debug:</strong> Categories: {categories.length} | 
+					Template Mode: {useTemplate ? 'YES' : 'NO'} | 
+					Edit Mode: {editGameId ? 'YES' : 'NO'} | 
+					Session Storage: {typeof window !== 'undefined' && TemplateService.hasTemplate() ? 'YES' : 'NO'}
+				</div>
+			</div>
+			
 			{/* Header */}
 			<motion.div 
 				initial={{ opacity: 0, y: -20 }}
@@ -1590,7 +1739,7 @@ function QuestionSetContent() {
 					transition={{ duration: 0.6, delay: 0.7 }}
 					className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100"
 				>
-					<div className="grid gap-1 p-4" style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}>
+					<div className="grid gap-1 p-4" style={{ gridTemplateColumns: `repeat(${Math.max(categories.length, 1)}, 1fr)` }}>
 						{/* Category Headers */}
 						{categories.map((category, categoryIndex) => (
 							<div key={category.id} className="space-y-1">
@@ -2212,10 +2361,21 @@ function QuestionSetContent() {
 									onChange={(e) => setTemplateForm(prev => ({ ...prev, type: e.target.value as 'theme' | 'layout' | 'complete' }))}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 								>
-									<option value="theme">Theme (Colors & Styling)</option>
-									<option value="layout">Layout (Structure & Design)</option>
-									<option value="complete">Complete (Everything)</option>
+									<option value="theme">Theme (Colors & Styling Only)</option>
+									<option value="layout">Layout (Structure + Categories/Questions)</option>
+									<option value="complete">Complete (Everything + Categories/Questions)</option>
 								</select>
+								<div className="mt-2 text-xs text-gray-600">
+									{templateForm.type === 'theme' && (
+										<p>• Saves: Colors, fonts, backgrounds, styling<br/>• Does NOT save: Categories, questions, answers</p>
+									)}
+									{templateForm.type === 'layout' && (
+										<p>• Saves: All styling + categories, questions, and answers<br/>• Perfect for reusing game content</p>
+									)}
+									{templateForm.type === 'complete' && (
+										<p>• Saves: Everything including all styling, categories, questions, and answers<br/>• Complete template for full reuse</p>
+									)}
+								</div>
 							</div>
 						</div>
 

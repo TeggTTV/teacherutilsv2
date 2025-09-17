@@ -419,7 +419,19 @@ export default function PlayGamePage() {
 			<div className="bg-white shadow-sm border-b flex-shrink-0">
 				<div className="px-6 py-3">
 					<div className="flex justify-between items-center">
-						<h1 className="text-xl font-bold text-gray-900">{game.title}</h1>
+						<div className="flex items-center gap-3">
+							<Link href="/dashboard">
+								<button 
+									className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+									title="Back to Dashboard"
+								>
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+									</svg>
+								</button>
+							</Link>
+							<h1 className="text-xl font-bold text-gray-900">{game.title}</h1>
+						</div>
 						<div className="flex gap-3">
 							{teams.map((team) => (
 								<div key={team.id} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1">

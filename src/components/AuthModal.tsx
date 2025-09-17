@@ -24,6 +24,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+	const [showEmailVerification, setShowEmailVerification] = useState(false);
+	const [userEmail, setUserEmail] = useState('');
 
 	const { login, register } = useAuth();
 
@@ -76,21 +78,35 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 		try {
 			if (isLogin) {
 				await login(formData.email, formData.password);
+				onClose();
+				// Reset form
+				setFormData({
+					email: '',
+					password: '',
+					firstName: '',
+					lastName: '',
+					username: '',
+					school: '',
+					grade: '',
+					subject: '',
+				});
 			} else {
 				await register(formData);
+				// Show email verification message instead of closing immediately
+				setUserEmail(formData.email);
+				setShowEmailVerification(true);
+				// Reset form
+				setFormData({
+					email: '',
+					password: '',
+					firstName: '',
+					lastName: '',
+					username: '',
+					school: '',
+					grade: '',
+					subject: '',
+				});
 			}
-			onClose();
-			// Reset form
-			setFormData({
-				email: '',
-				password: '',
-				firstName: '',
-				lastName: '',
-				username: '',
-				school: '',
-				grade: '',
-				subject: '',
-			});
 		} catch (error) {
 			console.error(`${isLogin ? 'Login' : 'Registration'} error:`, error);
 			
@@ -119,6 +135,23 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 		});
 	};
 
+	// Reset states when modal closes or mode changes
+	const handleClose = () => {
+		setShowEmailVerification(false);
+		setUserEmail('');
+		setError('');
+		setValidationErrors({});
+		onClose();
+	};
+
+	const handleModeSwitch = (loginMode: boolean) => {
+		setIsLogin(loginMode);
+		setShowEmailVerification(false);
+		setUserEmail('');
+		setError('');
+		setValidationErrors({});
+	};
+
 	if (!isOpen) return null;
 
 	return (
@@ -131,18 +164,70 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 					className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-200 shadow-lg"
 				>
 					<div className="p-6">
-						{/* Header */}
-						<div className="flex justify-between items-center mb-6">
-							<h2 className="text-2xl font-bold text-gray-900">
-								{isLogin ? 'Sign In' : 'Create Account'}
-							</h2>
-							<button
-								onClick={onClose}
-								className="text-gray-400 hover:text-gray-600 text-2xl"
-							>
-								×
-							</button>
-						</div>
+						{showEmailVerification ? (
+							/* Email Verification Screen */
+							<div className="text-center">
+								{/* Success Icon */}
+								<div className="mx-auto flex items-center justify-center w-16 h-16 mb-6 bg-green-100 rounded-full">
+									<svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+									</svg>
+								</div>
+
+								{/* Title and Message */}
+								<h2 className="text-2xl font-bold text-gray-900 mb-4">Check Your Email</h2>
+								<p className="text-gray-600 mb-4">
+									We&apos;ve sent a verification link to:
+								</p>
+								<p className="text-blue-600 font-medium mb-6">{userEmail}</p>
+								<p className="text-gray-600 mb-8">
+									Click the link in your email to verify your account and complete your registration.
+								</p>
+
+								{/* Action Buttons */}
+								<div className="space-y-3">
+									<button
+										onClick={handleClose}
+										className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+									>
+										Got it, thanks!
+									</button>
+									<button
+										onClick={() => {
+											setShowEmailVerification(false);
+											handleModeSwitch(true);
+										}}
+										className="w-full text-gray-600 hover:text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
+									>
+										Back to Sign In
+									</button>
+								</div>
+
+								{/* Help Text */}
+								<div className="mt-8 pt-6 border-t text-sm text-gray-500">
+									<p className="mb-2">Didn&apos;t receive the email?</p>
+									<ul className="text-left space-y-1">
+										<li>• Check your spam/junk folder</li>
+										<li>• Make sure you entered the correct email address</li>
+										<li>• The email may take a few minutes to arrive</li>
+									</ul>
+								</div>
+							</div>
+						) : (
+							/* Main Auth Form */
+							<div>
+								{/* Header */}
+								<div className="flex justify-between items-center mb-6">
+									<h2 className="text-2xl font-bold text-gray-900">
+										{isLogin ? 'Sign In' : 'Create Account'}
+									</h2>
+									<button
+										onClick={handleClose}
+										className="text-gray-400 hover:text-gray-600 text-2xl"
+									>
+										×
+									</button>
+								</div>
 
 						{/* Toggle Login/Register */}
 						<div className="flex bg-gray-100 rounded-lg p-1 mb-6">
@@ -357,6 +442,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 									'Create Account'
 								)}
 							</button>
+
+							{/* Forgot Password Link - only show on login */}
+							{isLogin && (
+								<div className="mt-4 text-center">
+									<a
+										href="/forgot-password"
+										className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+										onClick={handleClose}
+									>
+										Forgot your password?
+									</a>
+								</div>
+							)}
 						</form>
 
 						{/* Footer */}
@@ -365,7 +463,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 								<>
 									Don&apos;t have an account?{' '}
 									<button
-										onClick={() => setIsLogin(false)}
+										onClick={() => handleModeSwitch(false)}
 										className="text-blue-600 hover:text-blue-700 font-medium"
 									>
 										Sign up
@@ -375,7 +473,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 								<>
 									Already have an account?{' '}
 									<button
-										onClick={() => setIsLogin(true)}
+										onClick={() => handleModeSwitch(true)}
 										className="text-blue-600 hover:text-blue-700 font-medium"
 									>
 										Sign in
@@ -383,6 +481,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 								</>
 							)}
 						</div>
+						</div>
+						)}
 					</div>
 				</motion.div>
 			</div>
