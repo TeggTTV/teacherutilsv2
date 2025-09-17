@@ -6,12 +6,15 @@ export const getBaseUrl = (): string => {
 
 	// If we have a custom URL set (for production), use it
 	if (customUrl) {
-		return customUrl.startsWith('http') ? customUrl : `https://${customUrl}`;
+		// Remove any trailing slash and ensure proper protocol
+		const cleanUrl = customUrl.replace(/\/+$/, '');
+		return cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
 	}
 
 	// If we're in production and have a Vercel URL, use it
 	if (environment === 'production' && deploymentUrl) {
-		return `https://${deploymentUrl}`;
+		const cleanDeploymentUrl = deploymentUrl.replace(/\/+$/, '');
+		return cleanDeploymentUrl.startsWith('http') ? cleanDeploymentUrl : `https://${cleanDeploymentUrl}`;
 	}
 
 	// For development, use localhost
@@ -24,7 +27,22 @@ export const getBaseUrl = (): string => {
 
 export const getApiUrl = (endpoint: string): string => {
 	const baseUrl = getBaseUrl();
-	return `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+	const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+	const fullUrl = `${baseUrl}${cleanEndpoint}`;
+	
+	// Debug logging for production issues
+	if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+		console.log('getApiUrl debug:', {
+			baseUrl,
+			endpoint,
+			cleanEndpoint,
+			fullUrl,
+			customUrl: process.env.NEXT_PUBLIC_CUSTOM_URL,
+			deploymentUrl: process.env.NEXT_PUBLIC_VERCEL_URL
+		});
+	}
+	
+	return fullUrl;
 };
 
 // Alternative approach using environment key like you mentioned

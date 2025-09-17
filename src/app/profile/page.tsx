@@ -116,7 +116,7 @@ export default function ProfilePage() {
 	if (loading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-lg">Loading...</div>
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
 			</div>
 		);
 	}
@@ -319,7 +319,14 @@ export default function ProfilePage() {
 									disabled={saving}
 									className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
 								>
-									{saving ? 'Saving...' : 'Save Changes'}
+									{saving ? (
+										<>
+											<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+											Saving...
+										</>
+									) : (
+										'Save Changes'
+									)}
 								</button>
 							</div>
 						)}

@@ -218,7 +218,14 @@ export default function ChangePasswordForm() {
 						disabled={loading}
 						className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						{loading ? 'Changing Password...' : 'Change Password'}
+						{loading ? (
+							<>
+								<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+								Changing Password...
+							</>
+						) : (
+							'Change Password'
+						)}
 					</button>
 				</div>
 			</form>

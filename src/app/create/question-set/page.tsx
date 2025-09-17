@@ -837,7 +837,7 @@ function QuestionSetContent() {
 	if (loading || loadingGame) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-lg">Loading...</div>
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
 			</div>
 		);
 	}
@@ -1500,16 +1500,8 @@ function QuestionSetContent() {
 									<h4 className="text-lg font-semibold text-gray-900 mb-4">Your Templates</h4>
 									
 									{loadingTemplates ? (
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-											{[...Array(4)].map((_, i) => (
-												<div key={i} className="p-4 border border-gray-200 rounded-lg">
-													<div className="animate-pulse space-y-3">
-														<div className="h-4 bg-gray-200 rounded w-3/4"></div>
-														<div className="h-3 bg-gray-200 rounded w-full"></div>
-														<div className="h-3 bg-gray-200 rounded w-1/2"></div>
-													</div>
-												</div>
-											))}
+										<div className="flex items-center justify-center py-8">
+											<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
 										</div>
 									) : userTemplates && userTemplates.length > 0 ? (
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2505,7 +2497,7 @@ export default function QuestionSetPage() {
 	return (
 		<Suspense fallback={
 			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-lg">Loading...</div>
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
 			</div>
 		}>
 			<QuestionSetContent />

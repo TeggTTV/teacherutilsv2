@@ -63,7 +63,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			// Encrypt password before sending
 			const encryptedPassword = PasswordEncryption.encryptPassword(password);
 			
-			const response = await fetch(getApiUrl('/api/auth/login'), {
+			const loginUrl = getApiUrl('/api/auth/login');
+			
+			// Debug logging for URL issues
+			if (process.env.NODE_ENV === 'production') {
+				console.log('Login URL:', loginUrl);
+			}
+			
+			const response = await fetch(loginUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -83,6 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			}
 		} catch (error) {
 			console.error('Login error:', error);
+			// More detailed error logging for production debugging
+			if (error instanceof TypeError && error.message === 'Failed to fetch') {
+				console.error('Fetch failed - likely URL or network issue');
+				console.error('Attempted URL:', getApiUrl('/api/auth/login'));
+			}
 			throw error;
 		} finally {
 			setLoading(false);

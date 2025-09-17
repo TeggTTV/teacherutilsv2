@@ -136,7 +136,7 @@ export default function AdvancedSearch({
 					value={searchTerm}
 					onChange={(e) => handleSearchChange(e.target.value)}
 					onKeyDown={handleSearchKeyDown}
-					className="w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+					className="w-full bg-white pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
 				/>
 				<svg
 					className="absolute left-3 top-3.5 h-5 w-5 text-gray-400"

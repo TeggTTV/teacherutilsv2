@@ -52,12 +52,8 @@ export default function TemplateDownloadButton({
 			case 'loading':
 				return (
 					<>
-						<motion.div
-							className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full"
-							animate={{ rotate: 360 }}
-							transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-						/>
-						Loading...
+						<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+						Downloading...
 					</>
 				);
 			case 'downloaded':
