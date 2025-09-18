@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
 import AuthModal from './AuthModal';
 
 export default function Navbar() {
@@ -12,6 +13,7 @@ export default function Navbar() {
 	const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const { user, logout } = useAuth();
+	const pathname = usePathname();
 
 	const toggleProfileDropdown = () => {
 		setIsProfileOpen(!isProfileOpen);
@@ -123,7 +125,7 @@ export default function Navbar() {
 								whileTap={{ scale: 0.98 }}
 							>
 								<Link
-									href="/dashboard"
+									href={pathname === '/dashboard' ? '/dashboard?tab=play' : '/dashboard'}
 									className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
 								>
 									<span>Dashboard</span>

@@ -130,7 +130,7 @@ export default function HelpPage() {
 			{/* Main Content */}
 			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 				{/* Features Overview */}
-				<div className="mb-12">
+				{/* <div className="mb-12">
 					<h3 className="text-2xl font-bold text-gray-900 mb-6">
 						Features Overview
 					</h3>
@@ -152,7 +152,7 @@ export default function HelpPage() {
 							</div>
 						))}
 					</div>
-				</div>
+				</div> */}
 
 				{/* Quick Start Guide */}
 				<div className="mb-12 bg-white rounded-lg shadow-md p-8">
@@ -264,12 +264,12 @@ export default function HelpPage() {
 						support team is here to help!
 					</p>
 					<div className="flex justify-center gap-4">
-						<a
+						{/* <a
 							href="mailto:support@compyy.com"
 							className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 						>
 							Email Support
-						</a>
+						</a> */}
 						<Link
 							href="/dashboard"
 							className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"

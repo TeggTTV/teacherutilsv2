@@ -92,13 +92,13 @@ export default function Footer() {
 									</Link>
 								</li>
 								<li>
-									<Link href="/explore" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
-										Explore
+									<Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Dashboard
 									</Link>
 								</li>
 								<li>
-									<Link href="/templates" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
-										Templates
+									<Link href="/help" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
+										Help Center
 									</Link>
 								</li>
 							</ul>
@@ -116,21 +116,6 @@ export default function Footer() {
 								<li>
 									<Link href="/help" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
 										Help Center
-									</Link>
-								</li>
-								<li>
-									<Link href="/contact" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
-										Contact Us
-									</Link>
-								</li>
-								<li>
-									<Link href="/tutorials" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
-										Tutorials
-									</Link>
-								</li>
-								<li>
-									<Link href="/community" className="text-gray-300 hover:text-white transition-colors text-sm md:text-base">
-										Community
 									</Link>
 								</li>
 							</ul>
