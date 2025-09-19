@@ -6,11 +6,11 @@ export const baseMetadata: Metadata = {
 		template: '%s | Compyy.'
 	},
 	description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-	metadataBase: new URL(process.env.SITE_URL || 'https://compyy.vercel.app'),
+		metadataBase: new URL(process.env.SITE_URL || 'https://compyy.org'),
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
-		url: process.env.SITE_URL || 'https://compyy.vercel.app',
+			url: process.env.SITE_URL || 'https://compyy.org',
 		siteName: 'Compyy.',
 		title: 'Compyy. - Interactive Educational Games Platform',
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
@@ -72,11 +72,11 @@ export const defaultSEO = {
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
-		url: process.env.SITE_URL || 'https://compyy.vercel.app',
+		url: process.env.SITE_URL || 'https://compyy.org',
 		siteName: 'Compyy.',
 		images: [
 			{
-				url: `${process.env.SITE_URL || 'https://compyy.vercel.app'}/og-image.png`,
+				url: `${process.env.SITE_URL || 'https://compyy.org'}/og-image.png`,
 				width: 1200,
 				height: 630,
 				alt: 'Compyy. - Interactive Educational Games Platform',

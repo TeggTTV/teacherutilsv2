@@ -17,20 +17,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: 'Compyy. - Interactive Educational Games Platform',
+	title: {
+		default: 'Compyy. - Interactive Educational Games Platform',
+		template: '%s | Compyy.'
+	},
 	description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-	metadataBase: new URL(process.env.SITE_URL || 'https://compyy.vercel.app'),
-	manifest: '/manifest.json',
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
-		url: process.env.SITE_URL || 'https://compyy.vercel.app',
+		url: process.env.SITE_URL || 'https://compyy.org',
 		siteName: 'Compyy.',
 		title: 'Compyy. - Interactive Educational Games Platform',
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: [
 			{
-				url: '/Compyy%20Logo%20w%20Text.png',
+				url: '/og-image.png',
 				width: 1200,
 				height: 630,
 				alt: 'Compyy. - Interactive Educational Games Platform',
@@ -41,34 +42,10 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Compyy. - Interactive Educational Games Platform',
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-		images: ['/Compyy%20Logo%20w%20Text.png'],
+		images: ['/og-image.png'],
 	},
-	// viewport and themeColor are provided via <head> meta tags in the layout
 	icons: {
-		icon: [
-			{ url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
-			{ url: '/Compyy%20Logo%20Icon.png', sizes: '192x192', type: 'image/png' },
-			{ url: '/Compyy%20Logo%20Icon.png', sizes: '512x512', type: 'image/png' },
-		],
-		apple: [
-			{ url: '/Compyy%20Logo%20Icon.png', sizes: '180x180', type: 'image/png' },
-		],
-	},
-	keywords: ['education', 'games', 'jeopardy', 'quiz', 'teaching', 'learning', 'interactive', 'classroom'],
-	authors: [{ name: 'Compyy. Team' }],
-	creator: 'Compyy.',
-	publisher: 'Compyy.',
-	formatDetection: {
-		email: false,
-		address: false,
-		telephone: false,
-	},
-	applicationName: 'Compyy.',
-	appleWebApp: {
-		capable: true,
-		statusBarStyle: 'default',
-		title: 'Compyy.',
-		startupImage: '/Compyy%20Logo%20Icon.png',
+		icon: '/favicon.ico',
 	},
 };
 

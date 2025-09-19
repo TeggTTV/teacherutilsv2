@@ -21,7 +21,7 @@ export default function Icon() {
         }}
       >
         <img
-          src={`${process.env.SITE_URL || 'https://compyy.vercel.app'}/Compyy%20Logo%20Icon%20Transparent.png`}
+          src={`${process.env.SITE_URL || 'https://compyy.org'}/Compyy%20Logo%20Icon%20Transparent.png`}
           alt="Compyy"
           width={28}
           height={28}

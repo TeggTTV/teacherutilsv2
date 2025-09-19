@@ -128,6 +128,7 @@ const isLayoutOnlyTemplate = (template: Template) => {
 };
 
 // Small reusable card component to allow hooks (dropdown state) inside a proper component
+
 function TemplateCard({
 	template,
 	isTemplateDownloaded,
@@ -137,6 +138,7 @@ function TemplateCard({
 	handleDeleteTemplate,
 	handleUseTemplate,
 	showDownload = true,
+	currentUserId,
 }: {
 	template: Template;
 	isTemplateDownloaded: (id: string) => boolean;
@@ -146,6 +148,7 @@ function TemplateCard({
 	handleDeleteTemplate: (id: string) => void;
 	handleUseTemplate: (t: Template) => void;
 	showDownload?: boolean;
+	currentUserId?: string | null;
 }) {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -217,36 +220,38 @@ function TemplateCard({
 									'0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 							}}
 						>
-							<motion.button
-								whileHover={{
-									backgroundColor: 'rgba(59, 130, 246, 0.05)',
-								}}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									handleMenuAction(() =>
-										handleShareTemplate(template.id)
-									);
-								}}
-								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
-							>
-								<svg
-									className="w-4 h-4"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
+							{template.author && template.author.id === currentUserId && (
+								<motion.button
+									whileHover={{
+										backgroundColor: 'rgba(59, 130, 246, 0.05)',
+									}}
+									onClick={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										handleMenuAction(() =>
+											handleShareTemplate(template.id)
+										);
+									}}
+									className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
 								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-									/>
-								</svg>
-								<span className="font-medium">
-									Manage Sharing
-								</span>
-							</motion.button>
+									<svg
+										className="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+										/>
+									</svg>
+									<span className="font-medium">
+										Manage Sharing
+									</span>
+								</motion.button>
+							)}
 
 							<motion.button
 								whileHover={{
@@ -1841,6 +1846,7 @@ function DashboardContent() {
 													handleUseTemplate={
 														handleUseTemplate
 													}
+													currentUserId={user?.id}
 												/>
 											)
 										)}
@@ -2276,6 +2282,7 @@ function DashboardContent() {
 												handleUseTemplate={
 													handleUseTemplate
 												}
+												currentUserId={user?.id}
 											/>
 										))}
 									</div>

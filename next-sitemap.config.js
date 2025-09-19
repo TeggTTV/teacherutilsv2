@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-	siteUrl: process.env.SITE_URL || 'https://compyy.vercel.app',
+	siteUrl: process.env.SITE_URL || 'https://compyy.org',
 	generateRobotsTxt: true,
 	robotsTxtOptions: {
 		policies: [

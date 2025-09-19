@@ -20,15 +20,15 @@ export default function AppleIcon() {
           borderRadius: '20px',
         }}
       >
-        <img
-          src={`${process.env.SITE_URL || 'https://compyy.vercel.app'}/Compyy%20Logo%20Icon%20Transparent.png`}
-          alt="Compyy"
-          width={140}
-          height={140}
-          style={{
-            objectFit: 'contain',
-          }}
-        />
+           <img
+             src={`${process.env.SITE_URL || 'https://compyy.org'}/Compyy%20Logo%20Icon%20Transparent.png`}
+             alt="Compyy"
+             width={140}
+             height={140}
+             style={{
+               objectFit: 'contain',
+             }}
+           />
       </div>
     ),
     {
