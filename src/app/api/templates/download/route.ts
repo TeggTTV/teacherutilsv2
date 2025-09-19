@@ -86,3 +86,68 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const userId = await verifyAuth(request);
+
+        if (!userId) {
+            return NextResponse.json(
+                { error: 'Authentication required' },
+                { status: 401 }
+            );
+        }
+
+        const body = await request.json();
+        const { templateId } = body;
+
+        if (!templateId) {
+            return NextResponse.json(
+                { error: 'Template ID is required' },
+                { status: 400 }
+            );
+        }
+
+        // Ensure a download record exists
+        const existingDownload = await prisma.templateDownload.findUnique({
+            where: {
+                templateId_userId: {
+                    templateId,
+                    userId
+                }
+            }
+        });
+
+        if (!existingDownload) {
+            return NextResponse.json(
+                { error: 'Download record not found' },
+                { status: 404 }
+            );
+        }
+
+        // Delete download record and decrement download count
+        await Promise.all([
+            prisma.templateDownload.delete({
+                where: {
+                    templateId_userId: {
+                        templateId,
+                        userId
+                    }
+                }
+            }),
+            prisma.template.update({
+                where: { id: templateId },
+                data: { downloads: { decrement: 1 } }
+            })
+        ]);
+
+        return NextResponse.json({ message: 'Download removed' }, { status: 200 });
+
+    } catch (error) {
+        console.error('Error removing download:', error);
+        return NextResponse.json(
+            { error: 'Failed to remove download' },
+            { status: 500 }
+        );
+    }
+}

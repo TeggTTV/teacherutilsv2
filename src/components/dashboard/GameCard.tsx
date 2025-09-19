@@ -204,7 +204,7 @@ export default function GameCard({ game, onEdit, onShare, onInfo, onPlay, onDele
 			</div>
 
 			{/* Game Image */}
-			<div className="h-40 bg-gradient-to-br from-blue-500 to-purple-600 relative overflow-hidden">
+			<div className="h-40 bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden">
 				{/* Public status indicator */}
 				{game.isPublic && (
 					<div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 shadow-lg">

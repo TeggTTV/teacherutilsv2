@@ -43,11 +43,7 @@ export const metadata: Metadata = {
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: ['/Compyy%20Logo%20w%20Text.png'],
 	},
-	viewport: {
-		width: 'device-width',
-		initialScale: 1,
-	},
-	themeColor: '#3B82F6',
+	// viewport and themeColor are provided via <head> meta tags in the layout
 	icons: {
 		icon: [
 			{ url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
@@ -88,6 +84,10 @@ export default function RootLayout({
 				<link rel="icon" href="/Compyy%20Logo%20Icon.png" sizes="192x192" type="image/png" />
 				<link rel="apple-touch-icon" href="/Compyy%20Logo%20Icon.png" />
 				<link rel="manifest" href="/manifest.json" />
+				{/* Theme color meta tags for light and dark modes */}
+				<meta name="theme-color" content="#3B82F6" media="(prefers-color-scheme: light)" />
+				<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="application-name" content="Compyy." />

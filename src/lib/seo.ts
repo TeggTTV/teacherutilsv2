@@ -29,11 +29,8 @@ export const baseMetadata: Metadata = {
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: ['/og-image.png'],
 	},
-	viewport: {
-		width: 'device-width',
-		initialScale: 1,
-	},
-	themeColor: '#3B82F6',
+	// viewport handled in layout head
+	// themeColor handled in layout <head> to avoid Next.js unsupported-metadata warnings
 	icons: {
 		icon: '/favicon.ico',
 	},
@@ -95,10 +92,6 @@ export const defaultSEO = {
 		{
 			name: 'viewport',
 			content: 'width=device-width, initial-scale=1',
-		},
-		{
-			name: 'theme-color',
-			content: '#3B82F6',
 		},
 	],
 	additionalLinkTags: [

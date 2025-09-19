@@ -2,7 +2,7 @@
 
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import ShareModal from '@/components/ShareModal';
@@ -21,7 +21,6 @@ import {
 	SavedGame,
 	SidebarItem,
 	PublicGame,
-	MarketFilters,
 } from '@/components/dashboard/types';
 
 // Template types
@@ -83,6 +82,521 @@ const isGameComplete = (gameData: Record<string, unknown>): boolean => {
 };
 
 import TemplateService from '@/lib/services/templateService';
+import Image from 'next/image';
+
+// Utility: check if a template is layout-only (no visual customizations)
+const isLayoutOnlyTemplate = (template: Template) => {
+	// Check if template has tags indicating layout type
+	if (
+		template.tags &&
+		(template.tags.includes('layout-only') ||
+			template.tags.includes('template-type-layout'))
+	) {
+		return true;
+	}
+
+	// Check template data for visual customizations
+	if (template.data) {
+		const templateData = template.data as {
+			displayImage?: string;
+			boardBackground?: string;
+			boardCustomizations?: {
+				colors: {
+					categoryBackground: string;
+					categoryTextColor: string;
+					tileBackground: string;
+				};
+			};
+		};
+
+		const hasDisplayImage = templateData.displayImage;
+		const hasBoardBackground = templateData.boardBackground;
+		const hasCustomColors =
+			templateData.boardCustomizations &&
+			(templateData.boardCustomizations.colors.categoryBackground !==
+				'#3B82F6' ||
+				templateData.boardCustomizations.colors.categoryTextColor !==
+					'#FFFFFF' ||
+				templateData.boardCustomizations.colors.tileBackground !==
+					'#1E40AF');
+
+		// If no visual customizations, consider it layout-only
+		return !hasDisplayImage && !hasBoardBackground && !hasCustomColors;
+	}
+
+	return false;
+};
+
+// Small reusable card component to allow hooks (dropdown state) inside a proper component
+function TemplateCard({
+	template,
+	isTemplateDownloaded,
+	downloadTemplate,
+	downloadingTemplateId,
+	handleShareTemplate,
+	handleDeleteTemplate,
+	handleUseTemplate,
+	showDownload = true,
+}: {
+	template: Template;
+	isTemplateDownloaded: (id: string) => boolean;
+	downloadTemplate: (id: string) => void;
+	downloadingTemplateId: string | null;
+	handleShareTemplate: (id: string) => void;
+	handleDeleteTemplate: (id: string) => void;
+	handleUseTemplate: (t: Template) => void;
+	showDownload?: boolean;
+}) {
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
+				setIsDropdownOpen(false);
+			}
+		};
+
+		if (isDropdownOpen) {
+			document.addEventListener('mousedown', handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [isDropdownOpen]);
+
+	const handleDropdownToggle = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDropdownOpen(!isDropdownOpen);
+	};
+
+	const handleMenuAction = (action: () => void) => {
+		action();
+		setIsDropdownOpen(false);
+	};
+
+	return (
+		<motion.div
+			className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 relative"
+			initial={{ opacity: 0, y: 20 }}
+			animate={{ opacity: 1, y: 0 }}
+		>
+			<div className="absolute top-3 right-3 z-10" ref={dropdownRef}>
+				<motion.button
+					onClick={handleDropdownToggle}
+					whileHover={{ scale: 1.1 }}
+					whileTap={{ scale: 0.9 }}
+					className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
+				>
+					<motion.svg
+						className="w-4 h-4 text-gray-600"
+						fill="currentColor"
+						viewBox="0 0 24 24"
+						animate={{ rotate: isDropdownOpen ? 90 : 0 }}
+						transition={{ duration: 0.2 }}
+					>
+						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+					</motion.svg>
+				</motion.button>
+
+				<AnimatePresence>
+					{isDropdownOpen && (
+						<motion.div
+							initial={{ opacity: 0, scale: 0.95, y: -10 }}
+							animate={{ opacity: 1, scale: 1, y: 0 }}
+							exit={{ opacity: 0, scale: 0.95, y: -10 }}
+							transition={{ duration: 0.15, ease: 'easeOut' }}
+							className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden"
+							style={{
+								boxShadow:
+									'0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+							}}
+						>
+							<motion.button
+								whileHover={{
+									backgroundColor: 'rgba(59, 130, 246, 0.05)',
+								}}
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleMenuAction(() =>
+										handleShareTemplate(template.id)
+									);
+								}}
+								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
+							>
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+									/>
+								</svg>
+								<span className="font-medium">
+									Manage Sharing
+								</span>
+							</motion.button>
+
+							<motion.button
+								whileHover={{
+									backgroundColor: 'rgba(239, 68, 68, 0.05)',
+								}}
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleMenuAction(() =>
+										handleDeleteTemplate(template.id)
+									);
+								}}
+								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
+							>
+								<svg
+									className="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+									/>
+								</svg>
+								<span className="font-medium">Delete</span>
+							</motion.button>
+						</motion.div>
+					)}
+				</AnimatePresence>
+			</div>
+
+			{!isLayoutOnlyTemplate(template) && (
+				<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+					{template.previewImage ? (
+						<Image
+							width={400}
+							height={200}
+							src={template.previewImage}
+							alt={template.title}
+							className="w-full h-full object-cover"
+						/>
+					) : (
+						<div className="w-full h-full flex items-center justify-center">
+							<div className="text-2xl sm:text-4xl opacity-50">
+								📄
+							</div>
+						</div>
+					)}
+				</div>
+			)}
+
+			<div className="p-6">
+				<h3 className="font-bold text-lg text-gray-900 line-clamp-1">
+					{template.title}
+				</h3>
+
+				<p className="text-gray-600 text-sm mb-4 line-clamp-2">
+					{template.description || '(Description not provided)'}
+				</p>
+
+				<div className="flex flex-col space-y-3">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-4">
+							<span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+								{template.type}
+							</span>
+							{template.isPublic ? (
+								<span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+									Public
+								</span>
+							) : (
+								<span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+									Private
+								</span>
+							)}
+						</div>
+						<div className="flex items-center text-gray-500 text-xs">
+							{template.downloads} downloads
+						</div>
+					</div>
+
+					<div className="flex flex-col space-y-2">
+						{showDownload ? (
+							// Marketplace single-button: Download -> Use
+							isTemplateDownloaded(template.id) ? (
+								<motion.button
+									whileHover={{ scale: 1.02 }}
+									whileTap={{ scale: 0.98 }}
+									onClick={(e) => {
+										e.stopPropagation();
+										handleUseTemplate(template);
+									}}
+									className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+								>
+									Use Template
+								</motion.button>
+							) : (
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										downloadTemplate(template.id);
+									}}
+									disabled={downloadingTemplateId === template.id}
+									className="w-full px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+								>
+									{downloadingTemplateId === template.id
+										? 'Downloading...'
+										: 'Download'}
+								</button>
+							)
+						) : (
+							// For my-templates (showDownload=false) keep Use Template button
+							<motion.button
+								whileHover={{ scale: 1.02 }}
+								whileTap={{ scale: 0.98 }}
+								onClick={(e) => {
+									e.stopPropagation();
+									handleUseTemplate(template);
+								}}
+								className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+							>
+								Use Template
+							</motion.button>
+						)}
+					</div>
+				</div>
+			</div>
+		</motion.div>
+	);
+}
+
+// Small card component for saved games to host dropdown and 'Use Template' action
+function SavedGameCard({
+	game,
+	handleUseTemplate,
+	handleRemoveGame,
+}: {
+	game: PublicGame;
+	handleUseTemplate: (t: Template) => void;
+	handleRemoveGame: (game: PublicGame) => void;
+}) {
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
+				setIsDropdownOpen(false);
+			}
+		};
+		if (isDropdownOpen)
+			document.addEventListener('mousedown', handleClickOutside);
+		return () =>
+			document.removeEventListener('mousedown', handleClickOutside);
+	}, [isDropdownOpen]);
+
+	const toggle = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDropdownOpen(!isDropdownOpen);
+	};
+
+	const onUseTemplate = () => {
+		// Build a minimal Template from the saved game and open the template use modal
+		const template: Template = {
+			id: game.id,
+			title: `Template: ${game.title}`,
+			description: game.description || '',
+			type: 'JEOPARDY',
+			data: game.data as unknown as Record<string, unknown>,
+			previewImage: undefined,
+			tags: [],
+			downloads: 0,
+			rating: 0,
+			ratingCount: 0,
+			isFeatured: false,
+			isPublic: false,
+			createdAt: new Date().toISOString(),
+			author: {
+				id: game.author?.id || '',
+				name: game.author?.name || 'Unknown',
+			},
+		};
+
+		handleUseTemplate(template);
+		setIsDropdownOpen(false);
+	};
+
+	return (
+		<motion.div
+			key={game.id}
+			className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+			initial={{ opacity: 0, y: 20 }}
+			animate={{ opacity: 1, y: 0 }}
+		>
+			<div className="w-full p-4 sm:p-6 h-full flex flex-col justify-between relative">
+				<div className="absolute top-3 right-3" ref={dropdownRef}>
+					<motion.button
+						onClick={toggle}
+						whileHover={{ scale: 1.1 }}
+						whileTap={{ scale: 0.95 }}
+						className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
+					>
+						<svg
+							className="w-4 h-4 text-gray-600"
+							fill="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+						</svg>
+					</motion.button>
+					<AnimatePresence>
+						{isDropdownOpen && (
+							<motion.div
+								initial={{ opacity: 0, scale: 0.95, y: -10 }}
+								animate={{ opacity: 1, scale: 1, y: 0 }}
+								exit={{ opacity: 0, scale: 0.95, y: -10 }}
+								transition={{ duration: 0.15, ease: 'easeOut' }}
+								className="absolute right-0 top-full mt-2 w-44 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden z-50"
+								style={{
+									boxShadow:
+										'0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+								}}
+							>
+								<motion.button
+									whileHover={{
+										backgroundColor:
+											'rgba(59, 130, 246, 0.05)',
+									}}
+									onClick={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										onUseTemplate();
+									}}
+									className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
+								>
+									<svg
+										className="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M12 4v16m8-8H4"
+										/>
+									</svg>
+									<span className="font-medium">
+										Use Template
+									</span>
+								</motion.button>
+
+								<motion.button
+									whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
+									onClick={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										handleRemoveGame(game);
+									}}
+									className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
+								>
+									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+									<span className="font-medium">Remove</span>
+								</motion.button>
+							</motion.div>
+						)}
+					</AnimatePresence>
+				</div>
+
+				{/* ...existing saved game content ... */}
+				<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg overflow-hidden">
+					{game.data?.displayImage ? (
+						<Image
+							src={game.data.displayImage as string}
+							alt={game.title}
+							className="w-full h-full object-cover"
+							width={400}
+							height={200}
+						/>
+					) : (
+						<div className="w-full h-full flex items-center justify-center">
+							<div className="text-6xl opacity-50">⭐</div>
+						</div>
+					)}
+				</div>
+				<div className="p-4">
+					<div className="flex items-start justify-between mb-3">
+						<div className="flex-1">
+							<h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
+								{game.title}
+							</h3>
+							<p className="text-sm text-gray-600 mb-2">
+								by {game.author?.name}
+							</p>
+						</div>
+					</div>
+
+					<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+						<div className="flex items-center space-x-4">
+							<span className="flex items-center">
+								<svg
+									className="w-4 h-4 mr-1"
+									fill="currentColor"
+									viewBox="0 0 20 20"
+								>
+									<path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+								</svg>
+								{game.plays || 0}
+							</span>
+							<span className="flex items-center">
+								<svg
+									className="w-4 h-4 mr-1"
+									fill="currentColor"
+									viewBox="0 0 20 20"
+								>
+									<path
+										fillRule="evenodd"
+										d="M. . ."
+										clipRule="evenodd"
+									/>
+								</svg>
+								{game.saves || 0}
+							</span>
+						</div>
+					</div>
+
+					<div className="flex space-x-2">
+						<Link
+							href={`/play/${game.id}/setup`}
+							className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center"
+						>
+							Play Game
+						</Link>
+						{/* Removed inline Remove button; use the 3-dot menu Remove action instead */}
+					</div>
+				</div>
+			</div>
+		</motion.div>
+	);
+}
 
 export default function Dashboard() {
 	return (
@@ -124,12 +638,6 @@ function DashboardContent() {
 	const [publicGames, setPublicGames] = useState<PublicGame[]>([]);
 	const [loadingGames, setLoadingGames] = useState(true);
 	const [loadingPublicGames, setLoadingPublicGames] = useState(false);
-	const [marketFilters, setMarketFilters] = useState<MarketFilters>({
-		subject: '',
-		gradeLevel: '',
-		difficulty: '',
-		sortBy: 'newest',
-	});
 
 	// Advanced search states
 	const [discoverSelectedTags, setDiscoverSelectedTags] = useState<string[]>(
@@ -168,9 +676,7 @@ function DashboardContent() {
 	const [myTemplates, setMyTemplates] = useState<Template[]>([]);
 	const [loadingMyTemplates, setLoadingMyTemplates] = useState(false);
 	const [showIncompleteGames, setShowIncompleteGames] = useState(false);
-	const [openTemplateDropdown, setOpenTemplateDropdown] = useState<
-		string | null
-	>(null);
+	const [, setOpenTemplateDropdown] = useState<string | null>(null);
 	const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
 		isOpen: boolean;
 		templateId: string;
@@ -521,15 +1027,25 @@ function DashboardContent() {
 
 		try {
 			const savedGame = savedGames?.find((g) => g.id === gameId);
+
 			if (savedGame) {
 				// Unsave game
 				const response = await fetch(`/api/games/saved/${gameId}`, {
 					method: 'DELETE',
 				});
 				if (response.ok) {
-					setSavedGames(
-						(prev) => prev?.filter((g) => g.id !== gameId) || []
+					// Remove from savedGames
+					setSavedGames((prev) => prev?.filter((g) => g.id !== gameId) || []);
+					// Decrement favoritesCount for the public game
+					setPublicGames((prev) =>
+						prev.map((g) =>
+							g.id === gameId
+								? { ...g, favoritesCount: Math.max(0, (g.favoritesCount || 0) - 1) }
+								: g
+						)
 					);
+				} else {
+					console.error('Failed to unsave game', response.statusText);
 				}
 			} else {
 				// Save game
@@ -538,12 +1054,20 @@ function DashboardContent() {
 				});
 				if (response.ok) {
 					// Add to saved games
-					const gameToSave = publicGames?.find(
-						(g) => g.id === gameId
-					);
+					const gameToSave = publicGames?.find((g) => g.id === gameId);
 					if (gameToSave) {
 						setSavedGames((prev) => [...(prev || []), gameToSave]);
 					}
+					// Increment favoritesCount for the public game
+					setPublicGames((prev) =>
+						prev.map((g) =>
+							g.id === gameId
+								? { ...g, favoritesCount: (g.favoritesCount || 0) + 1 }
+								: g
+						)
+					);
+				} else {
+					console.error('Failed to save game', response.statusText);
 				}
 			}
 		} catch (error) {
@@ -679,28 +1203,9 @@ function DashboardContent() {
 	// 	}));
 	// };
 
-	// Template dropdown management
-	const toggleTemplateDropdown = (templateId: string) => {
-		setOpenTemplateDropdown(
-			openTemplateDropdown === templateId ? null : templateId
-		);
-	};
+	// Template dropdown management - removed global state, now handled locally in template cards
 
-	// Close dropdown when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				openTemplateDropdown &&
-				!(event.target as Element)?.closest('.template-dropdown')
-			) {
-				setOpenTemplateDropdown(null);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
-	}, [openTemplateDropdown]);
+	// Close dropdown when clicking outside - removed global handler, now handled locally
 
 	// Template actions
 	const handleShareTemplate = (templateId: string) => {
@@ -736,66 +1241,49 @@ function DashboardContent() {
 		setOpenTemplateDropdown(null);
 	};
 
-	// Check if template is layout-only (no visual customizations)
-	const isLayoutOnlyTemplate = (template: Template) => {
-		// Check if template has tags indicating layout type
-		if (
-			template.tags &&
-			(template.tags.includes('layout-only') ||
-				template.tags.includes('template-type-layout'))
-		) {
-			return true;
-		}
-
-		// Check template data for visual customizations
-		if (template.data) {
-			const templateData = template.data as {
-				displayImage?: string;
-				boardBackground?: string;
-				boardCustomizations?: {
-					colors: {
-						categoryBackground: string;
-						categoryTextColor: string;
-						tileBackground: string;
-					};
-				};
-			};
-
-			const hasDisplayImage = templateData.displayImage;
-			const hasBoardBackground = templateData.boardBackground;
-			const hasCustomColors =
-				templateData.boardCustomizations &&
-				(templateData.boardCustomizations.colors.categoryBackground !==
-					'#3B82F6' ||
-					templateData.boardCustomizations.colors
-						.categoryTextColor !== '#FFFFFF' ||
-					templateData.boardCustomizations.colors.tileBackground !==
-						'#1E40AF');
-
-			// If no visual customizations, consider it layout-only
-			return !hasDisplayImage && !hasBoardBackground && !hasCustomColors;
-		}
-
-		return false;
-	};
+	// NOTE: isLayoutOnlyTemplate is defined at module scope; use that implementation instead.
 
 	const confirmDeleteTemplate = async () => {
 		// Set loading state
 		setDeleteLoading(true);
 
 		try {
-			const response = await fetch(
-				`/api/templates/${deleteConfirmModal.templateId}`,
-				{
-					method: 'DELETE',
-				}
-			);
+			// Determine whether the template is owned by the user
+			const template = myTemplates.find(t => t.id === deleteConfirmModal.templateId);
+			if (!template) {
+				throw new Error('Template not found in local state');
+			}
 
-			if (response.ok) {
-				// Remove from local state
-				setMyTemplates((prev) =>
-					prev.filter((t) => t.id !== deleteConfirmModal.templateId)
+			if (template.author && template.author.id === user?.id) {
+				// User owns the template: delete it from server
+				const response = await fetch(
+					`/api/templates/${deleteConfirmModal.templateId}`,
+					{
+						method: 'DELETE',
+					}
 				);
+
+				if (response.ok) {
+					// Remove from local state
+					setMyTemplates((prev) =>
+						prev.filter((t) => t.id !== deleteConfirmModal.templateId)
+					);
+				}
+			} else {
+				// Template is owned by someone else, but user may have downloaded it.
+				// Call DELETE on /api/templates/download with templateId in body to remove from user's library
+				const response = await fetch(`/api/templates/download`, {
+					method: 'DELETE',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ templateId: deleteConfirmModal.templateId })
+				});
+
+				if (response.ok) {
+					// Remove from local state (myTemplates list contains downloads for this user)
+					setMyTemplates((prev) =>
+						prev.filter((t) => t.id !== deleteConfirmModal.templateId)
+					);
+				}
 			}
 		} catch (error) {
 			console.error('Error deleting template:', error);
@@ -1180,7 +1668,9 @@ function DashboardContent() {
 													<div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg overflow-hidden">
 														{game.data
 															.displayImage ? (
-															<img
+															<Image
+																width={400}
+																height={200}
 																src={
 																	game.data
 																		.displayImage
@@ -1330,210 +1820,28 @@ function DashboardContent() {
 									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
 										{filteredMarketTemplates.map(
 											(template) => (
-												<motion.div
+												<TemplateCard
 													key={template.id}
-													className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200"
-												>
-													<div className="p-4 sm:p-6 h-full flex flex-col justify-between relative">
-														{/* Preview Image */}
-														<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-															{template.previewImage ? (
-																<img
-																	src={
-																		template.previewImage
-																	}
-																	alt={
-																		template.title
-																	}
-																	className="w-full h-full object-cover"
-																/>
-															) : (
-																<div className="w-full h-full flex items-center justify-center">
-																	<div className="text-2xl sm:text-4xl opacity-50">
-																		📄
-																	</div>
-																</div>
-															)}
-														</div>
-
-														<div className="flex items-start justify-between mb-2">
-															<h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-sm sm:text-base flex-1">
-																{template.title}
-															</h3>
-															{template.isFeatured && (
-																<div className="ml-2 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0">
-																	⭐ Featured
-																</div>
-															)}
-														</div>
-
-														{template.description ? (
-															<p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">
-																{
-																	template.description
-																}
-															</p>
-														) : (
-															<p className="text-xs sm:text-sm text-gray-500 mb-3 line-clamp-2 italic">
-																(Description not
-																provided)
-															</p>
-														)}
-
-														{/* <span>⭐ {template.rating.toFixed(1)} ({template.ratingCount})</span> */}
-														<div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-															<span className="truncate">
-																By{' '}
-																{
-																	template
-																		.author
-																		.name
-																}
-															</span>
-															<div className="flex items-center space-x-2">
-																<span className="text-green-600 font-medium">
-																	Free
-																</span>
-															</div>
-														</div>
-
-														<div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-2">
-															<div className="relative flex-1">
-																<motion.button
-																	whileHover={{
-																		scale: 1.05,
-																	}}
-																	whileTap={{
-																		scale: 0.95,
-																	}}
-																	onClick={() => {
-																		if (
-																			isTemplateDownloaded(
-																				template.id
-																			)
-																		) {
-																			handleUseTemplate(
-																				template
-																			);
-																		} else {
-																			downloadTemplate(
-																				template.id
-																			);
-																		}
-																	}}
-																	disabled={
-																		downloadingTemplateId ===
-																		template.id
-																	}
-																	className={`w-full py-3 sm:py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1 min-h-[44px] sm:min-h-[40px] ${
-																		downloadingTemplateId ===
-																		template.id
-																			? 'bg-blue-500 text-white opacity-50 cursor-not-allowed'
-																			: isTemplateDownloaded(
-																					template.id
-																			  )
-																			? 'bg-green-500 hover:bg-green-600 text-white'
-																			: 'bg-blue-500 hover:bg-blue-600 text-white'
-																	}`}
-																>
-																	{downloadingTemplateId ===
-																	template.id ? (
-																		<>
-																			<motion.div
-																				animate={{
-																					rotate: 360,
-																				}}
-																				transition={{
-																					duration: 1,
-																					repeat: Infinity,
-																					ease: 'linear',
-																				}}
-																				className="w-4 h-4"
-																			>
-																				<svg
-																					className="w-4 h-4"
-																					fill="currentColor"
-																					viewBox="0 0 24 24"
-																				>
-																					<path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
-																				</svg>
-																			</motion.div>
-																			<span>
-																				Downloading...
-																			</span>
-																		</>
-																	) : isTemplateDownloaded(
-																			template.id
-																	  ) ? (
-																		<>
-																			<svg
-																				className="w-4 h-4"
-																				fill="none"
-																				stroke="currentColor"
-																				viewBox="0 0 24 24"
-																				strokeWidth={
-																					2
-																				}
-																			>
-																				<path
-																					strokeLinecap="round"
-																					strokeLinejoin="round"
-																					d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-																				/>
-																			</svg>
-																			<span>
-																				Use
-																				Template
-																			</span>
-																		</>
-																	) : (
-																		<>
-																			<svg
-																				className="w-4 h-4"
-																				fill="none"
-																				stroke="currentColor"
-																				viewBox="0 0 24 24"
-																				strokeWidth={
-																					2
-																				}
-																			>
-																				<path
-																					strokeLinecap="round"
-																					strokeLinejoin="round"
-																					d="M12 3v13m0 0l-4-4m4 4l4-4M5 21h14"
-																				/>
-																			</svg>
-																			<span>
-																				Download
-																			</span>
-																		</>
-																	)}
-																</motion.button>
-
-																{/* Downloads Badge - Positioned on top right of button */}
-																<div className="absolute -top-3 -right-2 z-10">
-																	<motion.div
-																		className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center shadow-lg transform rotate-[15deg]"
-																		whileHover={{
-																			scale: 1.1,
-																			rotate: 30,
-																		}}
-																		transition={{
-																			duration: 0.2,
-																		}}
-																	>
-																		{/* <span className="mr-1">📥</span> */}
-																		<span className="font-semibold">
-																			{
-																				template.downloads
-																			}
-																		</span>
-																	</motion.div>
-																</div>
-															</div>
-														</div>
-													</div>
-												</motion.div>
+													template={template}
+													isTemplateDownloaded={
+														isTemplateDownloaded
+													}
+													downloadTemplate={
+														downloadTemplate
+													}
+													downloadingTemplateId={
+														downloadingTemplateId
+													}
+													handleShareTemplate={
+														handleShareTemplate
+													}
+													handleDeleteTemplate={
+														handleDeleteTemplate
+													}
+													handleUseTemplate={
+														handleUseTemplate
+													}
+												/>
 											)
 										)}
 									</div>
@@ -1607,10 +1915,12 @@ function DashboardContent() {
 											>
 												<div className="p-4 sm:p-6 h-full flex flex-col justify-between relative">
 													{/* Display Image */}
-													<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+													<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
 														{game.data
 															?.displayImage ? (
-															<img
+															<Image
+																width={400}
+																height={200}
 																src={
 																	game.data
 																		.displayImage
@@ -1816,47 +2126,54 @@ function DashboardContent() {
 															</motion.button>
 
 															{/* Stats Badges - Positioned on top right of save button */}
-															<div className="absolute -top-3 -right-2 flex flex-col space-y-1 z-10">
-																<motion.div
-																	className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs flex items-center shadow-lg transform rotate-[15deg]"
-																	whileHover={{
-																		scale: 1.1,
-																		rotate: 30,
-																	}}
-																	transition={{
-																		duration: 0.2,
-																	}}
-																>
-																	{/* <span className="mr-1">❤️</span> */}
-																	<span className="font-semibold">
-																		{
-																			game.favoritesCount
-																		}
-																	</span>
-																</motion.div>
-																{game.avgRating >
-																	0 && (
+															{game.favoritesCount >
+																0 && (
+																<div className="absolute -top-3 -right-2 flex flex-col space-y-1 z-10">
 																	<motion.div
-																		className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs flex items-center shadow-lg transform rotate-[15deg] mt-1"
+																		className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs flex items-center shadow-lg transform rotate-[15deg]"
 																		whileHover={{
-																			scale: 1.1,
-																			rotate: 30,
+																			scale: 1.06,
+																			rotate: 22,
 																		}}
 																		transition={{
-																			duration: 0.2,
+																			duration: 0.18,
 																		}}
 																	>
-																		<span className="mr-1">
-																			⭐
-																		</span>
-																		<span className="font-semibold">
-																			{game.avgRating.toFixed(
-																				1
-																			)}
-																		</span>
+																		{/* Animated number */}
+																		<motion.span
+																			key={game.favoritesCount}
+																			initial={{ scale: 0.6, opacity: 0 }}
+																			animate={{ scale: 1, opacity: 1 }}
+																			transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+																			className="font-semibold"
+																		>
+																			{game.favoritesCount}
+																		</motion.span>
 																	</motion.div>
-																)}
-															</div>
+																	{game.avgRating >
+																		0 && (
+																		<motion.div
+																			className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs flex items-center shadow-lg transform rotate-[15deg] mt-1"
+																			whileHover={{
+																				scale: 1.1,
+																				rotate: 30,
+																			}}
+																			transition={{
+																				duration: 0.2,
+																			}}
+																		>
+																			<span className="mr-1">
+																				⭐
+																			</span>
+																			<span className="font-semibold">
+																				{game.avgRating.toFixed(
+																					1
+																				)}
+																			</span>
+																		</motion.div>
+																	)}
+																</div>
+															)}
 														</div>
 														<Link
 															href={`/play/${game.id}/setup`}
@@ -1937,245 +2254,29 @@ function DashboardContent() {
 								  filteredTemplates.length > 0 ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-visible">
 										{filteredTemplates.map((template) => (
-											<motion.div
+											<TemplateCard
 												key={template.id}
-												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible hover:shadow-lg transition-shadow duration-200 relative"
-												initial={{ opacity: 0, y: 20 }}
-												animate={{ opacity: 1, y: 0 }}
-											>
-												{/* Preview Image */}
-												{!isLayoutOnlyTemplate(
-													template
-												) && (
-													<div className="w-full h-48 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-t-lg overflow-hidden">
-														{template.previewImage ? (
-															<img
-																src={
-																	template.previewImage
-																}
-																alt={
-																	template.title
-																}
-																className="w-full h-full object-cover"
-															/>
-														) : (
-															<div className="w-full h-full flex items-center justify-center">
-																<div className="text-6xl opacity-50">
-																	📄
-																</div>
-															</div>
-														)}
-													</div>
-												)}
-
-												<div className="p-6">
-													<div className="flex justify-between items-start mb-3 relative overflow-visible">
-														<h3 className="font-bold text-lg text-gray-900 line-clamp-1">
-															{template.title}
-														</h3>
-														<div className="relative template-dropdown overflow-visible">
-															<motion.button
-																className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
-																whileHover={{
-																	scale: 1.1,
-																}}
-																whileTap={{
-																	scale: 0.9,
-																}}
-																onClick={(
-																	e
-																) => {
-																	e.stopPropagation();
-																	toggleTemplateDropdown(
-																		template.id
-																	);
-																}}
-															>
-																<motion.svg
-																	className="w-4 h-4 text-gray-600"
-																	fill="currentColor"
-																	viewBox="0 0 24 24"
-																	animate={{
-																		rotate:
-																			openTemplateDropdown ===
-																			template.id
-																				? 90
-																				: 0,
-																	}}
-																	transition={{
-																		duration: 0.2,
-																	}}
-																>
-																	<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-																</motion.svg>
-															</motion.button>
-
-															{/* Animated Dropdown Menu */}
-															<AnimatePresence>
-																{openTemplateDropdown ===
-																	template.id && (
-																	<motion.div
-																		initial={{
-																			opacity: 0,
-																			scale: 0.95,
-																			y: -10,
-																		}}
-																		animate={{
-																			opacity: 1,
-																			scale: 1,
-																			y: 0,
-																		}}
-																		exit={{
-																			opacity: 0,
-																			scale: 0.95,
-																			y: -10,
-																		}}
-																		transition={{
-																			duration: 0.15,
-																			ease: 'easeOut',
-																		}}
-																		className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden z-[60]"
-																		style={{
-																			boxShadow:
-																				'0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-																		}}
-																	>
-																		<motion.button
-																			whileHover={{
-																				backgroundColor:
-																					'rgba(59, 130, 246, 0.05)',
-																			}}
-																			onClick={(
-																				e
-																			) => {
-																				e.preventDefault();
-																				e.stopPropagation();
-																				handleShareTemplate(
-																					template.id
-																				);
-																			}}
-																			className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
-																		>
-																			<svg
-																				className="w-4 h-4"
-																				fill="none"
-																				stroke="currentColor"
-																				viewBox="0 0 24 24"
-																			>
-																				<path
-																					strokeLinecap="round"
-																					strokeLinejoin="round"
-																					strokeWidth={
-																						2
-																					}
-																					d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-																				/>
-																			</svg>
-																			<span className="font-medium">
-																				Manage
-																				Sharing
-																			</span>
-																		</motion.button>
-
-																		<motion.button
-																			whileHover={{
-																				backgroundColor:
-																					'rgba(239, 68, 68, 0.05)',
-																			}}
-																			onClick={(
-																				e
-																			) => {
-																				e.preventDefault();
-																				e.stopPropagation();
-																				handleDeleteTemplate(
-																					template.id
-																				);
-																			}}
-																			className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
-																		>
-																			<svg
-																				className="w-4 h-4"
-																				fill="none"
-																				stroke="currentColor"
-																				viewBox="0 0 24 24"
-																			>
-																				<path
-																					strokeLinecap="round"
-																					strokeLinejoin="round"
-																					strokeWidth={
-																						2
-																					}
-																					d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																				/>
-																			</svg>
-																			<span className="font-medium">
-																				Delete
-																			</span>
-																		</motion.button>
-																	</motion.div>
-																)}
-															</AnimatePresence>
-														</div>
-													</div>
-
-													<p className="text-gray-600 text-sm mb-4 line-clamp-2">
-														{template.description ||
-															'(Description not provided)'}
-													</p>
-
-													<div className="flex flex-col space-y-3">
-														<div className="flex items-center justify-between">
-															<div className="flex items-center space-x-4">
-																<span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-																	{
-																		template.type
-																	}
-																</span>
-																{template.isPublic && (
-																	<span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-																		Public
-																	</span>
-																)}
-																{!template.isPublic && (
-																	<span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-																		Private
-																	</span>
-																)}
-															</div>
-															<div className="flex items-center text-gray-500 text-xs">
-																<svg
-																	className="w-4 h-4 mr-1"
-																	fill="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-																</svg>
-																{
-																	template.downloads
-																}{' '}
-																downloads
-															</div>
-														</div>
-														<motion.button
-															whileHover={{
-																scale: 1.02,
-															}}
-															whileTap={{
-																scale: 0.98,
-															}}
-															onClick={(e) => {
-																e.stopPropagation();
-																handleUseTemplate(
-																	template
-																);
-															}}
-															className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
-														>
-															Use Template
-														</motion.button>
-													</div>
-												</div>
-											</motion.div>
+												template={template}
+												isTemplateDownloaded={
+													isTemplateDownloaded
+												}
+												downloadTemplate={
+													downloadTemplate
+												}
+												downloadingTemplateId={
+													downloadingTemplateId
+												}
+												handleShareTemplate={
+													handleShareTemplate
+												}
+												handleDeleteTemplate={
+													handleDeleteTemplate
+												}
+												showDownload={false}
+												handleUseTemplate={
+													handleUseTemplate
+												}
+											/>
 										))}
 									</div>
 								) : (
@@ -2240,135 +2341,12 @@ function DashboardContent() {
 								{savedGames && savedGames.length > 0 ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 										{savedGames.map((game) => (
-											<motion.div
-												key={game.id}
-												className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
-												initial={{ opacity: 0, y: 20 }}
-												animate={{ opacity: 1, y: 0 }}
-											>
-												{/* Display Image */}
-												<div className="w-full h-48 bg-gradient-to-br from-green-100 to-blue-100 rounded-t-lg overflow-hidden">
-													{game.data?.displayImage ? (
-														<img
-															src={
-																game.data
-																	.displayImage
-															}
-															alt={game.title}
-															className="w-full h-full object-cover"
-														/>
-													) : (
-														<div className="w-full h-full flex items-center justify-center">
-															<div className="text-6xl opacity-50">
-																⭐
-															</div>
-														</div>
-													)}
-												</div>
-												<div className="p-4">
-													<div className="flex items-start justify-between mb-3">
-														<div className="flex-1">
-															<h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
-																{game.title}
-															</h3>
-															<p className="text-sm text-gray-600 mb-2">
-																by{' '}
-																{
-																	game.author
-																		.name
-																}
-															</p>
-														</div>
-													</div>
-
-													<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-														<div className="flex items-center space-x-4">
-															<span className="flex items-center">
-																<svg
-																	className="w-4 h-4 mr-1"
-																	fill="currentColor"
-																	viewBox="0 0 20 20"
-																>
-																	<path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-																	<path
-																		fillRule="evenodd"
-																		d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
-																{game.plays ||
-																	0}
-															</span>
-															<span className="flex items-center">
-																<svg
-																	className="w-4 h-4 mr-1"
-																	fill="currentColor"
-																	viewBox="0 0 20 20"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
-																{game.saves ||
-																	0}
-															</span>
-														</div>
-													</div>
-
-													<div className="flex space-x-2">
-														<Link
-															href={`/play/${game.id}/setup`}
-															className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 text-center"
-														>
-															Play Game
-														</Link>
-														<button
-															onClick={() => {
-																// Store game as template in session storage
-																try {
-																	const templateData =
-																		{
-																			title: `Template: ${game.title}`,
-																			type: 'JEOPARDY',
-																			data: game.data,
-																		};
-																	TemplateService.storeTemplate(
-																		templateData
-																	);
-																	window.open(
-																		'/create/question-set?useTemplate=true',
-																		'_blank'
-																	);
-																} catch (error) {
-																	console.error(
-																		'Failed to store template:',
-																		error
-																	);
-																	alert(
-																		'Failed to load template. Please try again.'
-																	);
-																}
-															}}
-															className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200"
-															title="Use as Template"
-														>
-															Template
-														</button>
-														<button
-															onClick={() =>
-																handleFavoriteGame(
-																	game.id
-																)
-															}
-															className="px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors duration-200"
-														>
-															Remove
-														</button>
-													</div>
-												</div>
-											</motion.div>
+												<SavedGameCard
+													key={game.id}
+													game={game}
+													handleUseTemplate={handleUseTemplate}
+													handleRemoveGame={handleDeleteGame}
+												/>
 										))}
 									</div>
 								) : (
@@ -2622,7 +2600,7 @@ function DashboardContent() {
 						isOpen: false,
 						gameId: '',
 						gameTitle: '',
-					})
+					}) 
 				}
 				maxWidth="sm"
 			>
