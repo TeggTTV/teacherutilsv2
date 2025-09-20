@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailContent() {
 	const [status, setStatus] = useState<'success' | 'error' | 'already-verified'>('error');
 	const [message, setMessage] = useState('Processing your email confirmation...');
 	const searchParams = useSearchParams();
@@ -162,5 +162,29 @@ export default function ConfirmEmailPage() {
 				)}
 			</motion.div>
 		</div>
+	);
+}
+
+function LoadingFallback() {
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+			<div className="max-w-md w-full space-y-8">
+				<div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+					<div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-6">
+						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+					</div>
+					<h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+					<p className="text-gray-600">Processing your email confirmation...</p>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default function ConfirmEmailPage() {
+	return (
+		<Suspense fallback={<LoadingFallback />}>
+			<ConfirmEmailContent />
+		</Suspense>
 	);
 }

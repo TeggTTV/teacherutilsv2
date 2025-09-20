@@ -20,6 +20,7 @@ export default function Icon() {
           borderRadius: '6px',
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`${process.env.SITE_URL || 'https://compyy.org'}/Compyy%20Logo%20Icon%20Transparent.png`}
           alt="Compyy"

@@ -38,7 +38,7 @@ export class ServerPasswordEncryption {
 						const decrypted = this.xorDecrypt(encryptedPart, this.ENCRYPTION_KEY);
 						return decrypted;
 					}
-				} catch (e) {
+				} catch {
 					// Not a valid Base64 or encrypted format
 				}
 				
