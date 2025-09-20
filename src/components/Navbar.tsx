@@ -125,7 +125,11 @@ export default function Navbar() {
 								whileTap={{ scale: 0.98 }}
 							>
 								<Link
-									href={pathname === '/dashboard' ? '/dashboard?tab=play' : '/dashboard'}
+									href={
+										pathname === '/dashboard'
+											? '/dashboard?tab=play'
+											: '/dashboard'
+									}
 									className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
 								>
 									<span>Dashboard</span>
@@ -255,7 +259,11 @@ export default function Navbar() {
 															transition={{
 																duration: 0.2,
 															}}
-															onClick={() => setIsProfileOpen(false)}
+															onClick={() =>
+																setIsProfileOpen(
+																	false
+																)
+															}
 															className="w-full text-left px-4 py-3 text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
 														>
 															<svg
@@ -279,8 +287,6 @@ export default function Navbar() {
 														</motion.div>
 													</Link>
 
-													<div className="border-t border-gray-100 my-2"></div>
-													
 													<Link href="/help">
 														<motion.div
 															whileHover={{
@@ -308,13 +314,10 @@ export default function Navbar() {
 																/>
 															</svg>
 															<span className="truncate">
-																Help &
-																Support
+																Help & Support
 															</span>
 														</motion.div>
 													</Link>
-
-													<div className="border-t border-gray-100 my-2"></div>
 
 													<motion.button
 														whileHover={{
@@ -325,9 +328,7 @@ export default function Navbar() {
 														transition={{
 															duration: 0.2,
 														}}
-														onClick={
-															handleLogout
-														}
+														onClick={handleLogout}
 														className="w-full text-left px-4 py-3 text-sm text-red-600 flex items-center space-x-3"
 													>
 														<svg
@@ -339,9 +340,7 @@ export default function Navbar() {
 															<path
 																strokeLinecap="round"
 																strokeLinejoin="round"
-																strokeWidth={
-																	2
-																}
+																strokeWidth={2}
 																d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 															/>
 														</svg>
