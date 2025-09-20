@@ -279,105 +279,21 @@ export default function Navbar() {
 														</motion.div>
 													</Link>
 
-													<motion.button
-														whileHover={{
-															backgroundColor:
-																'#f0f9ff',
-														}}
-														transition={{
-															duration: 0.2,
-														}}
-														onClick={() => {
-															// Refresh games from database
-															if (
-																typeof window !==
-																'undefined'
-															) {
-																// Trigger refresh event that the question-set page can listen to
-																window.dispatchEvent(
-																	new CustomEvent(
-																		'refreshGames'
-																	)
-																);
-																// Clear localStorage cache
-																localStorage.removeItem(
-																	'savedGames'
-																);
-															}
-															setIsProfileOpen(
-																false
-															);
-														}}
-														className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-blue-600 flex items-center space-x-3"
-													>
-														<svg
-															className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																strokeWidth={2}
-																d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-															/>
-														</svg>
-														<span className="truncate">
-															Refresh Games
-														</span>
-													</motion.button>
-
-													<div className="border-t border-gray-100 mt-1 pt-1">
-														<Link href="/help">
-															<motion.div
-																whileHover={{
-																	backgroundColor:
-																		'#f3f4f6',
-																}}
-																transition={{
-																	duration: 0.2,
-																}}
-																className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
-															>
-																<svg
-																	className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"
-																	fill="none"
-																	stroke="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																		strokeWidth={
-																			2
-																		}
-																		d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-																	/>
-																</svg>
-																<span className="truncate">
-																	Help &
-																	Support
-																</span>
-															</motion.div>
-														</Link>
-
-														<motion.button
+													<div className="border-t border-gray-100 my-2"></div>
+													
+													<Link href="/help">
+														<motion.div
 															whileHover={{
 																backgroundColor:
-																	'#fef2f2',
-																color: '#dc2626',
+																	'#f3f4f6',
 															}}
 															transition={{
 																duration: 0.2,
 															}}
-															onClick={
-																handleLogout
-															}
-															className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-red-600 flex items-center space-x-3"
+															className="w-full text-left px-4 py-3 text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
 														>
 															<svg
-																className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"
+																className="w-4 h-4 flex-shrink-0"
 																fill="none"
 																stroke="currentColor"
 																viewBox="0 0 24 24"
@@ -388,14 +304,51 @@ export default function Navbar() {
 																	strokeWidth={
 																		2
 																	}
-																	d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+																	d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 																/>
 															</svg>
 															<span className="truncate">
-																Sign out
+																Help &
+																Support
 															</span>
-														</motion.button>
-													</div>
+														</motion.div>
+													</Link>
+
+													<div className="border-t border-gray-100 my-2"></div>
+
+													<motion.button
+														whileHover={{
+															backgroundColor:
+																'#fef2f2',
+															color: '#dc2626',
+														}}
+														transition={{
+															duration: 0.2,
+														}}
+														onClick={
+															handleLogout
+														}
+														className="w-full text-left px-4 py-3 text-sm text-red-600 flex items-center space-x-3"
+													>
+														<svg
+															className="w-4 h-4 flex-shrink-0"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<path
+																strokeLinecap="round"
+																strokeLinejoin="round"
+																strokeWidth={
+																	2
+																}
+																d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+															/>
+														</svg>
+														<span className="truncate">
+															Sign out
+														</span>
+													</motion.button>
 												</div>
 											</>
 										) : (
