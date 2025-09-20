@@ -35,13 +35,13 @@ export default function GameHeader({
   return (
     <>
       {/* Debug Panel */}
-      <div className="bg-yellow-50 border-b border-yellow-200 p-2">
+      {/* <div className="bg-yellow-50 border-b border-yellow-200 p-2">
         <div className="max-w-7xl mx-auto px-4 text-sm text-yellow-800 font-mono">
           <strong>🐛 Debug:</strong> Categories: {completionStats.categories} |
           Questions: {completionStats.questions} |
           Total Possible: {completionStats.totalPossible}
         </div>
-      </div>
+      </div> */}
 
       {/* Header */}
       <motion.div

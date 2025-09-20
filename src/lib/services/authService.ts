@@ -12,6 +12,7 @@ export interface RegisterData {
 	school?: string;
 	grade?: string;
 	subject?: string;
+	subscribeToNewsletter?: boolean;
 }
 
 export interface LoginData {
@@ -179,6 +180,21 @@ export class AuthService {
 					subject: data.subject,
 				},
 			});
+
+			// Handle newsletter subscription
+			if (data.subscribeToNewsletter) {
+				try {
+					await prisma.newsletterSubscriber.create({
+						data: {
+							email: data.email,
+							status: 'pending', // Set to pending until email is verified
+						},
+					});
+				} catch (error) {
+					// If newsletter subscription fails, log it but don't fail registration
+					console.error('Newsletter subscription error:', error);
+				}
+			}
 
 			// Generate token
 			const token = this.generateToken({

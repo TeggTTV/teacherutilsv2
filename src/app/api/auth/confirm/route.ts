@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 		const token = searchParams.get('token');
 
 		if (!token) {
-			return NextResponse.redirect(new URL('/dashboard?error=missing-token', request.url));
+			return NextResponse.redirect(new URL('/auth/confirm?error=missing-token', request.url));
 		}
 
 		// Find user by ID (token is the user ID)
@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
 		});
 
 		if (!user) {
-			return NextResponse.redirect(new URL('/dashboard?error=invalid-token', request.url));
+			return NextResponse.redirect(new URL('/auth/confirm?error=invalid-token', request.url));
 		}
 
 		if (user.isVerified) {
-			return NextResponse.redirect(new URL('/dashboard?message=already-verified', request.url));
+			return NextResponse.redirect(new URL('/auth/confirm?message=already-verified', request.url));
 		}
 
 		// Update user verification status
@@ -32,11 +32,11 @@ export async function GET(request: NextRequest) {
 			}
 		});
 
-		// Redirect to dashboard with success message
-		return NextResponse.redirect(new URL('/dashboard?message=email-verified', request.url));
+		// Redirect to confirmation page with success message
+		return NextResponse.redirect(new URL('/auth/confirm?message=email-verified', request.url));
 
 	} catch (error) {
 		console.error('Email confirmation error:', error);
-		return NextResponse.redirect(new URL('/dashboard?error=verification-failed', request.url));
+		return NextResponse.redirect(new URL('/auth/confirm?error=verification-failed', request.url));
 	}
 }

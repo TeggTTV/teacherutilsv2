@@ -1,11 +1,68 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Faq from '@/components/Faq';
 import NewsletterForm from '@/components/NewsletterForm';
+import { useCountAnimation } from '@/hooks/useCountAnimation';
+
+interface Stats {
+	activeTeachers: string;
+	gamesCreated: string;
+	studentsEngaged: string;
+}
+
+// Helper component for animated stats
+function AnimatedStat({ value, label, color }: { value: string; label: string; color: string }) {
+	// Extract numeric value from string (e.g., "1000+" -> 1000)
+	const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+	const suffix = value.replace(/[0-9]/g, '');
+	
+	const { count, elementRef } = useCountAnimation({
+		end: numericValue,
+		duration: 2500,
+		startOnInView: true
+	});
+
+	return (
+		<div className="text-center">
+			<div 
+				ref={elementRef}
+				className={`text-xl sm:text-2xl md:text-3xl font-bold ${color} mb-1 sm:mb-2`}
+			>
+				{count.toLocaleString()}{suffix}
+			</div>
+			<div className="text-xs sm:text-sm md:text-base text-gray-600">
+				{label}
+			</div>
+		</div>
+	);
+}
 
 export default function Home() {
+	const [stats, setStats] = useState<Stats>({
+		activeTeachers: '0',
+		gamesCreated: '0', 
+		studentsEngaged: '0'
+	});
+
+	useEffect(() => {
+		const fetchStats = async () => {
+			try {
+				const response = await fetch('/api/stats');
+				if (response.ok) {
+					const data = await response.json();
+					setStats(data);
+				}
+			} catch (error) {
+				console.error('Failed to fetch statistics:', error);
+				// Keep default stats if fetch fails
+			}
+		};
+
+		fetchStats();
+	}, []);
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
 			{/* Hero Section */}
@@ -28,9 +85,7 @@ export default function Home() {
 							transition={{ duration: 0.6, delay: 0.1 }}
 							className="text-lg sm:text-xl md:text-2xl text-gray-700 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-2"
 						>
-							Create engaging educational games in minutes. No
-							technical skills required. Join thousands of
-							teachers making learning fun and interactive.
+							Create engaging educational games in minutes. Join teachers around the world, making learning fun and interactive.
 						</motion.p>
 
 						<motion.div
@@ -48,13 +103,13 @@ export default function Home() {
 									Start Creating
 								</motion.button>
 							</Link>
-							<motion.button
+							{/* <motion.button
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
 								className="w-full sm:w-auto border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-all duration-200 min-w-[200px]"
 							>
 								Explore Games
-							</motion.button>
+							</motion.button> */}
 						</motion.div>
 
 						{/* Stats Section */}
@@ -64,30 +119,21 @@ export default function Home() {
 							transition={{ duration: 0.6, delay: 0.3 }}
 							className="grid grid-cols-3 sm:grid-cols-3 gap-4 sm:gap-8 max-w-md sm:max-w-2xl mx-auto px-4"
 						>
-							<div className="text-center">
-								<div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 mb-1 sm:mb-2">
-									10K+
-								</div>
-								<div className="text-xs sm:text-sm md:text-base text-gray-600">
-									Active Teachers
-								</div>
-							</div>
-							<div className="text-center">
-								<div className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 mb-1 sm:mb-2">
-									50K+
-								</div>
-								<div className="text-xs sm:text-sm md:text-base text-gray-600">
-									Games Created
-								</div>
-							</div>
-							<div className="text-center">
-								<div className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600 mb-1 sm:mb-2">
-									1M+
-								</div>
-								<div className="text-xs sm:text-sm md:text-base text-gray-600">
-									Students Engaged
-								</div>
-							</div>
+							<AnimatedStat 
+								value={stats.activeTeachers} 
+								label="Active Teachers" 
+								color="text-blue-600" 
+							/>
+							<AnimatedStat 
+								value={stats.gamesCreated} 
+								label="Games Created" 
+								color="text-green-600" 
+							/>
+							<AnimatedStat 
+								value={stats.studentsEngaged} 
+								label="Students Engaged" 
+								color="text-purple-600" 
+							/>
 						</motion.div>
 					</div>
 				</div>
@@ -368,7 +414,7 @@ export default function Home() {
 								</ul>
 								<NewsletterForm />
 								<p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">
-									Join 10,000+ teachers who already trust Compyy. Unsubscribe anytime.
+									Join a growing community of teachers who already trust Compyy. Unsubscribe anytime.
 								</p>
 							</div>
 						</motion.div>

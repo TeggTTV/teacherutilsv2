@@ -245,7 +245,7 @@ export default function Navbar() {
 												</div>
 
 												{/* Profile Menu Items - Authenticated */}
-												<div className="py-2">
+												<div className="py-1">
 													<Link href="/profile">
 														<motion.div
 															whileHover={{
@@ -255,8 +255,7 @@ export default function Navbar() {
 															transition={{
 																duration: 0.2,
 															}}
-															onClick={() => setIsProfileOpen(false)}
-															className="w-full text-left px-4 py-3 text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
+															className="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
 														>
 															<svg
 																className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"

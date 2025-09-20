@@ -1,6 +1,12 @@
-'use client';
-
+"use client";
+import { Metadata } from 'next';
 import Link from 'next/link';
+
+// export const metadata: Metadata = {
+// 	title: 'Terms of Service | Compyy.',
+// 	description:
+// 		'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+// };
 
 export default function TermsPage() {
 	return (
@@ -262,23 +268,6 @@ export default function TermsPage() {
 						<p className="text-gray-700 leading-relaxed">
 							We may update these terms from time to time. We will notify users of material changes by email or through our platform. Your continued use of our service after such changes constitutes acceptance of the updated terms.
 						</p>
-					</section>
-
-					{/* Contact Information */}
-					<section>
-						<h3 className="text-2xl font-bold text-gray-900 mb-4">
-							Contact Information
-						</h3>
-						<p className="text-gray-700 leading-relaxed mb-4">
-							If you have any questions about these Terms of Service, please contact us:
-						</p>
-						<div className="bg-gray-50 p-4 rounded-lg">
-							<p className="text-gray-700">
-								<strong>Email:</strong> legal@compyy.com<br />
-								<strong>Support:</strong> support@compyy.com<br />
-								<strong>Address:</strong> [Your Company Address]
-							</p>
-						</div>
 					</section>
 				</div>
 

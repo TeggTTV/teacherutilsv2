@@ -10,6 +10,7 @@ import TemplateShareModal from '@/components/TemplateShareModal';
 import DashboardSearch, { SearchFilters } from '@/components/DashboardSearch';
 import AdvancedSearch from '@/components/AdvancedSearch';
 import Modal from '@/components/Modal';
+import DropdownMenu, { DropdownMenuItem } from '@/components/DropdownMenu';
 import { getApiUrl } from '@/lib/config';
 import { trackGamePlay, trackSearch } from '@/lib/analytics';
 
@@ -150,38 +151,29 @@ function TemplateCard({
 	showDownload?: boolean;
 	currentUserId?: string | null;
 }) {
-	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const dropdownRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
-				setIsDropdownOpen(false);
-			}
-		};
-
-		if (isDropdownOpen) {
-			document.addEventListener('mousedown', handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, [isDropdownOpen]);
-
-	const handleDropdownToggle = (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDropdownOpen(!isDropdownOpen);
-	};
-
-	const handleMenuAction = (action: () => void) => {
-		action();
-		setIsDropdownOpen(false);
-	};
+	const menuItems: DropdownMenuItem[] = [
+		{
+			id: 'share',
+			label: 'Manage Sharing',
+			icon: (
+				<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+				</svg>
+			),
+			action: () => handleShareTemplate(template.id),
+		},
+		{
+			id: 'delete',
+			label: 'Delete',
+			icon: (
+				<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+				</svg>
+			),
+			action: () => handleDeleteTemplate(template.id),
+			variant: 'danger' as const,
+		},
+	];
 
 	return (
 		<motion.div
@@ -189,104 +181,21 @@ function TemplateCard({
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 		>
-			<div className="absolute top-3 right-3 z-10" ref={dropdownRef}>
-				<motion.button
-					onClick={handleDropdownToggle}
-					whileHover={{ scale: 1.1 }}
-					whileTap={{ scale: 0.9 }}
-					className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
-				>
-					<motion.svg
-						className="w-4 h-4 text-gray-600"
-						fill="currentColor"
-						viewBox="0 0 24 24"
-						animate={{ rotate: isDropdownOpen ? 90 : 0 }}
-						transition={{ duration: 0.2 }}
-					>
-						<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-					</motion.svg>
-				</motion.button>
-
-				<AnimatePresence>
-					{isDropdownOpen && (
-						<motion.div
-							initial={{ opacity: 0, scale: 0.95, y: -10 }}
-							animate={{ opacity: 1, scale: 1, y: 0 }}
-							exit={{ opacity: 0, scale: 0.95, y: -10 }}
-							transition={{ duration: 0.15, ease: 'easeOut' }}
-							className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl overflow-hidden"
-							style={{
-								boxShadow:
-									'0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-							}}
-						>
-							{template.author && template.author.id === currentUserId && (
-								<motion.button
-									whileHover={{
-										backgroundColor: 'rgba(59, 130, 246, 0.05)',
-									}}
-									onClick={(e) => {
-										e.preventDefault();
-										e.stopPropagation();
-										handleMenuAction(() =>
-											handleShareTemplate(template.id)
-										);
-									}}
-									className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-gray-700 hover:text-blue-600"
-								>
-									<svg
-										className="w-4 h-4"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-										/>
-									</svg>
-									<span className="font-medium">
-										Manage Sharing
-									</span>
-								</motion.button>
-							)}
-
-							<motion.button
-								whileHover={{
-									backgroundColor: 'rgba(239, 68, 68, 0.05)',
-								}}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									handleMenuAction(() =>
-										handleDeleteTemplate(template.id)
-									);
-								}}
-								className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
-							>
-								<svg
-									className="w-4 h-4"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-									/>
-								</svg>
-								<span className="font-medium">Delete</span>
-							</motion.button>
-						</motion.div>
-					)}
-				</AnimatePresence>
-			</div>
-
-			{!isLayoutOnlyTemplate(template) && (
+			{/* Only show dropdown menu for templates owned by the current user */}
+			{template.author && template.author.id === currentUserId && (
+				<div className="absolute top-3 right-3 z-10">
+					<DropdownMenu
+						items={menuItems}
+						position="right"
+						trigger={
+							<svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+								<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+							</svg>
+						}
+						triggerClassName="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
+					/>
+				</div>
+			)}			{!isLayoutOnlyTemplate(template) && (
 				<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
 					{template.previewImage ? (
 						<Image
@@ -559,7 +468,7 @@ function SavedGameCard({
 						</div>
 					</div>
 
-					<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+					{/* <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
 						<div className="flex items-center space-x-4">
 							<span className="flex items-center">
 								<svg
@@ -579,14 +488,14 @@ function SavedGameCard({
 								>
 									<path
 										fillRule="evenodd"
-										d="M. . ."
+										d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"
 										clipRule="evenodd"
 									/>
 								</svg>
-								{game.saves || 0}
+								{game.favoritesCount || 0}
 							</span>
 						</div>
-					</div>
+					</div> */}
 
 					<div className="flex space-x-2">
 						<Link
@@ -987,27 +896,42 @@ function DashboardContent() {
 		loadTemplates();
 	}, [activeTab, user]);
 
-	// Load user's templates for my-templates tab
+	// Load user's templates (needed for tracking downloaded state across all tabs)
 	useEffect(() => {
 		const loadMyTemplates = async () => {
-			if (activeTab === 'my-templates') {
-				setLoadingMyTemplates(true);
-				try {
-					const response = await fetch('/api/templates/my');
-					if (response.ok) {
-						const data = await response.json();
-						setMyTemplates(data.templates || []);
-					}
-				} catch (error) {
-					console.error('Error loading my templates:', error);
-				} finally {
-					setLoadingMyTemplates(false);
+			if (!user) return;
+			
+			try {
+				const response = await fetch('/api/templates/my');
+				if (response.ok) {
+					const data = await response.json();
+					setMyTemplates(data.templates || []);
 				}
+			} catch (error) {
+				console.error('Error loading my templates:', error);
 			}
 		};
 
 		loadMyTemplates();
-	}, [activeTab, user]);
+	}, [user]);
+
+	// Handle loading state for my-templates tab
+	useEffect(() => {
+		if (activeTab === 'my-templates' && user) {
+			setLoadingMyTemplates(true);
+			// If templates are already loaded, stop loading immediately
+			if (myTemplates.length > 0) {
+				setLoadingMyTemplates(false);
+			}
+		}
+	}, [activeTab, user, myTemplates.length]);
+
+	// Stop loading when templates finish loading
+	useEffect(() => {
+		if (activeTab === 'my-templates' && myTemplates.length > 0) {
+			setLoadingMyTemplates(false);
+		}
+	}, [activeTab, myTemplates.length]);
 
 	// Handle game actions
 	const handleEditGame = (game: SavedGame) => {
@@ -1396,14 +1320,18 @@ function DashboardContent() {
 		setTemplateUseModal({ isOpen: true, template });
 	};
 
-	// Load downloaded templates on mount
+	// Populate downloadedTemplateIds from myTemplates data when it loads
 	useEffect(() => {
-		if (!user) return;
+		if (!myTemplates) return;
 
-		// We'll get downloaded templates from the my-templates endpoint now
-		// So we can remove this separate call and rely on myTemplates data
-		// The isTemplateDownloaded function will check myTemplates instead
-	}, [user]);
+		const downloadedIds = new Set<string>();
+		myTemplates.forEach((template) => {
+			if (template.templateDownloads && template.templateDownloads.length > 0) {
+				downloadedIds.add(template.id);
+			}
+		});
+		setDownloadedTemplateIds(downloadedIds);
+	}, [myTemplates]);
 
 	// Sidebar configuration
 	const sidebarItems: SidebarItem[] = [
@@ -2821,20 +2749,32 @@ function DashboardContent() {
 								Cancel
 							</button>
 							<button
-								onClick={() => {
+								onClick={async () => {
 									// Store template in session storage and navigate
 									if (templateUseModal.template) {
 										try {
+											// First fetch the full template data including the game data
+											const response = await fetch(`/api/templates/${templateUseModal.template.id}`, {
+												method: 'POST', // Use POST to download the template
+												credentials: 'include'
+											});
+
+											if (!response.ok) {
+												throw new Error(`Failed to fetch template: ${response.statusText}`);
+											}
+
+											const fullTemplate = await response.json();
+											
+											if (!fullTemplate.data) {
+												throw new Error('Template data is missing');
+											}
+
 											// Transform Template to TemplateData format
 											const templateData = {
-												id: templateUseModal.template
-													.id,
-												title: templateUseModal.template
-													.title,
-												type: templateUseModal.template
-													.type,
-												data: templateUseModal.template
-													.data as {
+												id: fullTemplate.id,
+												title: fullTemplate.title,
+												type: fullTemplate.type,
+												data: fullTemplate.data as {
 													categories: Array<{
 														id: string;
 														name: string;
@@ -2854,18 +2794,16 @@ function DashboardContent() {
 													boardCustomizations?: unknown;
 												},
 											};
-											TemplateService.storeTemplate(
-												templateData
-											);
+
+											console.log('Storing template with data:', templateData);
+											TemplateService.storeTemplate(templateData);
+											
 											window.open(
 												'/create/question-set?useTemplate=true',
 												'_blank'
 											);
 										} catch (error) {
-											console.error(
-												'Failed to store template:',
-												error
-											);
+											console.error('Failed to store template:', error);
 											alert(
 												'Failed to load template. Please try again.'
 											);

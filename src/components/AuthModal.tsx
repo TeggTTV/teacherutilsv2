@@ -20,6 +20,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 		school: '',
 		grade: '',
 		subject: '',
+		subscribeToNewsletter: true, // Default to true
 	});
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
@@ -89,6 +90,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 					school: '',
 					grade: '',
 					subject: '',
+					subscribeToNewsletter: true,
 				});
 			} else {
 				await register(formData);
@@ -105,6 +107,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 					school: '',
 					grade: '',
 					subject: '',
+					subscribeToNewsletter: true,
 				});
 			}
 		} catch (error) {
@@ -129,9 +132,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, type, checked, value } = e.target;
 		setFormData({
 			...formData,
-			[e.target.name]: e.target.value,
+			[name]: type === 'checkbox' ? checked : value,
 		});
 	};
 
@@ -424,6 +428,29 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 												placeholder="Mathematics"
 											/>
 										</div>
+									</div>
+
+									{/* Newsletter Subscription */}
+									<div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+										<div>
+											<label htmlFor="subscribeToNewsletter" className="block text-sm font-medium text-gray-700">
+												Subscribe to Newsletter
+											</label>
+											<p className="text-xs text-gray-500">
+												Get updates and educational content
+											</p>
+										</div>
+										<label className="relative inline-flex items-center cursor-pointer">
+											<input
+												type="checkbox"
+												id="subscribeToNewsletter"
+												name="subscribeToNewsletter"
+												checked={formData.subscribeToNewsletter}
+												onChange={handleInputChange}
+												className="sr-only peer"
+											/>
+											<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+										</label>
 									</div>
 								</>
 							)}

@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
 				publishedAt:
 					game.publishedAt?.toISOString() ||
 					game.createdAt.toISOString(),
-				downloads: 0, // This field is not tracked yet
-				plays: 0, // This field is not tracked yet
+				downloads: game.downloads || 0,
+				plays: game.plays || 0,
 				avgRating,
 				ratingsCount: game._count.ratings,
 				favoritesCount: game._count.favorites,

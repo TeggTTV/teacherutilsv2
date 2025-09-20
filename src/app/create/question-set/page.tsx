@@ -88,6 +88,13 @@ interface BoardCustomizations {
 	typography: BoardTypography;
 }
 
+// export const metadata: Metadata = {
+// 	title: 'Create | Compyy.',
+// 	description:
+// 		'Create your own custom educational games with our easy-to-use game builder. Design engaging quizzes and activities tailored to your classroom needs.',
+// };
+
+
 function QuestionSetContent() {
 	const { user, loading } = useAuthGuard();
 	const searchParams = useSearchParams();
@@ -98,11 +105,6 @@ function QuestionSetContent() {
 	// Core game state
 	const [gameTitle, setGameTitle] = useState('');
 	const [categories, setCategories] = useState<Category[]>([]);
-	
-	// Debug log for categories state changes
-	useEffect(() => {
-		console.log('Categories state updated:', categories.length, categories);
-	}, [categories]);
 	const [customValues] = useState<number[]>([100, 200, 300, 400, 500]);
 	const [savedGameId, setSavedGameId] = useState<string | null>(editGameId);
 	const [editingQuestion, setEditingQuestion] = useState<{
@@ -223,41 +225,39 @@ function QuestionSetContent() {
 
 	// Load template from session storage or initialize empty categories
 	useEffect(() => {
-		console.log('Template loading effect triggered:', { useTemplate, editGameId });
-		
 		const initializeData = async () => {
 			if (useTemplate && !editGameId) {
-				console.log('Attempting to load template from session storage...');
-				
 				const templateData = TemplateService.getTemplate();
 				
 				if (templateData) {
-					console.log('Template loaded successfully:', templateData);
-					
 					// Set game title
 					if (templateData.title) {
-						console.log('Setting game title:', templateData.title);
 						setGameTitle(templateData.title);
 					}
 					
 					// Load game data
 					const gameData = templateData.data;
 					if (gameData) {
-						console.log('Processing game data:', gameData);
-						
 						// Load categories and questions
 						if (gameData.categories && Array.isArray(gameData.categories)) {
-							console.log('Processing categories:', gameData.categories.length);
-							
 							// If categories array is empty, create empty categories but still apply styling
 							if (gameData.categories.length === 0) {
-								console.log('Categories array is empty, creating default empty categories with styling applied');
 								initializeEmptyCategories();
+								// Load styling even with empty categories
+								if (gameData.displayImage) {
+									setDisplayImage(gameData.displayImage);
+								}
+								
+								if (gameData.boardBackground) {
+									setBoardBackground(gameData.boardBackground);
+								}
+								
+								if (gameData.boardCustomizations) {
+									setBoardCustomizations(gameData.boardCustomizations as BoardCustomizations);
+								}
 							} else {
 								// Process categories with content
 								const processedCategories = gameData.categories.map((category, catIndex) => {
-									console.log(`Processing category ${catIndex}:`, category.name, 'questions:', category.questions?.length);
-									
 									return {
 										id: category.id || `category-${catIndex}`,
 										name: category.name || '',
@@ -277,25 +277,36 @@ function QuestionSetContent() {
 									};
 								});
 								
-								console.log('Setting processed categories:', processedCategories.length);
 								setCategories(processedCategories);
+								
+								// Load other game settings for categories with content
+								if (gameData.displayImage) {
+									setDisplayImage(gameData.displayImage);
+								}
+								
+								if (gameData.boardBackground) {
+									setBoardBackground(gameData.boardBackground);
+								}
+								
+								if (gameData.boardCustomizations) {
+									setBoardCustomizations(gameData.boardCustomizations as BoardCustomizations);
+								}
 							}
 						} else {
-							console.log('No categories found in game data, creating empty categories');
 							initializeEmptyCategories();
-						}
-						
-						// Load other game settings
-						if (gameData.displayImage) {
-							setDisplayImage(gameData.displayImage);
-						}
-						
-						if (gameData.boardBackground) {
-							setBoardBackground(gameData.boardBackground);
-						}
-						
-						if (gameData.boardCustomizations) {
-							setBoardCustomizations(gameData.boardCustomizations as BoardCustomizations);
+							
+							// Load other game settings when no categories exist
+							if (gameData.displayImage) {
+								setDisplayImage(gameData.displayImage);
+							}
+							
+							if (gameData.boardBackground) {
+								setBoardBackground(gameData.boardBackground);
+							}
+							
+							if (gameData.boardCustomizations) {
+								setBoardCustomizations(gameData.boardCustomizations as BoardCustomizations);
+							}
 						}
 					}
 					
@@ -303,19 +314,14 @@ function QuestionSetContent() {
 					TemplateService.clearTemplate();
 					
 				} else {
-					console.log('No template found in session storage, initializing empty categories');
 					initializeEmptyCategories();
 				}
 			} else if (!editGameId) {
-				console.log('No template requested, initializing empty categories');
 				initializeEmptyCategories();
-			} else {
-				console.log('Editing existing game, skipping template logic');
 			}
 		};
 
 		const initializeEmptyCategories = () => {
-			console.log('Creating empty categories...');
 			const initialCategories: Category[] = Array.from({ length: 6 }, (_, i) => ({
 				id: `category-${i}`,
 				name: '',
@@ -327,7 +333,6 @@ function QuestionSetContent() {
 					isAnswered: false
 				}))
 			}));
-			console.log('Setting empty categories:', initialCategories.length);
 			setCategories(initialCategories);
 		};
 
@@ -371,7 +376,6 @@ function QuestionSetContent() {
 		field: 'question' | 'answer' | 'media' | 'timer' | 'difficulty', 
 		value: string | number | { type: 'image' | 'audio' | 'video'; url: string; alt?: string } | undefined
 	) => {
-		console.log('Updating question:', { categoryIndex, questionIndex, field, value });
 		setCategories(prev => {
 			const newCategories = prev.map((cat, catIndex) => 
 				catIndex === categoryIndex 
@@ -383,7 +387,6 @@ function QuestionSetContent() {
 					}
 					: cat
 			);
-			console.log('New categories state:', newCategories);
 			return newCategories;
 		});
 		
@@ -494,14 +497,16 @@ function QuestionSetContent() {
 					data: {
 						gameTitle: gameTitle.trim(),
 						categories,
-					customValues,
-					displayImage: displayImage || undefined,
-					boardBackground: boardBackground || undefined,
-					boardCustomizations
-				},
-				isPublic: false,
-				tags: selectedTags
-			};				const response = await fetch(getApiUrl(`/api/games/${savedGameId}`), {
+						customValues,
+						displayImage: displayImage || undefined,
+						boardBackground: boardBackground || undefined,
+						boardCustomizations
+					},
+					isPublic: false,
+					tags: selectedTags
+				};
+
+				const response = await fetch(getApiUrl(`/api/games/${savedGameId}`), {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(gameData)
@@ -552,7 +557,9 @@ function QuestionSetContent() {
 					},
 					isPublic: false,
 					tags: selectedTags
-				};			const url = savedGameId ? `/api/games/${savedGameId}` : '/api/games';
+				};
+
+			const url = savedGameId ? `/api/games/${savedGameId}` : '/api/games';
 			const method = savedGameId ? 'PUT' : 'POST';
 
 			const response = await fetch(url, {
@@ -650,18 +657,15 @@ function QuestionSetContent() {
 				}),
 			});
 
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
 
-			const result = await response.json();
-			console.log('Template saved successfully:', result);
+		await response.json();
 
-			// Reset form and close modal
-			setTemplateForm({ title: '', description: '', type: 'theme' });
-			setShowTemplateModal(false);
-			
-			// Show success modal instead of alert
+		// Reset form and close modal
+		setTemplateForm({ title: '', description: '', type: 'theme' });
+		setShowTemplateModal(false);			// Show success modal instead of alert
 			setShowTemplateSuccessModal(true);
 			
 			// Reload user templates to include the new one
@@ -698,8 +702,6 @@ function QuestionSetContent() {
 			
 			// Apply categories if available (for complete/layout templates)
 			if (templateData.categories && Array.isArray(templateData.categories)) {
-				console.log('Applying template categories:', templateData.categories.length);
-				
 				if (templateData.categories.length > 0) {
 					// Process categories with content
 					const processedCategories = templateData.categories.map((category: { id?: string; name?: string; questions?: { question?: string; answer?: string; media?: unknown; timer?: number; difficulty?: string }[] }, catIndex: number) => ({
@@ -848,16 +850,6 @@ function QuestionSetContent() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-			{/* Debug Panel */}
-			<div className="bg-yellow-50 border-b border-yellow-200 p-2">
-				<div className="max-w-7xl mx-auto px-4 text-sm text-yellow-800 font-mono">
-					<strong>🐛 Debug:</strong> Categories: {categories.length} | 
-					Template Mode: {useTemplate ? 'YES' : 'NO'} | 
-					Edit Mode: {editGameId ? 'YES' : 'NO'} | 
-					Session Storage: {typeof window !== 'undefined' && TemplateService.hasTemplate() ? 'YES' : 'NO'}
-				</div>
-			</div>
-			
 			{/* Header */}
 			<GameHeader
 				gameTitle={gameTitle}

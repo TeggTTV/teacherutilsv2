@@ -1,10 +1,66 @@
 'use client';
 
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { useState } from 'react';
 
+// export const metadata: Metadata = {
+// 	title: 'Help | Compyy.',
+// 	description:
+// 		'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+// };
+
 export default function HelpPage() {
 	const [activeTab, setActiveTab] = useState('getting-started');
+	const [showSupportForm, setShowSupportForm] = useState(false);
+	const [formData, setFormData] = useState({
+		name: '',
+		email: '',
+		subject: '',
+		message: ''
+	});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+		const { name, value } = e.target;
+		setFormData(prev => ({
+			...prev,
+			[name]: value
+		}));
+	};
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsSubmitting(true);
+		setSubmitStatus('idle');
+
+		try {
+			const response = await fetch('/api/support', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(formData),
+			});
+
+			if (response.ok) {
+				setSubmitStatus('success');
+				setFormData({ name: '', email: '', subject: '', message: '' });
+				setTimeout(() => {
+					setShowSupportForm(false);
+					setSubmitStatus('idle');
+				}, 2000);
+			} else {
+				setSubmitStatus('error');
+			}
+		} catch (error) {
+			console.error('Error submitting support ticket:', error);
+			setSubmitStatus('error');
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
 	const faqData = {
 		'getting-started': [
@@ -50,31 +106,6 @@ export default function HelpPage() {
 			},
 		],
 	};
-
-	const features = [
-		{
-			title: 'Game Creation',
-			description:
-				'Create custom Jeopardy games with multiple categories and questions',
-			icon: '🎮',
-		},
-		{
-			title: 'Smart Board Ready',
-			description:
-				'Optimized for classroom smart boards and touch displays',
-			icon: '📱',
-		},
-		{
-			title: 'Team Management',
-			description: 'Support for multiple teams with automatic scoring',
-			icon: '👥',
-		},
-		{
-			title: 'Custom Styling',
-			description: 'Beautiful themes and customization options',
-			icon: '🎨',
-		},
-	];
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -255,28 +286,141 @@ export default function HelpPage() {
 				</div>
 
 				{/* Contact Support */}
-				<div className="mt-12 bg-gray-100 rounded-lg p-8 text-center">
-					<h3 className="text-2xl font-bold text-gray-900 mb-4">
-						Still Need Help?
-					</h3>
-					<p className="text-gray-600 mb-6">
-						Can&apos;t find what you&apos;re looking for? Our
-						support team is here to help!
-					</p>
-					<div className="flex justify-center gap-4">
-						{/* <a
-							href="mailto:support@compyy.com"
-							className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-						>
-							Email Support
-						</a> */}
-						<Link
-							href="/dashboard"
-							className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-						>
-							Back to Dashboard
-						</Link>
-					</div>
+				<div className="mt-12">
+					{!showSupportForm ? (
+						<div className="bg-gray-100 rounded-lg p-8 text-center">
+							<h3 className="text-2xl font-bold text-gray-900 mb-4">
+								Still Need Help?
+							</h3>
+							<p className="text-gray-600 mb-6">
+								Can&apos;t find what you&apos;re looking for? Our
+								support team is here to help!
+							</p>
+							<div className="flex justify-center gap-4">
+								<button
+									onClick={() => setShowSupportForm(true)}
+									className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+								>
+									Contact Support
+								</button>
+								<Link
+									href="/dashboard"
+									className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+								>
+									Back to Dashboard
+								</Link>
+							</div>
+						</div>
+					) : (
+						<div className="bg-white rounded-lg shadow-md p-8">
+							<div className="flex justify-between items-center mb-6">
+								<h3 className="text-2xl font-bold text-gray-900">
+									Contact Support
+								</h3>
+								<button
+									onClick={() => setShowSupportForm(false)}
+									className="text-gray-500 hover:text-gray-700"
+								>
+									<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+									</svg>
+								</button>
+							</div>
+							
+							{submitStatus === 'success' && (
+								<div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+									Thank you! Your support ticket has been submitted successfully. We&apos;ll get back to you soon.
+								</div>
+							)}
+							
+							{submitStatus === 'error' && (
+								<div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+									Sorry, there was an error submitting your support ticket. Please try again.
+								</div>
+							)}
+							
+							<form onSubmit={handleSubmit} className="space-y-6">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div>
+										<label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+											Name *
+										</label>
+										<input
+											type="text"
+											id="name"
+											name="name"
+											value={formData.name}
+											onChange={handleInputChange}
+											required
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										/>
+									</div>
+									<div>
+										<label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+											Email *
+										</label>
+										<input
+											type="email"
+											id="email"
+											name="email"
+											value={formData.email}
+											onChange={handleInputChange}
+											required
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										/>
+									</div>
+								</div>
+								
+								<div>
+									<label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+										Subject *
+									</label>
+									<input
+										type="text"
+										id="subject"
+										name="subject"
+										value={formData.subject}
+										onChange={handleInputChange}
+										required
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+									/>
+								</div>
+								
+								<div>
+									<label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+										Message *
+									</label>
+									<textarea
+										id="message"
+										name="message"
+										value={formData.message}
+										onChange={handleInputChange}
+										required
+										rows={6}
+										placeholder="Please describe your issue or question in detail..."
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+									/>
+								</div>
+								
+								<div className="flex justify-end gap-4">
+									<button
+										type="button"
+										onClick={() => setShowSupportForm(false)}
+										className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+									>
+										Cancel
+									</button>
+									<button
+										type="submit"
+										disabled={isSubmitting}
+										className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+									>
+										{isSubmitting ? 'Submitting...' : 'Submit Ticket'}
+									</button>
+								</div>
+							</form>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

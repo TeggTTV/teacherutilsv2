@@ -26,7 +26,7 @@ export default function NewsletterForm() {
 
             if (response.ok) {
                 setStatus('success');
-                setMessage('Check your email for the confirmation link!');
+                setMessage('Successfully subscribed to the newsletter!');
                 setEmail('');
             } else {
                 setStatus('error');

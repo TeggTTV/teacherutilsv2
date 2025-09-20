@@ -264,22 +264,6 @@ export default function CookiesPage() {
 							</Link>
 						</div>
 					</section>
-
-					{/* Contact Information */}
-					<section>
-						<h3 className="text-2xl font-bold text-gray-900 mb-4">
-							Contact Us
-						</h3>
-						<p className="text-gray-700 leading-relaxed mb-4">
-							If you have any questions about our use of cookies, please contact us:
-						</p>
-						<div className="bg-gray-50 p-4 rounded-lg">
-							<p className="text-gray-700">
-								<strong>Email:</strong> privacy@compyy.com<br />
-								<strong>Support:</strong> support@compyy.com
-							</p>
-						</div>
-					</section>
 				</div>
 
 				{/* Back to Dashboard */}

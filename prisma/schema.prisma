@@ -225,3 +225,18 @@ model Tag {
   
   @@map("tags")
 }
+
+model SupportTicket {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   // User's name
+  email     String   // User's email
+  subject   String   // Ticket subject
+  message   String   // Support message
+  status    String   @default("open") // "open", "in-progress", "resolved", "closed"
+  priority  String   @default("normal") // "low", "normal", "high", "urgent"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("support_tickets")
+}
