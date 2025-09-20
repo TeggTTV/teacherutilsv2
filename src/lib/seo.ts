@@ -16,7 +16,7 @@ export const baseMetadata: Metadata = {
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: [
 			{
-				url: '/og-image.png',
+				url: '/Compyy%20Logo%20w%20Text.png',
 				width: 1200,
 				height: 630,
 				alt: 'Compyy. - Interactive Educational Games Platform',
@@ -27,7 +27,7 @@ export const baseMetadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Compyy. - Interactive Educational Games Platform',
 		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-		images: ['/og-image.png'],
+		images: ['/Compyy%20Logo%20w%20Text.png'],
 	},
 	// viewport handled in layout head
 	// themeColor handled in layout <head> to avoid Next.js unsupported-metadata warnings
@@ -76,7 +76,7 @@ export const defaultSEO = {
 		siteName: 'Compyy.',
 		images: [
 			{
-				url: `${process.env.SITE_URL || 'https://compyy.org'}/og-image.png`,
+				url: `${process.env.SITE_URL || 'https://compyy.org'}/Compyy%20Logo%20w%20Text.png`,
 				width: 1200,
 				height: 630,
 				alt: 'Compyy. - Interactive Educational Games Platform',
