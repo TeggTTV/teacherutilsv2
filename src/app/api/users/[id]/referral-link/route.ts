@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 // POST /api/users/[id]/referral-link - Create a referral link for a user if not exists
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
 		const { id } = await params;

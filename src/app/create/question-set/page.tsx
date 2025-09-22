@@ -2,7 +2,6 @@
 
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useState, useEffect, Suspense } from 'react';
-import TagSelector from '@/components/TagSelector';
 import { useSearchParams, useRouter } from 'next/navigation';
 import TemplateService from '@/lib/services/templateService';
 import { getApiUrl } from '@/lib/config';

@@ -149,9 +149,7 @@ export default function ProfilePage() {
 						<ChangePasswordForm />
 					</div>
 
-					<Refferal
-						
-					/>
+					<Refferal user={user} />
 
 					{/* Newsletter Subscription Section */}
 					<Newsletter user={user} />

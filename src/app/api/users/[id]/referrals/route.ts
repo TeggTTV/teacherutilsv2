@@ -4,10 +4,10 @@ import { prisma } from '@/lib/prisma';
 // GET /api/users/[id]/referrals - Get referral link, tickets, and referrals for a user
 export async function GET(
 	request: NextRequest,
-	context: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const { id } = await context.params;
+		const { id } = await params;
 		// Get referral link (active)
 		const referralLink = await prisma.referralLink.findFirst({
 			where: { userId: id, active: true },

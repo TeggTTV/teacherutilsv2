@@ -3,17 +3,19 @@ import { Metadata } from 'next';
 export const baseMetadata: Metadata = {
 	title: {
 		default: 'Compyy. - Interactive Educational Games Platform',
-		template: '%s | Compyy.'
+		template: '%s | Compyy.',
 	},
-	description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-		metadataBase: new URL(process.env.SITE_URL || 'https://compyy.org'),
+	description:
+		'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+	metadataBase: new URL('https://compyy.org'),
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
-			url: process.env.SITE_URL || 'https://compyy.org',
+		url: process.env.SITE_URL || 'https://compyy.org',
 		siteName: 'Compyy.',
 		title: 'Compyy. - Interactive Educational Games Platform',
-		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+		description:
+			'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: [
 			{
 				url: '/Compyy%20Logo%20w%20Text.png',
@@ -26,7 +28,8 @@ export const baseMetadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Compyy. - Interactive Educational Games Platform',
-		description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+		description:
+			'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 		images: ['/Compyy%20Logo%20w%20Text.png'],
 	},
 	// viewport handled in layout head
@@ -43,10 +46,12 @@ export function generateGameMetadata(game: {
 }): Metadata {
 	return {
 		title: game.title,
-		description: game.description || 'Play this educational game on Compyy.',
+		description:
+			game.description || 'Play this educational game on Compyy.',
 		openGraph: {
 			title: game.title,
-			description: game.description || 'Play this educational game on Compyy.',
+			description:
+				game.description || 'Play this educational game on Compyy.',
 			images: [
 				{
 					url: `/api/og/game/${game.id}`,
@@ -59,7 +64,8 @@ export function generateGameMetadata(game: {
 		twitter: {
 			card: 'summary_large_image',
 			title: game.title,
-			description: game.description || 'Play this educational game on Compyy.',
+			description:
+				game.description || 'Play this educational game on Compyy.',
 			images: [`/api/og/game/${game.id}`],
 		},
 	};
@@ -68,7 +74,8 @@ export function generateGameMetadata(game: {
 // Legacy export for backward compatibility (though we won't use it in App Router)
 export const defaultSEO = {
 	title: 'Compyy. - Interactive Educational Games Platform',
-	description: 'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+	description:
+		'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
@@ -76,7 +83,9 @@ export const defaultSEO = {
 		siteName: 'Compyy.',
 		images: [
 			{
-				url: `${process.env.SITE_URL || 'https://compyy.org'}/Compyy%20Logo%20w%20Text.png`,
+				url: `${
+					process.env.SITE_URL || 'https://compyy.org'
+				}/Compyy%20Logo%20w%20Text.png`,
 				width: 1200,
 				height: 630,
 				alt: 'Compyy. - Interactive Educational Games Platform',
