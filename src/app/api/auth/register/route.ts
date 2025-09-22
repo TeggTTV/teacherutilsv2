@@ -159,17 +159,6 @@ export async function POST(request: NextRequest) {
 							</p>
 						</div>
 
-						<!-- What's Next Section -->
-						<div style="background-color: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-							<h3 style="color: #2563eb; margin-top: 0; font-size: 20px;">What you can do with Compyy:</h3>
-							<ul style="color: #4b5563; padding-left: 20px;">
-								<li style="margin-bottom: 10px;">🎮 Create interactive Jeopardy games for your classroom</li>
-								<li style="margin-bottom: 10px;">📚 Access free templates to get started quickly</li>
-								<li style="margin-bottom: 10px;">🚀 Share your games with other educators</li>
-								<li style="margin-bottom: 10px;">⭐ Save and organize your favorite games</li>
-							</ul>
-						</div>
-
 						<!-- Footer -->
 						<div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
 							<p style="color: #6b7280; font-size: 14px; margin-bottom: 10px;">
