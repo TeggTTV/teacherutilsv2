@@ -136,7 +136,7 @@ export default function Home() {
 						>
 							<AnimatedStat 
 								value={stats.activeTeachers} 
-								label="Active Teachers" 
+								label="Active Users" 
 								color="text-blue-600" 
 							/>
 							<AnimatedStat 
