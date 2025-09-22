@@ -63,8 +63,23 @@ export default function Home() {
 
 		fetchStats();
 	}, []);
-	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+				{/* Referral Banner (Landing Page Only) */}
+				<div
+					style={{ zIndex: 9999 }}
+					className="fixed bottom-0 left-0 w-full flex items-center justify-center bg-blue-100 border-t border-blue-300 py-4 px-2 shadow-lg"
+				>
+					<span className="text-lg font-semibold text-blue-900 mr-4">
+						Refer a teacher for a chance to win $100!
+					</span>
+					<a
+						href="/profile"
+						className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-2 rounded-lg shadow transition-colors"
+					>
+						View My Referral
+					</a>
+				</div>
 			{/* Hero Section */}
 			<section className="relative overflow-hidden">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-16 pb-12 sm:pb-20">
@@ -453,5 +468,5 @@ export default function Home() {
 				</div>
 			</section>
 		</div>
-	);
+		);
 }

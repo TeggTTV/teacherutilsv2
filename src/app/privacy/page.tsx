@@ -1,47 +1,22 @@
 'use client';
 
+import Header from '@/components/Header';
 import Link from 'next/link';
 
 export default function PrivacyPage() {
 	return (
 		<div className="min-h-screen bg-gray-50">
 			{/* Header */}
-			<div className="bg-white shadow-sm border-b">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-					<div className="flex justify-between items-center">
-						<div className="flex items-center gap-4">
-							<Link
-								href="/dashboard"
-								className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-							>
-								<svg
-									className="w-5 h-5"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M15 19l-7-7 7-7"
-									/>
-								</svg>
-								Back to Dashboard
-							</Link>
-							<div className="border-l pl-4">
-								<h1 className="text-xl font-semibold text-gray-900">
-									Privacy Policy
-								</h1>
-								<p className="text-sm text-gray-600">
-									How we protect and use your information
-								</p>
-							</div>
-						</div>
-					</div>
+			<Header>
+				<div className="border-l pl-4">
+					<h1 className="text-xl font-semibold text-gray-900">
+						Privacy Policy
+					</h1>
+					<p className="text-sm text-gray-600">
+						How we protect and use your information
+					</p>
 				</div>
-			</div>
-
+			</Header>
 			{/* Hero Section */}
 			<div className="bg-blue-600 text-white py-12">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

@@ -5,15 +5,24 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import AuthModal from './AuthModal';
+
 
 export default function Navbar() {
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const { user, logout } = useAuth();
-	const pathname = usePathname();
+
+	// Auto-open registration modal if ?register=1 is present
+	useEffect(() => {
+		if (pathname === '/' && searchParams.get('register') === '1') {
+			setIsAuthModalOpen(true);
+		}
+	}, [pathname, searchParams]);
 
 	const toggleProfileDropdown = () => {
 		setIsProfileOpen(!isProfileOpen);

@@ -13,6 +13,7 @@ export interface RegisterData {
 	grade?: string;
 	subject?: string;
 	subscribeToNewsletter?: boolean;
+	referralCode?: string; // Optional referral code for registration
 }
 
 export interface LoginData {
@@ -167,6 +168,7 @@ export class AuthService {
 			// Hash password
 			const hashedPassword = await this.hashPassword(data.password);
 
+
 			// Create user
 			const user = await prisma.user.create({
 				data: {
@@ -180,6 +182,27 @@ export class AuthService {
 					subject: data.subject,
 				},
 			});
+
+			// Handle referral code logic
+			if (data.referralCode) {
+				// Find referral link by code
+				const referralLink = await prisma.referralLink.findUnique({
+					where: { code: data.referralCode },
+					include: { user: true },
+				});
+				if (referralLink && referralLink.active) {
+					// Create Referral entry with status 'pending'
+					await prisma.referral.create({
+						data: {
+							referrerId: referralLink.userId,
+							referredId: user.id,
+							referralLinkId: referralLink.id,
+							status: 'pending',
+						},
+					});
+					// Do NOT increment raffleTickets yet; wait for email confirmation
+				}
+			}
 
 			// Handle newsletter subscription
 			if (data.subscribeToNewsletter) {

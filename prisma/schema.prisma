@@ -42,7 +42,40 @@ model User {
   templateDownloads TemplateDownload[]
   templateRatings   TemplateRating[]
 
+
+  // Referral system
+  referralLinks ReferralLink[]
+  referrals     Referral[] @relation("Referrer")
+  referredBy    Referral[] @relation("Referred")
+  raffleTickets Int      @default(0)
+
   @@map("users")
+}
+
+model ReferralLink {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  active    Boolean  @default(true)
+  referrals Referral[]
+
+  @@map("referral_links")
+}
+
+model Referral {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  referrerId   String   @db.ObjectId
+  referrer     User     @relation("Referrer", fields: [referrerId], references: [id])
+  referredId   String   @db.ObjectId
+  referred     User     @relation("Referred", fields: [referredId], references: [id])
+  referralLinkId String @db.ObjectId
+  referralLink ReferralLink @relation(fields: [referralLinkId], references: [id])
+  status       String   @default("approved") // "approved", "pending", etc.
+  createdAt    DateTime @default(now())
+
+  @@map("referrals")
 }
 
 model Game {

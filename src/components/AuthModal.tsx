@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -21,7 +22,18 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 		grade: '',
 		subject: '',
 		subscribeToNewsletter: true, // Default to true
+		referralCode: '',
 	});
+
+	// Auto-populate referralCode from URL if present
+	const searchParams = useSearchParams();
+	useEffect(() => {
+		const ref = searchParams?.get('ref');
+		if (ref && !formData.referralCode) {
+			setFormData((prev) => ({ ...prev, referralCode: ref }));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [searchParams]);
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
@@ -91,6 +103,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 					grade: '',
 					subject: '',
 					subscribeToNewsletter: true,
+					referralCode: '',
 				});
 			} else {
 				await register(formData);
@@ -108,6 +121,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 					grade: '',
 					subject: '',
 					subscribeToNewsletter: true,
+					referralCode: '',
 				});
 			}
 		} catch (error) {
@@ -320,6 +334,25 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 							{/* Additional fields for registration */}
 							{!isLogin && (
 								<>
+									{/* Referral Code (hidden if auto-populated, visible if user wants to enter manually) */}
+									{formData.referralCode ? (
+										<input type="hidden" name="referralCode" value={formData.referralCode} />
+									) : (
+										<div>
+											<label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 mb-1">
+												Referral Code (optional)
+											</label>
+											<input
+												type="text"
+												id="referralCode"
+												name="referralCode"
+												value={formData.referralCode}
+												onChange={handleInputChange}
+												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+												placeholder="Paste a referral code if you have one"
+											/>
+										</div>
+									)}
 									<div className="grid grid-cols-2 gap-4">
 										<div>
 											<label

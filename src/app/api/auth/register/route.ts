@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
 			school: body.school?.trim(),
 			grade: body.grade?.trim(),
 			subject: body.subject?.trim(),
+			referralCode: body.referralCode?.trim(),
 		};
 
 		const result = await AuthService.register(registerData);

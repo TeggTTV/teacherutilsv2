@@ -1,5 +1,6 @@
 'use client';
 
+import Header from '@/components/Header';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -16,16 +17,20 @@ export default function HelpPage() {
 		name: '',
 		email: '',
 		subject: '',
-		message: ''
+		message: '',
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+	const [submitStatus, setSubmitStatus] = useState<
+		'idle' | 'success' | 'error'
+	>('idle');
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+	const handleInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+	) => {
 		const { name, value } = e.target;
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
-			[name]: value
+			[name]: value,
 		}));
 	};
 
@@ -109,41 +114,16 @@ export default function HelpPage() {
 	return (
 		<div className="min-h-screen bg-gray-50">
 			{/* Header */}
-			<div className="bg-white shadow-sm border-b">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-					<div className="flex justify-between items-center">
-						<div className="flex items-center gap-4">
-							<Link
-								href="/dashboard"
-								className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-							>
-								<svg
-									className="w-5 h-5"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M15 19l-7-7 7-7"
-									/>
-								</svg>
-								Back to Dashboard
-							</Link>
-							<div className="border-l pl-4">
-								<h1 className="text-xl font-semibold text-gray-900">
-									Help & Support
-								</h1>
-								<p className="text-sm text-gray-600">
-									Get help with using Compyy.
-								</p>
-							</div>
-						</div>
-					</div>
+			<Header>
+				<div className="border-l pl-4">
+					<h1 className="text-xl font-semibold text-gray-900">
+						Help & Support
+					</h1>
+					<p className="text-sm text-gray-600">
+						Get help with using Compyy.
+					</p>
 				</div>
-			</div>
+			</Header>
 
 			{/* Hero Section */}
 			<div className="bg-blue-600 text-white py-12">
@@ -159,31 +139,6 @@ export default function HelpPage() {
 
 			{/* Main Content */}
 			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-				{/* Features Overview */}
-				{/* <div className="mb-12">
-					<h3 className="text-2xl font-bold text-gray-900 mb-6">
-						Features Overview
-					</h3>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						{features.map((feature, index) => (
-							<div
-								key={index}
-								className="bg-white p-6 rounded-lg shadow-md"
-							>
-								<div className="text-3xl mb-3">
-									{feature.icon}
-								</div>
-								<h4 className="font-semibold text-gray-900 mb-2">
-									{feature.title}
-								</h4>
-								<p className="text-gray-600 text-sm">
-									{feature.description}
-								</p>
-							</div>
-						))}
-					</div>
-				</div> */}
-
 				{/* Quick Start Guide */}
 				<div className="mb-12 bg-white rounded-lg shadow-md p-8">
 					<h3 className="text-2xl font-bold text-gray-900 mb-6">
@@ -292,8 +247,8 @@ export default function HelpPage() {
 								Still Need Help?
 							</h3>
 							<p className="text-gray-600 mb-6">
-								Can&apos;t find what you&apos;re looking for? Our
-								support team is here to help!
+								Can&apos;t find what you&apos;re looking for?
+								Our support team is here to help!
 							</p>
 							<div className="flex justify-center gap-4">
 								<button
@@ -320,28 +275,44 @@ export default function HelpPage() {
 									onClick={() => setShowSupportForm(false)}
 									className="text-gray-500 hover:text-gray-700"
 								>
-									<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+									<svg
+										className="w-6 h-6"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M6 18L18 6M6 6l12 12"
+										/>
 									</svg>
 								</button>
 							</div>
-							
+
 							{submitStatus === 'success' && (
 								<div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-									Thank you! Your support ticket has been submitted successfully. We&apos;ll get back to you soon.
+									Thank you! Your support ticket has been
+									submitted successfully. We&apos;ll get back
+									to you soon.
 								</div>
 							)}
-							
+
 							{submitStatus === 'error' && (
 								<div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-									Sorry, there was an error submitting your support ticket. Please try again.
+									Sorry, there was an error submitting your
+									support ticket. Please try again.
 								</div>
 							)}
-							
+
 							<form onSubmit={handleSubmit} className="space-y-6">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div>
-										<label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+										<label
+											htmlFor="name"
+											className="block text-sm font-medium text-gray-700 mb-2"
+										>
 											Name *
 										</label>
 										<input
@@ -355,7 +326,10 @@ export default function HelpPage() {
 										/>
 									</div>
 									<div>
-										<label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+										<label
+											htmlFor="email"
+											className="block text-sm font-medium text-gray-700 mb-2"
+										>
 											Email *
 										</label>
 										<input
@@ -369,9 +343,12 @@ export default function HelpPage() {
 										/>
 									</div>
 								</div>
-								
+
 								<div>
-									<label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+									<label
+										htmlFor="subject"
+										className="block text-sm font-medium text-gray-700 mb-2"
+									>
 										Subject *
 									</label>
 									<input
@@ -384,9 +361,12 @@ export default function HelpPage() {
 										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 									/>
 								</div>
-								
+
 								<div>
-									<label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+									<label
+										htmlFor="message"
+										className="block text-sm font-medium text-gray-700 mb-2"
+									>
 										Message *
 									</label>
 									<textarea
@@ -400,11 +380,13 @@ export default function HelpPage() {
 										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
 									/>
 								</div>
-								
+
 								<div className="flex justify-end gap-4">
 									<button
 										type="button"
-										onClick={() => setShowSupportForm(false)}
+										onClick={() =>
+											setShowSupportForm(false)
+										}
 										className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
 									>
 										Cancel
@@ -414,7 +396,9 @@ export default function HelpPage() {
 										disabled={isSubmitting}
 										className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
 									>
-										{isSubmitting ? 'Submitting...' : 'Submit Ticket'}
+										{isSubmitting
+											? 'Submitting...'
+											: 'Submit Ticket'}
 									</button>
 								</div>
 							</form>
