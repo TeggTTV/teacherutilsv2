@@ -20,18 +20,28 @@ export async function GET(
 		const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET!) as { userId: string };
 		const userId = decoded.userId;
 
-		const game = await prisma.game.findFirst({
-			where: {
-				id: id,
-				userId // Ensure user owns the game
-			}
-		});
+		   // Try to find the game by id
+		   const game = await prisma.game.findUnique({
+			   where: { id }
+		   });
 
-		if (!game) {
-			return NextResponse.json({ error: 'Game not found' }, { status: 404 });
-		}
+		   // If not found, return 404
+		   if (!game) {
+			   return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+		   }
 
-		return NextResponse.json({ game });
+		   // If the game is public, allow access
+		   if (game.isPublic) {
+			   return NextResponse.json({ game });
+		   }
+
+		   // If the game is private, only allow the owner
+		   if (game.userId === userId) {
+			   return NextResponse.json({ game });
+		   }
+
+		   // Otherwise, deny access
+		   return NextResponse.json({ error: 'Game not found' }, { status: 404 });
 	} catch (error) {
 		console.error('Error fetching game:', error);
 		return NextResponse.json(

@@ -48,7 +48,7 @@ export default function MySetsTab({
 					</div>
 					<h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">No games yet</h3>
 					<p className="text-gray-600 mb-8 sm:mb-10 text-lg leading-relaxed">Create your first educational game to get started on your teaching journey.</p>
-					<Link href="/create/question-set">
+					<Link href="/create/">
 						<motion.button
 							whileHover={{ scale: 1.02 }}
 							whileTap={{ scale: 0.98 }}

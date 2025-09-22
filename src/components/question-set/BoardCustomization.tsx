@@ -818,7 +818,7 @@ export default function BoardCustomization({
               </div>
 
               {/* Preview Info */}
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border text-xs">
+              {/* <div className="mt-3 p-3 bg-gray-50 rounded-lg border text-xs">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <span className="font-medium text-gray-600">Opacity:</span>
@@ -829,7 +829,7 @@ export default function BoardCustomization({
                     <p className="text-gray-800">{boardCustomizations.typography.fontFamily.split(',')[0]}</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         )}

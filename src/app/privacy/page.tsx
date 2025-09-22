@@ -335,6 +335,35 @@ export default function PrivacyPage() {
 							</p>
 						</div>
 					</section> */}
+					<section>
+						<h3 className="text-2xl font-bold text-gray-900 mb-4">
+							More Information
+						</h3>
+						<p className="text-gray-700 leading-relaxed mb-4">
+							For more information about how we protect your
+							privacy, please read our:
+						</p>
+						<div className="flex flex-wrap gap-4">
+							<Link
+								href="/privacy"
+								className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+							>
+								Privacy Policy
+							</Link>
+							<Link
+								href="/terms"
+								className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+							>
+								Terms of Service
+							</Link>
+							<Link
+								href="/cookies"
+								className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+							>
+								Cookie Policy
+							</Link>
+						</div>
+					</section>
 				</div>
 
 				{/* Back to Dashboard */}

@@ -156,8 +156,18 @@ function TemplateCard({
 			id: 'share',
 			label: 'Manage Sharing',
 			icon: (
-				<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+				<svg
+					className="w-4 h-4"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+					/>
 				</svg>
 			),
 			action: () => handleShareTemplate(template.id),
@@ -166,8 +176,18 @@ function TemplateCard({
 			id: 'delete',
 			label: 'Delete',
 			icon: (
-				<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+				<svg
+					className="w-4 h-4"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+					/>
 				</svg>
 			),
 			action: () => handleDeleteTemplate(template.id),
@@ -188,14 +208,19 @@ function TemplateCard({
 						items={menuItems}
 						position="right"
 						trigger={
-							<svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+							<svg
+								className="w-4 h-4 text-gray-600"
+								fill="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
 							</svg>
 						}
 						triggerClassName="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 shadow-sm"
 					/>
 				</div>
-			)}			{!isLayoutOnlyTemplate(template) && (
+			)}{' '}
+			{!isLayoutOnlyTemplate(template) && (
 				<div className="w-full h-24 sm:h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-3 sm:mb-4 overflow-hidden">
 					{template.previewImage ? (
 						<Image
@@ -214,7 +239,6 @@ function TemplateCard({
 					)}
 				</div>
 			)}
-
 			<div className="p-6">
 				<h3 className="font-bold text-lg text-gray-900 line-clamp-1">
 					{template.title}
@@ -266,7 +290,9 @@ function TemplateCard({
 										e.stopPropagation();
 										downloadTemplate(template.id);
 									}}
-									disabled={downloadingTemplateId === template.id}
+									disabled={
+										downloadingTemplateId === template.id
+									}
 									className="w-full px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
 								>
 									{downloadingTemplateId === template.id
@@ -422,7 +448,10 @@ function SavedGameCard({
 								</motion.button>
 
 								<motion.button
-									whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
+									whileHover={{
+										backgroundColor:
+											'rgba(239, 68, 68, 0.05)',
+									}}
 									onClick={(e) => {
 										e.preventDefault();
 										e.stopPropagation();
@@ -430,8 +459,18 @@ function SavedGameCard({
 									}}
 									className="w-full text-left px-4 py-3 transition-colors flex items-center space-x-3 text-red-600 hover:text-red-700"
 								>
-									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									<svg
+										className="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+										/>
 									</svg>
 									<span className="font-medium">Remove</span>
 								</motion.button>
@@ -900,7 +939,7 @@ function DashboardContent() {
 	useEffect(() => {
 		const loadMyTemplates = async () => {
 			if (!user) return;
-			
+
 			try {
 				const response = await fetch('/api/templates/my');
 				if (response.ok) {
@@ -964,12 +1003,20 @@ function DashboardContent() {
 				});
 				if (response.ok) {
 					// Remove from savedGames
-					setSavedGames((prev) => prev?.filter((g) => g.id !== gameId) || []);
+					setSavedGames(
+						(prev) => prev?.filter((g) => g.id !== gameId) || []
+					);
 					// Decrement favoritesCount for the public game
 					setPublicGames((prev) =>
 						prev.map((g) =>
 							g.id === gameId
-								? { ...g, favoritesCount: Math.max(0, (g.favoritesCount || 0) - 1) }
+								? {
+										...g,
+										favoritesCount: Math.max(
+											0,
+											(g.favoritesCount || 0) - 1
+										),
+								  }
 								: g
 						)
 					);
@@ -983,7 +1030,9 @@ function DashboardContent() {
 				});
 				if (response.ok) {
 					// Add to saved games
-					const gameToSave = publicGames?.find((g) => g.id === gameId);
+					const gameToSave = publicGames?.find(
+						(g) => g.id === gameId
+					);
 					if (gameToSave) {
 						setSavedGames((prev) => [...(prev || []), gameToSave]);
 					}
@@ -991,7 +1040,11 @@ function DashboardContent() {
 					setPublicGames((prev) =>
 						prev.map((g) =>
 							g.id === gameId
-								? { ...g, favoritesCount: (g.favoritesCount || 0) + 1 }
+								? {
+										...g,
+										favoritesCount:
+											(g.favoritesCount || 0) + 1,
+								  }
 								: g
 						)
 					);
@@ -1178,7 +1231,9 @@ function DashboardContent() {
 
 		try {
 			// Determine whether the template is owned by the user
-			const template = myTemplates.find(t => t.id === deleteConfirmModal.templateId);
+			const template = myTemplates.find(
+				(t) => t.id === deleteConfirmModal.templateId
+			);
 			if (!template) {
 				throw new Error('Template not found in local state');
 			}
@@ -1195,7 +1250,9 @@ function DashboardContent() {
 				if (response.ok) {
 					// Remove from local state
 					setMyTemplates((prev) =>
-						prev.filter((t) => t.id !== deleteConfirmModal.templateId)
+						prev.filter(
+							(t) => t.id !== deleteConfirmModal.templateId
+						)
 					);
 				}
 			} else {
@@ -1204,13 +1261,17 @@ function DashboardContent() {
 				const response = await fetch(`/api/templates/download`, {
 					method: 'DELETE',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ templateId: deleteConfirmModal.templateId })
+					body: JSON.stringify({
+						templateId: deleteConfirmModal.templateId,
+					}),
 				});
 
 				if (response.ok) {
 					// Remove from local state (myTemplates list contains downloads for this user)
 					setMyTemplates((prev) =>
-						prev.filter((t) => t.id !== deleteConfirmModal.templateId)
+						prev.filter(
+							(t) => t.id !== deleteConfirmModal.templateId
+						)
 					);
 				}
 			}
@@ -1326,7 +1387,10 @@ function DashboardContent() {
 
 		const downloadedIds = new Set<string>();
 		myTemplates.forEach((template) => {
-			if (template.templateDownloads && template.templateDownloads.length > 0) {
+			if (
+				template.templateDownloads &&
+				template.templateDownloads.length > 0
+			) {
 				downloadedIds.add(template.id);
 			}
 		});
@@ -1634,7 +1698,7 @@ function DashboardContent() {
 																'No description available'}
 														</p>
 
-														<div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+														{/* <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
 															<span className="flex items-center">
 																<svg
 																	className="w-4 h-4 mr-1"
@@ -1655,7 +1719,7 @@ function DashboardContent() {
 															<span className="text-green-600 font-medium">
 																Ready to Play
 															</span>
-														</div>
+														</div> */}
 
 														<Link
 															href={`/play/${game.id}/setup`}
@@ -2075,13 +2139,27 @@ function DashboardContent() {
 																	>
 																		{/* Animated number */}
 																		<motion.span
-																			key={game.favoritesCount}
-																			initial={{ scale: 0.6, opacity: 0 }}
-																			animate={{ scale: 1, opacity: 1 }}
-																			transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+																			key={
+																				game.favoritesCount
+																			}
+																			initial={{
+																				scale: 0.6,
+																				opacity: 0,
+																			}}
+																			animate={{
+																				scale: 1,
+																				opacity: 1,
+																			}}
+																			transition={{
+																				type: 'spring',
+																				stiffness: 600,
+																				damping: 20,
+																			}}
 																			className="font-semibold"
 																		>
-																			{game.favoritesCount}
+																			{
+																				game.favoritesCount
+																			}
 																		</motion.span>
 																	</motion.div>
 																	{game.avgRating >
@@ -2276,12 +2354,16 @@ function DashboardContent() {
 								{savedGames && savedGames.length > 0 ? (
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 										{savedGames.map((game) => (
-												<SavedGameCard
-													key={game.id}
-													game={game}
-													handleUseTemplate={handleUseTemplate}
-													handleRemoveGame={handleDeleteGame}
-												/>
+											<SavedGameCard
+												key={game.id}
+												game={game}
+												handleUseTemplate={
+													handleUseTemplate
+												}
+												handleRemoveGame={
+													handleDeleteGame
+												}
+											/>
 										))}
 									</div>
 								) : (
@@ -2535,7 +2617,7 @@ function DashboardContent() {
 						isOpen: false,
 						gameId: '',
 						gameTitle: '',
-					}) 
+					})
 				}
 				maxWidth="sm"
 			>
@@ -2754,19 +2836,27 @@ function DashboardContent() {
 									if (templateUseModal.template) {
 										try {
 											// First fetch the full template data including the game data
-											const response = await fetch(`/api/templates/${templateUseModal.template.id}`, {
-												method: 'POST', // Use POST to download the template
-												credentials: 'include'
-											});
+											const response = await fetch(
+												`/api/templates/${templateUseModal.template.id}`,
+												{
+													method: 'POST', // Use POST to download the template
+													credentials: 'include',
+												}
+											);
 
 											if (!response.ok) {
-												throw new Error(`Failed to fetch template: ${response.statusText}`);
+												throw new Error(
+													`Failed to fetch template: ${response.statusText}`
+												);
 											}
 
-											const fullTemplate = await response.json();
-											
+											const fullTemplate =
+												await response.json();
+
 											if (!fullTemplate.data) {
-												throw new Error('Template data is missing');
+												throw new Error(
+													'Template data is missing'
+												);
 											}
 
 											// Transform Template to TemplateData format
@@ -2795,15 +2885,23 @@ function DashboardContent() {
 												},
 											};
 
-											console.log('Storing template with data:', templateData);
-											TemplateService.storeTemplate(templateData);
-											
+											console.log(
+												'Storing template with data:',
+												templateData
+											);
+											TemplateService.storeTemplate(
+												templateData
+											);
+
 											window.open(
 												'/create/question-set?useTemplate=true',
 												'_blank'
 											);
 										} catch (error) {
-											console.error('Failed to store template:', error);
+											console.error(
+												'Failed to store template:',
+												error
+											);
 											alert(
 												'Failed to load template. Please try again.'
 											);

@@ -91,7 +91,7 @@ export default function DropdownMenu({
 	);
 
 	return (
-		<div className={`relative ${className}`} ref={dropdownRef}>
+		<div className={`${className}`} ref={dropdownRef}>
 			<div onClick={handleToggle}>
 				{trigger || defaultTrigger}
 			</div>

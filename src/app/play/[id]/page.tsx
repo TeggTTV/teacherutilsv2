@@ -459,18 +459,18 @@ export default function PlayGamePage() {
 						<div className="flex-1">
 							<div className="h-full grid" style={{ 
 								gridTemplateColumns: `repeat(${game.data.categories.length}, 1fr)`,
-								gridTemplateRows: 'auto 1fr 1fr 1fr 1fr 1fr',
+								gridTemplateRows: '.33fr 1fr 1fr 1fr 1fr 1fr',
 								gap: '0px'
 							}}>
 								{/* Category Headers */}
 								{game.data.categories.map((category) => (
 									<div 
 										key={category.id} 
-										className="flex items-center justify-center font-bold text-lg md:text-xl lg:text-2xl border-r border-white last:border-r-0 relative overflow-hidden"
+										className="h-full flex items-center justify-center text-lg md:text-xl lg:text-2xl border-r border-white last:border-r-0 relative overflow-hidden"
 										style={getCategoryStyle()}
 									>
 										<span style={{
-											textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+											// textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
 											position: 'relative',
 											zIndex: 1
 										}}>
@@ -497,10 +497,10 @@ export default function PlayGamePage() {
 												style={tileStyle}
 											>
 												<span style={{
-													textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+													// textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
 													position: 'relative',
 													zIndex: 1
-												}}>
+												}} className='text-2xl'>
 													${question.value}
 												</span>
 											</button>

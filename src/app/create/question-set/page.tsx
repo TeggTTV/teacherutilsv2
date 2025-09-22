@@ -503,7 +503,6 @@ function QuestionSetContent() {
 						boardCustomizations
 					},
 					isPublic: false,
-					tags: selectedTags
 				};
 
 				const response = await fetch(getApiUrl(`/api/games/${savedGameId}`), {
@@ -914,7 +913,7 @@ function QuestionSetContent() {
 				</motion.div>
 
 				{/* Tags Section */}
-				<motion.div 
+				{/* <motion.div 
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.6, delay: 0.6 }}
@@ -925,7 +924,7 @@ function QuestionSetContent() {
 						onTagsChange={setSelectedTags}
 						placeholder="Add tags to help others discover your game..."
 					/>
-				</motion.div>
+				</motion.div> */}
 
 				{/* Game Board */}
 				<GameBoard

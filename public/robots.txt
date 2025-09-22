@@ -2,7 +2,16 @@
 User-agent: *
 Allow: /
 Disallow: /api/*
-Disallow: /dashboard/*
+Disallow: /dashboard*
+Disallow: /profile*
+Disallow: /saved*
+Disallow: /create*
+Disallow: /reset-password*
+Disallow: /forgot-password*
+Disallow: /newsletter*
+Disallow: /play/*/setup*
+Disallow: /users*
+Disallow: /support*
 
 # Host
 Host: http://localhost:3000
