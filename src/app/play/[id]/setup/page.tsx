@@ -170,7 +170,7 @@ function GameSetupContent({ gameId }: { gameId: string }) {
 					<div className="text-center">
 						<button
 							onClick={startGame}
-							className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+							className="px-8 py-4 bg-blue-500 text-white text-lg font-semibold rounded-lg hover:bg-blue-600 transition-colors"
 						>
 							Start Game
 						</button>

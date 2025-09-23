@@ -148,7 +148,7 @@ export default function GameHeader({
                 <button
                   onClick={onSaveGame}
                   disabled={saveSuccess}
-                  className="px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  className="px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   {saveSuccess ? 'Saved!' : 'Save Game'}
                 </button>

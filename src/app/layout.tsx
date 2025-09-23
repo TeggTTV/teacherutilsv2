@@ -16,41 +16,41 @@ const geistMono = Geist_Mono({
 	subsets: ['latin'],
 });
 
-export const metadata: Metadata = {
-	title: {
-		default: 'Compyy. - Interactive Educational Games Platform',
-		template: '%s | Compyy.',
-	},
-	description:
-		'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-	openGraph: {
-		type: 'website',
-		locale: 'en_US',
-		url: process.env.SITE_URL || 'https://compyy.org',
-		siteName: 'Compyy.',
-		title: 'Compyy. - Interactive Educational Games Platform',
-		description:
-			'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-		images: [
-			{
-				url: '/Compyy%20Logo%20w%20Text.png',
-				width: 1200,
-				height: 630,
-				alt: 'Compyy. - Interactive Educational Games Platform',
-			},
-		],
-	},
-	twitter: {
-		card: 'summary_large_image',
-		title: 'Compyy. - Interactive Educational Games Platform',
-		description:
-			'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
-		images: ['/Compyy%20Logo%20w%20Text.png'],
-	},
-	icons: {
-		icon: '/favicon.ico',
-	},
-};
+// export const metadata: Metadata = {
+// 	title: {
+// 		default: 'Compyy. - Interactive Educational Games Platform',
+// 		template: '%s | Compyy.',
+// 	},
+// 	description:
+// 		'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+// 	openGraph: {
+// 		type: 'website',
+// 		locale: 'en_US',
+// 		url: process.env.SITE_URL || 'https://compyy.org',
+// 		siteName: 'Compyy.',
+// 		title: 'Compyy. - Interactive Educational Games Platform',
+// 		description:
+// 			'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+// 		images: [
+// 			{
+// 				url: '/Compyy%20Logo%20w%20Text.png',
+// 				width: 1200,
+// 				height: 630,
+// 				alt: 'Compyy. - Interactive Educational Games Platform',
+// 			},
+// 		],
+// 	},
+// 	twitter: {
+// 		card: 'summary_large_image',
+// 		title: 'Compyy. - Interactive Educational Games Platform',
+// 		description:
+// 			'Create and play educational games, starting with Jeopardy-style quizzes. Perfect for teachers and students.',
+// 		images: ['/Compyy%20Logo%20w%20Text.png'],
+// 	},
+// 	icons: {
+// 		icon: '/favicon.ico',
+// 	},
+// };
 
 export default function RootLayout({
 	children,
@@ -104,7 +104,6 @@ export default function RootLayout({
 					<ConditionalLayout>{children}</ConditionalLayout>
 					{/* </TutorialManager> */}
 				</AuthProvider>
-
 				<CookieConsent />
 			</body>
 		</html>

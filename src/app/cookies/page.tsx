@@ -1,7 +1,41 @@
-'use client';
+// No 'use client' so we can use metadata export
 
 import Header from '@/components/Header';
 import Link from 'next/link';
+
+export const metadata = {
+	title: 'Cookie Policy | Compyy',
+	description:
+		'How Compyy uses cookies and tracking technologies to improve your experience.',
+	alternates: {
+		canonical: 'https://compyy.org/cookies',
+	},
+	openGraph: {
+		url: 'https://compyy.org/cookies',
+		title: 'Cookie Policy | Compyy',
+		description:
+			'How Compyy uses cookies and tracking technologies to improve your experience.',
+		images: [
+			{
+				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				width: 800,
+				height: 600,
+				alt: 'Compyy Logo',
+				type: 'image/png',
+			},
+		],
+		siteName: 'Compyy',
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: 'Cookie Policy | Compyy',
+		description:
+			'How Compyy uses cookies and tracking technologies to improve your experience.',
+		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
+		site: '@compyy',
+		creator: '@compyy',
+	},
+};
 
 export default function CookiesPage() {
 	return (
@@ -345,7 +379,7 @@ export default function CookiesPage() {
 				<div className="mt-8 text-center">
 					<Link
 						href="/dashboard"
-						className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+						className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
 					>
 						Back to Dashboard
 					</Link>

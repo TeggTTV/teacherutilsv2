@@ -155,7 +155,7 @@ export default function AdvancedSearch({
 					whileHover={{ scale: 1.05 }}
 					whileTap={{ scale: 0.95 }}
 					onClick={() => onSearch && onSearch(searchTerm)}
-					className="absolute right-2 top-2 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm"
+					className="absolute right-2 top-2 px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors font-medium text-sm"
 				>
 					Search
 				</motion.button>
@@ -246,7 +246,7 @@ export default function AdvancedSearch({
 											setShowTagDropdown(false);
 											setTagSearchTerm('');
 										}}
-										className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+										className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
 									>
 										Done
 									</motion.button>

@@ -239,7 +239,7 @@ export default function PlayGamePage() {
 														? 'bg-gray-800 text-gray-600 cursor-not-allowed'
 														: !question.question || !question.answer
 														? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-														: 'bg-blue-800 hover:bg-blue-700 text-yellow-300 cursor-pointer hover:scale-105'
+														: 'bg-blue-800 hover:bg-blue-600 text-yellow-300 cursor-pointer hover:scale-105'
 												}`}
 											>
 												${question.value}

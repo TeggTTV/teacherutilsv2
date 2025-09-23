@@ -1,12 +1,38 @@
-'use client';
+// No 'use client' so we can use metadata export
 import Header from '@/components/Header';
 import Link from 'next/link';
 
-// export const metadata: Metadata = {
-// 	title: 'Terms of Service | Compyy.',
-// 	description:
-// 		'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
-// };
+
+export const metadata = {
+	title: 'Terms of Service | Compyy',
+	description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+	alternates: {
+		canonical: 'https://compyy.org/terms',
+	},
+	openGraph: {
+		url: 'https://compyy.org/terms',
+		title: 'Terms of Service | Compyy',
+		description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+		images: [
+			{
+				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				width: 800,
+				height: 600,
+				alt: 'Compyy Logo',
+				type: 'image/png',
+			},
+		],
+		siteName: 'Compyy',
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: 'Terms of Service | Compyy',
+		description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
+		site: '@compyy',
+		creator: '@compyy',
+	},
+};
 
 export default function TermsPage() {
 	return (
@@ -401,7 +427,7 @@ export default function TermsPage() {
 				<div className="mt-8 text-center">
 					<Link
 						href="/dashboard"
-						className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+						className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
 					>
 						Back to Dashboard
 					</Link>

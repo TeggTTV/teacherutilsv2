@@ -400,7 +400,7 @@ export default function PlayGamePage() {
 				<div className="text-center">
 					<h1 className="text-2xl font-bold mb-4 text-gray-900">Game not found</h1>
 					<Link href="/dashboard">
-						<button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+						<button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
 							Back to Dashboard
 						</button>
 					</Link>

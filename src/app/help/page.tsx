@@ -1,14 +1,40 @@
-'use client';
+// No 'use client' so we can use metadata export
 
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { useState } from 'react';
 
-// export const metadata: Metadata = {
-// 	title: 'Help | Compyy.',
-// 	description:
-// 		'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
-// };
+
+export const metadata = {
+	title: 'Help | Compyy',
+	description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+	alternates: {
+		canonical: 'https://compyy.org/help',
+	},
+	openGraph: {
+		url: 'https://compyy.org/help',
+		title: 'Help | Compyy',
+		description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+		images: [
+			{
+				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				width: 800,
+				height: 600,
+				alt: 'Compyy Logo',
+				type: 'image/png',
+			},
+		],
+		siteName: 'Compyy',
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: 'Help | Compyy',
+		description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
+		site: '@compyy',
+		creator: '@compyy',
+	},
+};
 
 export default function HelpPage() {
 	const [activeTab, setActiveTab] = useState('getting-started');
@@ -146,7 +172,7 @@ export default function HelpPage() {
 					</h3>
 					<div className="space-y-6">
 						<div className="flex items-start gap-4">
-							<div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+							<div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
 								1
 							</div>
 							<div>
@@ -160,7 +186,7 @@ export default function HelpPage() {
 							</div>
 						</div>
 						<div className="flex items-start gap-4">
-							<div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+							<div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
 								2
 							</div>
 							<div>
@@ -174,7 +200,7 @@ export default function HelpPage() {
 							</div>
 						</div>
 						<div className="flex items-start gap-4">
-							<div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+							<div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
 								3
 							</div>
 							<div>
@@ -253,7 +279,7 @@ export default function HelpPage() {
 							<div className="flex justify-center gap-4">
 								<button
 									onClick={() => setShowSupportForm(true)}
-									className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+									className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
 								>
 									Contact Support
 								</button>
@@ -394,7 +420,7 @@ export default function HelpPage() {
 									<button
 										type="submit"
 										disabled={isSubmitting}
-										className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+										className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-400"
 									>
 										{isSubmitting
 											? 'Submitting...'

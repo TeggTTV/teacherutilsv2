@@ -1,4 +1,34 @@
-'use client';
+// No 'use client' so we can use metadata export
+export const metadata = {
+	title: 'Privacy Policy | Compyy',
+	description: 'How Compyy protects and uses your information.',
+	alternates: {
+		canonical: 'https://compyy.org/privacy',
+	},
+	openGraph: {
+		url: 'https://compyy.org/privacy',
+		title: 'Privacy Policy | Compyy',
+		description: 'How Compyy protects and uses your information.',
+		images: [
+			{
+				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				width: 800,
+				height: 600,
+				alt: 'Compyy Logo',
+				type: 'image/png',
+			},
+		],
+		siteName: 'Compyy',
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: 'Privacy Policy | Compyy',
+		description: 'How Compyy protects and uses your information.',
+		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
+		site: '@compyy',
+		creator: '@compyy',
+	},
+};
 
 import Header from '@/components/Header';
 import Link from 'next/link';
@@ -22,7 +52,7 @@ export default function PrivacyPage() {
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 					<h2 className="text-3xl font-bold mb-4">Privacy Policy</h2>
 					<p className="text-xl opacity-90">
-						Last updated: September 18, 2025
+						Last updated: September 22, 2025
 					</p>
 				</div>
 			</div>
@@ -245,8 +275,7 @@ export default function PrivacyPage() {
 							</li>
 						</ul>
 						<p className="text-gray-700 leading-relaxed mt-4">
-							To exercise these rights, please contact us at
-							privacy@compyy.com.
+							To exercise these rights, please submit a request via the form on our Help page.
 						</p>
 					</section>
 
@@ -294,22 +323,6 @@ export default function PrivacyPage() {
 						</p>
 					</section>
 
-					{/* Contact Information */}
-					{/* <section>
-						<h3 className="text-2xl font-bold text-gray-900 mb-4">
-							Contact Us
-						</h3>
-						<p className="text-gray-700 leading-relaxed mb-4">
-							If you have any questions about this Privacy Policy or our privacy practices, please contact us:
-						</p>
-						<div className="bg-gray-50 p-4 rounded-lg">
-							<p className="text-gray-700">
-								<strong>Email:</strong> privacy@compyy.com<br />
-								<strong>Support:</strong> support@compyy.com<br />
-								<strong>Address:</strong> [Your Company Address]
-							</p>
-						</div>
-					</section> */}
 					<section>
 						<h3 className="text-2xl font-bold text-gray-900 mb-4">
 							More Information
@@ -345,7 +358,7 @@ export default function PrivacyPage() {
 				<div className="mt-8 text-center">
 					<Link
 						href="/dashboard"
-						className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+						className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
 					>
 						Back to Dashboard
 					</Link>
