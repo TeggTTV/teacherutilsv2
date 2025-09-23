@@ -517,7 +517,7 @@ export default function PlayGamePage() {
 								<div className="space-x-4">
 									<button
 										onClick={resetGame}
-										className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors text-lg"
+										className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors text-lg"
 									>
 										Play Again
 									</button>
@@ -605,7 +605,7 @@ export default function PlayGamePage() {
 								
 								<button
 									onClick={showAnswer}
-									className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 rounded-lg text-2xl font-medium transition-colors touch-manipulation"
+									className="bg-blue-500 hover:bg-blue-600 text-white px-12 py-6 rounded-lg text-2xl font-medium transition-colors touch-manipulation"
 								>
 									Show Answer
 								</button>
@@ -635,7 +635,7 @@ export default function PlayGamePage() {
 										<button
 											key={team.id}
 											onClick={() => awardPoints(team.id)}
-											className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-medium transition-colors text-lg touch-manipulation"
+											className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-lg font-medium transition-colors text-lg touch-manipulation"
 										>
 											{team.name} (+${currentQuestion.question.value})
 										</button>

@@ -87,7 +87,7 @@ export default function TemplateDownloadButton({
 	const getButtonColor = () => {
 		switch (state) {
 			case 'download':
-				return 'bg-blue-600 hover:bg-blue-700 text-white';
+				return 'bg-blue-500 hover:bg-blue-600 text-white';
 			case 'loading':
 				return 'bg-blue-500 text-white cursor-not-allowed';
 			case 'downloaded':

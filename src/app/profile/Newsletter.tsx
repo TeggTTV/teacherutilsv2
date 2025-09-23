@@ -268,7 +268,7 @@ export default function Newsletter({ user }: { user: User }) {
 								<button
 									onClick={handleSubscribe}
 									disabled={isSubscribing}
-									className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50"
+									className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white border border-blue-600 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50"
 								>
 									{isSubscribing ? (
 										<>

@@ -306,7 +306,7 @@ export default function PlayGamePage() {
 									<button
 										key={team.id}
 										onClick={() => awardPoints(team.id)}
-										className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
+										className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition-colors"
 									>
 										{team.name}
 									</button>

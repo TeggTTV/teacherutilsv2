@@ -206,7 +206,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 								<div className="space-y-3">
 									<button
 										onClick={handleClose}
-										className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+										className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
 									>
 										Got it, thanks!
 									</button>
@@ -492,7 +492,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 							<button
 								type="submit"
 								disabled={loading}
-								className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center"
+								className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center"
 							>
 								{loading ? (
 									<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

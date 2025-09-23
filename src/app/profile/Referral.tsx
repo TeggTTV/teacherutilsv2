@@ -1,6 +1,8 @@
 import { getApiUrl } from '@/lib/config';
 import { User } from '@/types/user';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import Modal from '@/components/Modal';
 
 type Referral = { name: string; email: string; status: string };
 
@@ -11,7 +13,7 @@ export default function Refferal({ user }: { user: User }) {
 	const [raffleTickets, setRaffleTickets] = useState(0);
 	const [referrals, setReferrals] = useState<Referral[]>([]);
 
-    const [users, setUsers] = useState<User[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
 
 	const pageSize = 10;
 	const handleGenerateReferral = async () => {
@@ -44,6 +46,10 @@ export default function Refferal({ user }: { user: User }) {
 		}
 	};
 
+	const [referralRulesOpen, setReferralRulesOpen] = useState(false);
+	const openReferralRules = () => setReferralRulesOpen(true);
+	const closeReferralRules = () => setReferralRulesOpen(false);
+
 	useEffect(() => {
 		const fetchReferralData = async () => {
 			if (!user) return;
@@ -73,20 +79,20 @@ export default function Refferal({ user }: { user: User }) {
 		};
 		fetchReferralData();
 
-        const fetchUsersWithTickets = async () => {
-            try {
-                const res = await fetch(getApiUrl('/api/users'));
-                if (res.ok) {
-                    const data = await res.json();
-                    setUsers(data.data || []);
-                } else {
-                    setUsers([]);
-                }
-            } catch {
-                setUsers([]);
-            }
-        }
-        fetchUsersWithTickets();
+		const fetchUsersWithTickets = async () => {
+			try {
+				const res = await fetch(getApiUrl('/api/users'));
+				if (res.ok) {
+					const data = await res.json();
+					setUsers(data.data || []);
+				} else {
+					setUsers([]);
+				}
+			} catch {
+				setUsers([]);
+			}
+		};
+		fetchUsersWithTickets();
 	}, [user]);
 
 	return (
@@ -213,8 +219,56 @@ export default function Refferal({ user }: { user: User }) {
 					raffle ticket. Each ticket increases your chances of winning
 					in our next prize draw! The more tickets you have, the
 					better your odds. Check back after your friends confirm
-					their emails to see your updated ticket count.
+					their emails to see your updated ticket count. View the{' '}
+					<span
+						onClick={openReferralRules}
+						className="cursor-pointer text-blue-500 underline"
+					>
+						Rules
+					</span>
+					.
 				</div>
+				<Modal
+					isOpen={referralRulesOpen}
+					onClose={closeReferralRules}
+					maxWidth="lg"
+				>
+					<div className="text-xl font-bold mb-2">Raffle Rules</div>
+					<ul className="list-disc pl-5 space-y-2 text-gray-800">
+						<li>
+							For every friend you refer who registers and
+							confirms their email, you earn{' '}
+							<b>1 raffle ticket</b>.
+						</li>
+						<li>
+							If your referred friend refers someone else who also
+							registers and confirms, <b>you also get a ticket</b>{' '}
+							(multi-level/chain referrals).
+						</li>
+						<li>
+							The more tickets you have, the higher your chances
+							of winning in the next prize draw.
+						</li>
+						<li>
+							Tickets are only awarded after the referred user
+							confirms their email.
+						</li>
+						<li>
+							Check your profile to see your current ticket count
+							and referral status.
+						</li>
+						<li>
+							Winners will be contacted via the email associated
+							with their account.
+						</li>
+					</ul>
+					<button
+						onClick={closeReferralRules}
+						className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+					>
+						Close
+					</button>
+				</Modal>
 			</div>
 			<table className="mt-6 min-w-full bg-white border border-gray-200 rounded-lg">
 				<thead>
@@ -244,8 +298,11 @@ export default function Refferal({ user }: { user: User }) {
 								currentPage * pageSize
 							)
 							.sort(
-                                (a, b) => (b.raffleTickets || 0) - (a.raffleTickets || 0)
-                            ).map((ref, idx) => (
+								(a, b) =>
+									(b.raffleTickets || 0) -
+									(a.raffleTickets || 0)
+							)
+							.map((ref, idx) => (
 								<tr
 									key={idx}
 									className="border-t border-gray-100"

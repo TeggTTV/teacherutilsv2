@@ -54,7 +54,7 @@ export default function TemplateDownloadButton({ templateId, onDownload }: Templ
             case 'use':
                 return 'bg-purple-600 hover:bg-purple-700 text-white';
             default:
-                return 'bg-blue-600 hover:bg-blue-700 text-white';
+                return 'bg-blue-500 hover:bg-blue-600 text-white';
         }
     };
 

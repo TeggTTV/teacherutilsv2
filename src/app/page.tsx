@@ -43,9 +43,10 @@ function AnimatedStat({ value, label, color }: { value: string; label: string; c
 export default function Home() {
 	const [stats, setStats] = useState<Stats>({
 		activeTeachers: '0',
-		gamesCreated: '0', 
-		studentsEngaged: '0'
+		gamesCreated: '0',
+		studentsEngaged: '0',
 	});
+	const [showBanner, setShowBanner] = useState(true);
 
 	useEffect(() => {
 		const fetchStats = async () => {
@@ -60,12 +61,13 @@ export default function Home() {
 				// Keep default stats if fetch fails
 			}
 		};
-
 		fetchStats();
 	}, []);
-		return (
-			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-				{/* Referral Banner (Landing Page Only) */}
+
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+			{/* Referral Banner (Landing Page Only) */}
+			{showBanner && (
 				<div
 					style={{ zIndex: 9999 }}
 					className="fixed bottom-0 left-0 w-full flex items-center justify-center bg-blue-100 border-t border-blue-300 py-4 px-2 shadow-lg"
@@ -77,9 +79,19 @@ export default function Home() {
 						href="/profile"
 						className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-2 rounded-lg shadow transition-colors"
 					>
-						View My Referral
+						My Referrals
 					</a>
+					<button
+						onClick={() => setShowBanner(false)}
+						className="ml-4 p-1 rounded hover:bg-blue-200 focus:outline-none"
+						aria-label="Close referral banner"
+					>
+						<svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
 				</div>
+			)}
 			{/* Hero Section */}
 			<section className="relative overflow-hidden">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-16 pb-12 sm:pb-20">
@@ -113,7 +125,7 @@ export default function Home() {
 								<motion.button
 									whileHover={{ scale: 1.02 }}
 									whileTap={{ scale: 0.98 }}
-									className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-all duration-200 shadow-lg hover:shadow-xl min-w-[200px]"
+									className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-all duration-200 shadow-lg hover:shadow-xl min-w-[200px]"
 								>
 									Start Creating
 								</motion.button>

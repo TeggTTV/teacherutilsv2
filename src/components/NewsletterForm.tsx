@@ -58,7 +58,7 @@ export default function NewsletterForm() {
                 className={`w-full px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl
                     ${status === 'loading' 
                         ? 'bg-gray-400 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
                     }`}
             >
                 {status === 'loading' ? 'Sending...' : 'Subscribe'}
