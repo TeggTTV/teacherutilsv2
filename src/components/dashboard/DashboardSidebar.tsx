@@ -90,10 +90,15 @@ export default function DashboardSidebar({
 								onTabChange(item.id);
 								setSidebarOpen(false);
 							}}
-							className={`w-full flex items-center space-x-4 px-6 py-4 lg:py-3 rounded-xl transition-all duration-200 group ${item.bgColor} ${item.textColor} min-h-[48px] lg:min-h-[44px] shadow-sm hover:shadow-md`}
+							className={`w-full flex items-center space-x-4 px-6 py-4 lg:py-3 rounded-xl transition-all duration-200 group ${item.bgColor} ${item.textColor} min-h-[48px] lg:min-h-[44px] shadow-sm hover:shadow-md relative`}
 						>
 							{item.icon}
 							<span className="font-medium">{item.label}</span>
+							{item.badge && (
+								<span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold animate-pulse">
+									{item.badge}
+								</span>
+							)}
 						</motion.button>
 					))}
 				</nav>
@@ -114,10 +119,15 @@ export default function DashboardSidebar({
 							onTabChange(lastItem.id);
 							setSidebarOpen(false);
 						}}
-						className={`w-full flex items-center space-x-4 px-6 py-4 lg:py-3 rounded-xl transition-all duration-200 group ${lastItem.bgColor} ${lastItem.textColor} min-h-[48px] lg:min-h-[44px] shadow-sm hover:shadow-md`}
+						className={`w-full flex items-center space-x-4 px-6 py-4 lg:py-3 rounded-xl transition-all duration-200 group ${lastItem.bgColor} ${lastItem.textColor} min-h-[48px] lg:min-h-[44px] shadow-sm hover:shadow-md relative`}
 					>
 						{lastItem.icon}
 						<span className="font-medium">{lastItem.label}</span>
+						{lastItem.badge && (
+							<span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold animate-pulse">
+								{lastItem.badge}
+							</span>
+						)}
 					</motion.button>
 				</div>
 				<motion.div

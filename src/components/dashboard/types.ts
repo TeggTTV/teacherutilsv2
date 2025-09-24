@@ -106,6 +106,7 @@ export interface SidebarItem {
 	icon: React.ReactNode;
 	bgColor: string;
 	textColor: string;
+	badge?: string;
 }
 
 export interface MarketFilters {

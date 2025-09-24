@@ -215,6 +215,7 @@ export default function sidebarItems(activeTab: string): SidebarItem[] {
 		{
 			id: 'referrals',
 			label: 'Referrals',
+			badge: 'New!',
 			icon: (
 				<svg
 					className="w-5 h-5"
@@ -230,9 +231,9 @@ export default function sidebarItems(activeTab: string): SidebarItem[] {
 					/>
 				</svg>
 			),
-			bgColor: activeTab === 'referrals' ? 'bg-blue-500' : 'bg-gray-100',
+			bgColor: activeTab === 'referrals' ? 'bg-blue-500' : 'bg-gradient-to-r from-purple-100 to-pink-100',
 			textColor:
-				activeTab === 'referrals' ? 'text-white' : 'text-gray-700',
+				activeTab === 'referrals' ? 'text-white' : 'text-purple-700',
 		},
 	];
 }

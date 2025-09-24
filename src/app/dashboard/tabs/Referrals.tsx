@@ -16,7 +16,7 @@ export default function Referrals({ user }: ReferralsProps) {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [generating, setGenerating] = useState(false);
 	const [referralLink, setReferralLink] = useState('');
-	const [raffleTickets, setRaffleTickets] = useState(0);
+	// const [raffleTickets, setRaffleTickets] = useState(0);
 	const [referrals, setReferrals] = useState<Referral[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [referralRulesOpen, setReferralRulesOpen] = useState(false);
@@ -111,16 +111,16 @@ export default function Referrals({ user }: ReferralsProps) {
 							? `${window.location.origin}/?ref=${data.data.referralLink}&register=1`
 							: ''
 					);
-					setRaffleTickets(data.data.raffleTickets ?? 0);
+					// setRaffleTickets(data.data.raffleTickets ?? 0);
 					setReferrals(data.data.referrals ?? []);
 				} else {
 					setReferralLink('');
-					setRaffleTickets(0);
+					// setRaffleTickets(0);
 					setReferrals([]);
 				}
 			} catch {
 				setReferralLink('');
-				setRaffleTickets(0);
+				// setRaffleTickets(0);
 				setReferrals([]);
 			} finally {
 				setLoadingReferralData(false);
