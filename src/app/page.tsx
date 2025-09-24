@@ -1,5 +1,4 @@
 import FaqComponent from './Faq';
-import Banner from './Banner';
 import Hero from './Hero';
 import ChooseCompyy from './ChooseCompyy';
 import Testimonials from './Testimonials';
@@ -47,7 +46,6 @@ export default function Home() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-			{/* <Banner /> */}
 			<Hero />
 			<ChooseCompyy />
 			<FaqComponent />	
