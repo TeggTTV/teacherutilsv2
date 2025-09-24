@@ -114,3 +114,28 @@ export interface MarketFilters {
 	difficulty: string;
 	sortBy: string;
 }
+
+export interface Template {
+	id: string;
+	title: string;
+	description: string;
+	type: 'JEOPARDY' | 'QUIZ' | 'WORD_GAME';
+	data: Record<string, unknown>;
+	previewImage?: string;
+	tags: string[];
+	difficulty?: string;
+	gradeLevel?: string;
+	subject?: string;
+	templateDownloads?: Array<unknown>;
+	downloads: number;
+	rating: number;
+	ratingCount: number;
+	isFeatured: boolean;
+	isPublic: boolean;
+	createdAt: string;
+	author: {
+		id: string;
+		name: string;
+		username?: string;
+	};
+}
