@@ -20,6 +20,14 @@ export default function Referrals({ user }: ReferralsProps) {
 	const [referrals, setReferrals] = useState<Referral[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [referralRulesOpen, setReferralRulesOpen] = useState(false);
+	const [loadingReferralData, setLoadingReferralData] = useState(true);
+	const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+	const [timeLeft, setTimeLeft] = useState({
+		days: 0,
+		hours: 0,
+		minutes: 0,
+		seconds: 0
+	});
 
 	const pageSize = 10;
 
@@ -66,8 +74,32 @@ export default function Referrals({ user }: ReferralsProps) {
 	const closeReferralRules = () => setReferralRulesOpen(false);
 
 	useEffect(() => {
+		const calculateTimeLeft = () => {
+			const targetDate = new Date('2025-10-01T00:00:00').getTime();
+			const now = new Date().getTime();
+			const difference = targetDate - now;
+
+			if (difference > 0) {
+				setTimeLeft({
+					days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+					hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+					minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+					seconds: Math.floor((difference % (1000 * 60)) / 1000)
+				});
+			} else {
+				setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+			}
+		};
+
+		// Calculate initial time
+		calculateTimeLeft();
+
+		// Update every second
+		const timer = setInterval(calculateTimeLeft, 1000);
+
 		const fetchReferralData = async () => {
 			if (!user) return;
+			setLoadingReferralData(true);
 			try {
 				const res = await fetch(
 					getApiUrl(`/api/users/${user.id}/referrals`)
@@ -90,11 +122,14 @@ export default function Referrals({ user }: ReferralsProps) {
 				setReferralLink('');
 				setRaffleTickets(0);
 				setReferrals([]);
+			} finally {
+				setLoadingReferralData(false);
 			}
 		};
 		fetchReferralData();
 
 		const fetchUsersWithTickets = async () => {
+			setLoadingLeaderboard(true);
 			try {
 				const res = await fetch(getApiUrl('/api/users'));
 				if (res.ok) {
@@ -105,15 +140,24 @@ export default function Referrals({ user }: ReferralsProps) {
 				}
 			} catch {
 				setUsers([]);
+			} finally {
+				setLoadingLeaderboard(false);
 			}
 		};
 		fetchUsersWithTickets();
+
+		// Cleanup timer on unmount
+		return () => {
+			if (timer) {
+				clearInterval(timer);
+			}
+		};
 	}, [user]);
 
 	return (
 		<div className="space-y-8">
 			{/* Header */}
-			<div className="text-center">
+			{/* <div className="text-center">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
@@ -127,34 +171,253 @@ export default function Referrals({ user }: ReferralsProps) {
 						prizes!
 					</p>
 				</motion.div>
-			</div>
+			</div> */}
 
-			{/* Ticket Display */}
+			{/* Countdown Timer */}
 			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ delay: 0.1 }}
+				className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200"
+			>
+				<div className="text-center">
+					<h2 className="text-2xl font-bold text-blue-900 mb-2">
+						🎉 Raffle Draw Countdown
+					</h2>
+					<p className="text-blue-700 mb-4">
+						Next draw happens October 1st, 2025!
+					</p>
+					<div className="grid grid-cols-4 gap-4 max-w-md mx-auto">
+						<div className="bg-white rounded-lg p-4 shadow-md border border-blue-100">
+							<div className="text-3xl font-bold text-blue-600">
+								{timeLeft.days}
+							</div>
+							<div className="text-sm text-blue-500 font-medium">
+								Days
+							</div>
+						</div>
+						<div className="bg-white rounded-lg p-4 shadow-md border border-blue-100">
+							<div className="text-3xl font-bold text-blue-600">
+								{timeLeft.hours}
+							</div>
+							<div className="text-sm text-blue-500 font-medium">
+								Hours
+							</div>
+						</div>
+						<div className="bg-white rounded-lg p-4 shadow-md border border-blue-100">
+							<div className="text-3xl font-bold text-blue-600">
+								{timeLeft.minutes}
+							</div>
+							<div className="text-sm text-blue-500 font-medium">
+								Minutes
+							</div>
+						</div>
+						<div className="bg-white rounded-lg p-4 shadow-md border border-blue-100">
+							<div className="text-3xl font-bold text-blue-600">
+								{timeLeft.seconds}
+							</div>
+							<div className="text-sm text-blue-500 font-medium">
+								Seconds
+							</div>
+						</div>
+					</div>
+					{timeLeft.days === 0 &&
+						timeLeft.hours === 0 &&
+						timeLeft.minutes === 0 &&
+						timeLeft.seconds === 0 && (
+							<div className="mt-4 text-2xl font-bold text-blue-600">
+								🎊 It&apos;s time for the draw! 🎊
+							</div>
+						)}
+				</div>
+			</motion.div>
+
+			{/* Leaderboard */}
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ delay: 0.4 }}
+				className="bg-white rounded-lg shadow-lg p-6 border border-gray-200"
+			>
+				<h3 className="text-xl font-semibold text-gray-900 mb-4">
+					🏆 Ticket Leaderboard
+				</h3>
+				<p className="text-gray-600 mb-4">
+					See how you stack up against other users!
+				</p>
+
+				<div className="overflow-x-auto">
+					<table className="min-w-full bg-white border border-gray-200 rounded-lg">
+						<thead>
+							<tr className="bg-gray-50">
+								<th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+									Rank
+								</th>
+								<th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+									User
+								</th>
+								<th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+									Tickets
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{loadingLeaderboard ? (
+								<tr>
+									<td
+										colSpan={3}
+										className="px-4 py-8 text-center text-gray-500"
+									>
+										<div className="flex flex-col items-center">
+											<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+											<p>Loading leaderboard...</p>
+										</div>
+									</td>
+								</tr>
+							) : users.length === 0 ? (
+								<tr>
+									<td
+										colSpan={3}
+										className="px-4 py-8 text-center text-gray-500"
+									>
+										No users found
+									</td>
+								</tr>
+							) : (() => {
+								const sortedUsers = users.sort(
+									(a, b) =>
+										(b.raffleTickets || 0) -
+										(a.raffleTickets || 0)
+								);
+								
+								let displayUsers = sortedUsers.slice(0, pageSize);
+								let currentUserPosition = -1;
+								
+								// Find current user's position in the full sorted list
+								if (user) {
+									currentUserPosition = sortedUsers.findIndex(u => u.id === user.id);
+								}
+								
+								// If current user is not in top pageSize but exists, replace last position with current user
+								if (currentUserPosition > pageSize - 1 && user) {
+									displayUsers = [
+										...sortedUsers.slice(0, pageSize - 1),
+										user
+									];
+								}
+								
+								return displayUsers.map((userItem, idx) => {
+									const isCurrentUser = userItem.id === user?.id;
+									// Use actual position for display rank
+									let displayRank = idx + 1;
+									if (isCurrentUser && currentUserPosition > pageSize - 1) {
+										displayRank = currentUserPosition + 1;
+									}
+									
+									return (
+										<tr
+											key={userItem.id || idx}
+											className={`border-t border-gray-100 ${
+												isCurrentUser
+													? 'bg-blue-50'
+													: 'hover:bg-gray-50'
+											}`}
+										>
+											<td className="px-4 py-3 text-gray-900">
+												<div className="flex items-center">
+													{displayRank}
+													{idx === 0 && displayRank === 1 && (
+														<span className="ml-1">
+															🥇
+														</span>
+													)}
+													{idx === 1 && displayRank === 2 && (
+														<span className="ml-1">
+															🥈
+														</span>
+													)}
+													{idx === 2 && displayRank === 3 && (
+														<span className="ml-1">
+															🥉
+														</span>
+													)}
+												</div>
+											</td>
+											<td className="px-4 py-3">
+												<span
+													className={`font-medium ${
+														isCurrentUser
+															? 'text-blue-900'
+															: 'text-gray-900'
+													}`}
+												>
+													{userItem.username ||
+														'Anonymous'}
+													{isCurrentUser && (
+														<span className="ml-2 text-xs text-blue-600">
+															(You)
+														</span>
+													)}
+												</span>
+											</td>
+											<td className="px-4 py-3">
+												<span
+													className={`font-semibold ${
+														isCurrentUser
+															? 'text-blue-900'
+															: 'text-gray-700'
+													}`}
+												>
+													{userItem.raffleTickets ||
+														0}
+												</span>
+											</td>
+										</tr>
+									);
+								});
+							})()
+							}
+						</tbody>
+					</table>
+				</div>
+			</motion.div>
+			{/* Ticket Display */}
+			{/* <motion.div
 				initial={{ opacity: 0, scale: 0.95 }}
 				animate={{ opacity: 1, scale: 1 }}
 				className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 border border-blue-200"
 			>
-				<div className="flex items-center justify-center gap-4">
-					<div className="text-6xl">🎟️</div>
-					<div className="text-center">
-						<div className="text-5xl font-bold text-blue-900">
-							{raffleTickets}
-						</div>
-						<div className="text-xl text-blue-700">
-							{raffleTickets === 1
-								? 'Raffle Ticket'
-								: 'Raffle Tickets'}
+				{loadingReferralData ? (
+					<div className="flex items-center justify-center gap-4">
+						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+						<div className="text-center">
+							<div className="text-lg font-semibold text-blue-900">
+								Loading your tickets...
+							</div>
 						</div>
 					</div>
-				</div>
+				) : (
+					<div className="flex items-center justify-center gap-4">
+						<div className="text-6xl">🎟️</div>
+						<div className="text-center">
+							<div className="text-5xl font-bold text-blue-900">
+								{raffleTickets}
+							</div>
+							<div className="text-xl text-blue-700">
+								{raffleTickets === 1
+									? 'Raffle Ticket'
+									: 'Raffle Tickets'}
+							</div>
+						</div>
+					</div>
+				)}
 				<div className="mt-4 text-center">
 					<p className="text-gray-600">
 						The more tickets you have, the better your chances of
 						winning!
 					</p>
 				</div>
-			</motion.div>
+			</motion.div> */}
 
 			{/* Referral Link Section */}
 			<motion.div
@@ -248,7 +511,19 @@ export default function Referrals({ user }: ReferralsProps) {
 							</tr>
 						</thead>
 						<tbody>
-							{referrals.length === 0 ? (
+							{loadingReferralData ? (
+								<tr>
+									<td
+										colSpan={3}
+										className="px-4 py-8 text-center text-gray-500"
+									>
+										<div className="flex flex-col items-center">
+											<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+											<p>Loading your referrals...</p>
+										</div>
+									</td>
+								</tr>
+							) : referrals.length === 0 ? (
 								<tr>
 									<td
 										colSpan={3}
@@ -320,123 +595,6 @@ export default function Referrals({ user }: ReferralsProps) {
 							))}
 						</div>
 					)}
-				</div>
-			</motion.div>
-
-			{/* Leaderboard */}
-			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ delay: 0.4 }}
-				className="bg-white rounded-lg shadow-lg p-6 border border-gray-200"
-			>
-				<h3 className="text-xl font-semibold text-gray-900 mb-4">
-					🏆 Ticket Leaderboard
-				</h3>
-				<p className="text-gray-600 mb-4">
-					See how you stack up against other users!
-				</p>
-
-				<div className="overflow-x-auto">
-					<table className="min-w-full bg-white border border-gray-200 rounded-lg">
-						<thead>
-							<tr className="bg-gray-50">
-								<th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-									Rank
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-									User
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-									Tickets
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{users.length === 0 ? (
-								<tr>
-									<td
-										colSpan={3}
-										className="px-4 py-8 text-center text-gray-500"
-									>
-										Loading leaderboard...
-									</td>
-								</tr>
-							) : (
-								users
-									.sort(
-										(a, b) =>
-											(b.raffleTickets || 0) -
-											(a.raffleTickets || 0)
-									)
-									.slice(0, 10) // Show top 10
-									.map((userItem, idx) => {
-										const isCurrentUser =
-											userItem.id === user?.id;
-										return (
-											<tr
-												key={idx}
-												className={`border-t border-gray-100 ${
-													isCurrentUser
-														? 'bg-blue-50'
-														: 'hover:bg-gray-50'
-												}`}
-											>
-												<td className="px-4 py-3 text-gray-900">
-													<div className="flex items-center">
-														{idx + 1}
-														{idx === 0 && (
-															<span className="ml-1">
-																🥇
-															</span>
-														)}
-														{idx === 1 && (
-															<span className="ml-1">
-																🥈
-															</span>
-														)}
-														{idx === 2 && (
-															<span className="ml-1">
-																🥉
-															</span>
-														)}
-													</div>
-												</td>
-												<td className="px-4 py-3">
-													<span
-														className={`font-medium ${
-															isCurrentUser
-																? 'text-blue-900'
-																: 'text-gray-900'
-														}`}
-													>
-														{userItem.username ||
-															'Anonymous'}
-														{isCurrentUser && (
-															<span className="ml-2 text-xs text-blue-600">
-																(You)
-															</span>
-														)}
-													</span>
-												</td>
-												<td className="px-4 py-3">
-													<span
-														className={`font-semibold ${
-															isCurrentUser
-																? 'text-blue-900'
-																: 'text-gray-700'
-														}`}
-													>
-														{userItem.raffleTickets ||
-															0}
-													</span>
-												</td>
-											</tr>
-										);
-									})
-							)}
-						</tbody>
-					</table>
 				</div>
 			</motion.div>
 

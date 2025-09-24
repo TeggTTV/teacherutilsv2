@@ -471,7 +471,7 @@ export default function DashboardContent() {
 	}
 
 	return (
-		<div className="min-h-[calc(100vh-64px	)] bg-gradient-to-br from-blue-50 to-indigo-100 flex">
+		<div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-blue-50 to-indigo-100 flex">
 			{/* Sidebar */}
 			<DashboardSidebar
 				sidebarOpen={sidebarOpen}
@@ -482,7 +482,7 @@ export default function DashboardContent() {
 			/>
 
 			{/* Main Content */}
-			<div className="flex-1 min-w-0">
+			<div className="h-full flex-1 min-w-0">
 				{/* Header */}
 				<DashboardHeader
 					activeTab={activeTab}

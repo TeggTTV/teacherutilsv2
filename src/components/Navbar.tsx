@@ -9,7 +9,6 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import AuthModal from './AuthModel/AuthModal';
 import Banner from '@/app/Banner';
 
-
 export default function Navbar() {
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -458,8 +457,10 @@ export default function Navbar() {
 				isOpen={isAuthModalOpen}
 				onClose={() => setIsAuthModalOpen(false)}
 			/>
-
-			<Banner setIsAuthModalOpen={setIsAuthModalOpen} />
+			{/* only on main page / */}
+			{pathname === '/' && (
+				<Banner setIsAuthModalOpen={setIsAuthModalOpen} />
+			)}
 		</motion.nav>
 	);
 }

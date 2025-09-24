@@ -26,7 +26,7 @@ export default function ConditionalLayout({
 		<Suspense>
 			<div className="min-h-screen flex flex-col">
 				<Navbar />
-				<main className="flex-grow">{children}</main>
+				<main className="flex-grow min-h-[calc(100vh-64px)]">{children}</main>
 				<Footer />
 			</div>
 		</Suspense>
