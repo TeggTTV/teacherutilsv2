@@ -34,8 +34,15 @@ function AnimatedStat({
 				ref={elementRef}
 				className={`text-xl sm:text-2xl md:text-3xl font-bold ${color} mb-1 sm:mb-2`}
 			>
-				{count.toLocaleString()}
-				{suffix}
+				{/* Spinner or number */}
+				{value === '0' ? (
+					<span className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400 align-middle"></span>
+				) : (
+					<>
+						{count.toLocaleString()}
+						{suffix}
+					</>
+				)}
 			</div>
 			<div className="text-xs sm:text-sm md:text-base text-gray-600">
 				{label}
