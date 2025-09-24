@@ -30,7 +30,7 @@ export default function CookieConsent() {
 					initial={{ y: 100, opacity: 0 }}
 					animate={{ y: 0, opacity: 1 }}
 					exit={{ y: 100, opacity: 0 }}
-					className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 p-4"
+					className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20 p-4"
 				>
 					<div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
 						<div className="flex-1">

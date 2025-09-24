@@ -7,7 +7,6 @@ import { getApiUrl } from '@/lib/config';
 import ChangePasswordForm from '@/components/ChangePasswordForm';
 import ProfilePicture from './ProfilePicture';
 import ProfileForm from './ProfileForm';
-import Refferal from './Referral';
 import Newsletter from './Newsletter';
 
 export default function ProfilePage() {
@@ -148,8 +147,6 @@ export default function ProfilePage() {
 					<div className="mt-8 pt-8 border-t">
 						<ChangePasswordForm />
 					</div>
-
-					<Refferal user={user} />
 
 					{/* Newsletter Subscription Section */}
 					<Newsletter user={user} />

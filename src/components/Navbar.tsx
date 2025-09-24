@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname, useSearchParams } from 'next/navigation';
-import AuthModal from './AuthModal';
+import AuthModal from './AuthModel/AuthModal';
+import Banner from '@/app/Banner';
 
 
 export default function Navbar() {
@@ -457,6 +458,8 @@ export default function Navbar() {
 				isOpen={isAuthModalOpen}
 				onClose={() => setIsAuthModalOpen(false)}
 			/>
+
+			<Banner setIsAuthModalOpen={setIsAuthModalOpen} />
 		</motion.nav>
 	);
 }

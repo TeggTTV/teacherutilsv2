@@ -14,6 +14,9 @@ export type CreateUserData = {
 	school?: string;
 	grade?: string;
 	subject?: string;
+	isTeacher?: boolean; // New field to indicate teacher status
+	referralCode?: string;
+	subscribeToNewsletter?: boolean;
 };
 
 export type UpdateUserData = Partial<Omit<CreateUserData, 'email'>> & {
@@ -35,6 +38,33 @@ export class UserService {
 			const password = data.password || Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
 			const hashedPassword = await bcrypt.hash(password, 12);
 
+			// Handle referral code if provided
+			let referralReward = 0;
+			let referralLinkId: string | undefined;
+			if (data.referralCode) {
+				try {
+					const referralLink = await prisma.referralLink.findUnique({
+						where: { code: data.referralCode, active: true },
+						include: { user: true },
+					});
+
+					if (referralLink) {
+						// Give referral reward to the referrer
+						await prisma.user.update({
+							where: { id: referralLink.user.id },
+							data: { raffleTickets: { increment: 1 } },
+						});
+						
+						// Give bonus ticket to the new user for using a referral
+						referralReward = 1;
+						referralLinkId = referralLink.id;
+					}
+				} catch (error) {
+					console.error('Error processing referral code:', error);
+					// Don't fail user creation if referral processing fails
+				}
+			}
+
 			const user = await prisma.user.create({
 				data: {
 					email: data.email,
@@ -47,8 +77,51 @@ export class UserService {
 					school: data.school,
 					grade: data.grade,
 					subject: data.subject,
+					role: data.isTeacher ? 'teacher' : 'user',
+					raffleTickets: 1 + referralReward, // Start with 1 ticket + referral bonus
 				},
 			});
+
+			// Handle newsletter subscription separately
+			if (data.subscribeToNewsletter) {
+				try {
+					await prisma.newsletterSubscriber.upsert({
+						where: { email: data.email },
+						update: { status: 'confirmed' },
+						create: {
+							email: data.email,
+							status: 'confirmed',
+						},
+					});
+				} catch (error) {
+					console.error('Error subscribing to newsletter:', error);
+					// Don't fail user creation if newsletter subscription fails
+				}
+			}
+
+			// Create referral record if referral was used
+			if (referralLinkId) {
+				try {
+					const referralLink = await prisma.referralLink.findUnique({
+						where: { id: referralLinkId },
+					});
+
+					if (referralLink) {
+						await prisma.referral.create({
+							data: {
+								referrerId: referralLink.userId,
+								referredId: user.id,
+								referralLinkId: referralLinkId,
+								status: 'approved',
+							},
+						});
+					}
+				} catch (error) {
+					console.error('Error creating referral record:', error);
+					// Don't fail user creation if referral record creation fails
+				}
+			}
+
 			return user;
 		} catch (error: unknown) {
 			if (error && typeof error === 'object' && 'code' in error) {

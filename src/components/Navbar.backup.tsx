@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
-import AuthModal from './AuthModal';
+import AuthModal from './AuthModel/AuthModal';
 
 export default function Navbar() {
 	const [isProfileOpen, setIsProfileOpen] = useState(false);

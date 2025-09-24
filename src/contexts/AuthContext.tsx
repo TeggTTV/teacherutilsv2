@@ -25,6 +25,9 @@ interface RegisterFormData {
 	school?: string;
 	grade?: string;
 	subject?: string;
+	isTeacher?: boolean;
+	referralCode?: string;
+	subscribeToNewsletter?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
