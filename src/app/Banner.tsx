@@ -1,21 +1,35 @@
 'use client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 
 export default function Banner({
 	setIsAuthModalOpen,
 }: {
 	setIsAuthModalOpen?: (open: boolean) => void;
 }) {
-	const [showBanner, setShowBanner] = useState(true);
+	const [showBanner, setShowBanner] = useState(false);
 	const { user } = useAuth();
 
-	console.log(user);
+	// wait one second before showing banner
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setShowBanner(true);
+		}, 1500);
+		return () => clearTimeout(timer);
+	}, []);
 
 	if (!showBanner) return null;
 
 	return (
-		<div className="z-10 fixed bottom-0 left-0 w-full flex flex-col sm:flex-row items-center justify-center bg-blue-100 border-t border-blue-300 py-2 sm:py-4 px-2 sm:px-4 shadow-lg">
+		<motion.div
+			// fade in
+			initial={{ opacity: 0, y: 50 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.5 }}
+			exit={{ opacity: 0, y: 50}}
+			className="z-10 fixed bottom-0 left-0 w-full flex flex-col sm:flex-row items-center justify-center bg-blue-100 border-t border-blue-300 py-2 sm:py-4 px-2 sm:px-4 shadow-lg"
+		>
 			<span className="text-base sm:text-lg font-semibold text-blue-900 mb-2 sm:mb-0 sm:mr-4 text-center sm:text-left">
 				Refer a teacher for a chance to win $100!
 			</span>
@@ -80,6 +94,6 @@ export default function Banner({
 						</svg>
 					</button> */}
 			</div>
-		</div>
+		</motion.div>
 	);
 }
