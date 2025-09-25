@@ -35,7 +35,8 @@ module.exports = {
 		'/play/*/setup*',
 		'/users*',
 		'/support*',
-		'/auth/confirm'
+		'/auth/confirm',
+		'/reset-password'
 	],
 	changefreq: 'daily',
 	priority: 0.7,

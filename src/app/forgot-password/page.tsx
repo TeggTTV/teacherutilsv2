@@ -3,6 +3,40 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+export const metadata = {
+	title: 'Forgot Password | Compyy',
+	description:
+		'Reset your password on Compyy. Enter your email to receive a password reset link and regain access to your account.',
+	alternates: {
+		canonical: 'https://compyy.org/forgot-password',
+	},
+	openGraph: {
+		url: 'https://compyy.org/forgot-password',
+		title: 'Forgot Password | Compyy',
+		description:
+			'Reset your password on Compyy. Enter your email to receive a password reset link and regain access to your account.',
+		images: [
+			{
+				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				width: 800,
+				height: 600,
+				alt: 'Compyy Logo',
+				type: 'image/png',
+			},
+		],
+		siteName: 'Compyy',
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: 'Forgot Password | Compyy',
+		description:
+			'Reset your password on Compyy. Enter your email to receive a password reset link and regain access to your account.',
+		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
+		site: '@compyy',
+		creator: '@compyy',
+	},
+};
+
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState('');
 	const [message, setMessage] = useState('');
@@ -54,7 +88,8 @@ export default function ForgotPasswordPage() {
 						Reset your password
 					</h2>
 					<p className="mt-2 text-sm text-gray-600">
-						Enter your email address and we&apos;ll send you a link to reset your password.
+						Enter your email address and we&apos;ll send you a link
+						to reset your password.
 					</p>
 				</div>
 			</div>
@@ -66,12 +101,22 @@ export default function ForgotPasswordPage() {
 						<div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
 							<div className="flex">
 								<div className="flex-shrink-0">
-									<svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-										<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+									<svg
+										className="h-5 w-5 text-green-400"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+											clipRule="evenodd"
+										/>
 									</svg>
 								</div>
 								<div className="ml-3">
-									<p className="text-sm text-green-800">{message}</p>
+									<p className="text-sm text-green-800">
+										{message}
+									</p>
 								</div>
 							</div>
 						</div>
@@ -82,12 +127,22 @@ export default function ForgotPasswordPage() {
 						<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
 							<div className="flex">
 								<div className="flex-shrink-0">
-									<svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-										<path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+									<svg
+										className="h-5 w-5 text-red-400"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+											clipRule="evenodd"
+										/>
 									</svg>
 								</div>
 								<div className="ml-3">
-									<p className="text-sm text-red-800">{error}</p>
+									<p className="text-sm text-red-800">
+										{error}
+									</p>
 								</div>
 							</div>
 						</div>
@@ -95,7 +150,10 @@ export default function ForgotPasswordPage() {
 
 					<form className="space-y-6" onSubmit={handleSubmit}>
 						<div>
-							<label htmlFor="email" className="block text-sm font-medium text-gray-700">
+							<label
+								htmlFor="email"
+								className="block text-sm font-medium text-gray-700"
+							>
 								Email address
 							</label>
 							<div className="mt-1">
@@ -129,7 +187,9 @@ export default function ForgotPasswordPage() {
 								<div className="w-full border-t border-gray-300" />
 							</div>
 							<div className="relative flex justify-center text-sm">
-								<span className="px-2 bg-white text-gray-500">Or</span>
+								<span className="px-2 bg-white text-gray-500">
+									Or
+								</span>
 							</div>
 						</div>
 
@@ -147,8 +207,10 @@ export default function ForgotPasswordPage() {
 					{process.env.NODE_ENV === 'development' && !message && (
 						<div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
 							<p className="text-xs text-blue-800">
-								<strong>Development Mode:</strong> Password reset emails will be sent using Resend API. 
-								Make sure RESEND_API_KEY is set in your environment variables.
+								<strong>Development Mode:</strong> Password
+								reset emails will be sent using Resend API. Make
+								sure RESEND_API_KEY is set in your environment
+								variables.
 							</p>
 						</div>
 					)}
