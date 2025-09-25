@@ -1,4 +1,3 @@
-'use client';
 import { Suspense } from 'react';
 // Import our new modular components
 import DashboardContent from './DashboardContent';

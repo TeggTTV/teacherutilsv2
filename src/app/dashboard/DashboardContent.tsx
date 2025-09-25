@@ -22,6 +22,7 @@ import Discover from './tabs/Discover';
 import Saved from './tabs/Saved';
 import Referrals from './tabs/Referrals';
 import MyTemplates from './tabs/MyTemplates';
+import Head from './head';
 
 // Small reusable card component to allow hooks (dropdown state) inside a proper component
 
@@ -472,6 +473,10 @@ export default function DashboardContent() {
 
 	return (
 		<div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-blue-50 to-indigo-100 flex">
+			<Head currentTab={
+				activeTab as 'overview' | 'play' | 'discover' | 'my-templates' | 'my-sets' | 'saved' | 'market' | 'stats' | 'referrals'
+			} />
+
 			{/* Sidebar */}
 			<DashboardSidebar
 				sidebarOpen={sidebarOpen}
@@ -556,7 +561,7 @@ export default function DashboardContent() {
 
 						{activeTab === 'my-templates' && (
 							<MyTemplates
-							user={user}
+								user={user}
 								myTemplates={myTemplates}
 								setMyTemplates={setMyTemplates}
 								downloadTemplate={downloadTemplate}
