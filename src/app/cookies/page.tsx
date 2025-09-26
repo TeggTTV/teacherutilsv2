@@ -17,7 +17,7 @@ export const metadata = {
 			'How Compyy uses cookies and tracking technologies to improve your experience.',
 		images: [
 			{
-				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
 				width: 800,
 				height: 600,
 				alt: 'Compyy Logo',

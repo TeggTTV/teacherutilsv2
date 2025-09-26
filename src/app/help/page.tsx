@@ -13,7 +13,7 @@ export const metadata = {
 		description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
 		images: [
 			{
-				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
 				width: 800,
 				height: 600,
 				alt: 'Compyy Logo',

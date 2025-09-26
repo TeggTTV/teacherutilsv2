@@ -14,7 +14,7 @@ export const metadata = {
 			'Reset your password on Compyy. Enter your email to receive a password reset link and regain access to your account.',
 		images: [
 			{
-				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
 				width: 800,
 				height: 600,
 				alt: 'Compyy Logo',

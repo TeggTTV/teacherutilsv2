@@ -19,9 +19,9 @@ export const metadata = {
 			'Create engaging educational games in minutes. Join teachers around the world, making learning fun and interactive with Compyy.',
 		images: [
 			{
-				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
-				width: 800,
-				height: 600,
+				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
+				width: 512,
+				height: 512,
 				alt: 'Compyy Logo',
 				type: 'image/png',
 			},

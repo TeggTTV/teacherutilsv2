@@ -15,7 +15,7 @@ export const metadata = {
 		description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
 		images: [
 			{
-				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
 				width: 800,
 				height: 600,
 				alt: 'Compyy Logo',

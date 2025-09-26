@@ -10,7 +10,7 @@ const SEO = {
 		site_name: 'Compyy',
 		images: [
 			{
-				url: 'https://compyy.org/Compyy%20Logo%20Icon.png',
+				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
 				width: 800,
 				height: 600,
 				alt: 'Compyy Logo',
