@@ -2,6 +2,7 @@
 export const metadata = {
 	title: 'Privacy Policy | Compyy',
 	description: 'How Compyy protects and uses your information.',
+	type: 'website',
 	alternates: {
 		canonical: 'https://compyy.org/privacy',
 	},

@@ -7,6 +7,7 @@ export const metadata = {
 	title: 'Cookie Policy | Compyy',
 	description:
 		'How Compyy uses cookies and tracking technologies to improve your experience.',
+	type: 'website',
 	alternates: {
 		canonical: 'https://compyy.org/cookies',
 	},

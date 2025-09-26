@@ -9,6 +9,7 @@ export const metadata = {
 	title: 'Compyy - Create Engaging Educational Games',
 	description:
 		'Create engaging educational games in minutes. Join teachers around the world, making learning fun and interactive with Compyy.',
+	type: 'website',
 	alternates: {
 		canonical: 'https://compyy.org/',
 	},
@@ -48,7 +49,7 @@ export default function Home() {
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
 			<Hero />
 			<ChooseCompyy />
-			<FaqComponent />	
+			<FaqComponent />
 			<Testimonials />
 			<Newsletter />
 			<CTA />

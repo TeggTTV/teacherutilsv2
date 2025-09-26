@@ -3,14 +3,17 @@ import HelpContent from './HelpContent';
 
 export const metadata = {
 	title: 'Help | Compyy',
-	description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+	description:
+		'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+	type: 'website',
 	alternates: {
 		canonical: 'https://compyy.org/help',
 	},
 	openGraph: {
 		url: 'https://compyy.org/help',
 		title: 'Help | Compyy',
-		description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+		description:
+			'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
 		images: [
 			{
 				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
@@ -25,7 +28,8 @@ export const metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Help | Compyy',
-		description: 'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
+		description:
+			'Useful guides and FAQs to help you get the most out of Compyy. Find answers to common questions and learn how to create engaging educational games for your classroom.',
 		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
 		site: '@compyy',
 		creator: '@compyy',

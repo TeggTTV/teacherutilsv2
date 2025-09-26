@@ -5,14 +5,17 @@ import Link from 'next/link';
 
 export const metadata = {
 	title: 'Terms of Service | Compyy',
-	description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+	description:
+		'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+	type: 'website',
 	alternates: {
 		canonical: 'https://compyy.org/terms',
 	},
 	openGraph: {
 		url: 'https://compyy.org/terms',
 		title: 'Terms of Service | Compyy',
-		description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+		description:
+			'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
 		images: [
 			{
 				url: 'https://compyy.org/Compyy%20Logo%20w%20Text.png',
@@ -27,7 +30,8 @@ export const metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Terms of Service | Compyy',
-		description: 'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
+		description:
+			'Terms and conditions for using Compyy, including user responsibilities, content ownership, privacy, and more.',
 		images: ['https://compyy.org/Compyy%20Logo%20Icon.png'],
 		site: '@compyy',
 		creator: '@compyy',

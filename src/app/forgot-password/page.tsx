@@ -4,6 +4,7 @@ export const metadata = {
 	title: 'Forgot Password | Compyy',
 	description:
 		'Reset your password on Compyy. Enter your email to receive a password reset link and regain access to your account.',
+	type: 'website',
 	alternates: {
 		canonical: 'https://compyy.org/forgot-password',
 	},
