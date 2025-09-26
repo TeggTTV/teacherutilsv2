@@ -46,7 +46,7 @@ export default function Banner({
 					</button>
 				) : (
 					<a
-						href="/profile"
+						href="/dashboard?tab=referrals"
 						className="flex-1 sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold px-3 py-2 sm:px-6 sm:py-2 rounded-lg shadow transition-colors text-center whitespace-nowrap"
 						style={{ minWidth: 0 }}
 					>
