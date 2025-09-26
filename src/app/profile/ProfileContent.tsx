@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { getApiUrl } from "@/lib/config";
 import Link from "next/link";
