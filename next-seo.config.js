@@ -3,6 +3,10 @@ const SEO = {
 	title: 'Compyy. - Create Engaging Educational Games',
 	description:
 		'Create engaging educational games in minutes. Join teachers around the world, making learning fun and interactive with Compyy.',
+	type: 'website',
+	alternates: {
+		canonical: 'https://compyy.org/',
+	},
 	openGraph: {
 		type: 'website',
 		locale: 'en_US',
