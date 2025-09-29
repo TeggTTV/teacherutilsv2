@@ -306,6 +306,11 @@ export default function Navbar() {
 																duration: 0.2,
 															}}
 															className="w-full text-left px-4 py-3 text-sm text-gray-700 flex items-center space-x-3 cursor-pointer"
+															onClick={() =>
+																setIsProfileOpen(
+																	false
+																)
+															}
 														>
 															<svg
 																className="w-4 h-4 flex-shrink-0"
@@ -334,6 +339,11 @@ export default function Navbar() {
 																backgroundColor:
 																	'#f3f4f6',
 															}}
+															onClick={() =>
+																setIsProfileOpen(
+																	false
+																)
+															}
 															transition={{
 																duration: 0.2,
 															}}
@@ -348,7 +358,9 @@ export default function Navbar() {
 																<path
 																	strokeLinecap="round"
 																	strokeLinejoin="round"
-																	strokeWidth={2}
+																	strokeWidth={
+																		2
+																	}
 																	d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8l-4 1 1-4A8.96 8.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
 																/>
 															</svg>
