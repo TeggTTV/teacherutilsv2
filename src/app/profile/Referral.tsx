@@ -175,7 +175,7 @@ export default function Refferal({ user }: { user: User }) {
 												<span className="inline-flex items-center gap-1 text-green-700 font-semibold">
 													Approved{' '}
 													<span className="text-lg">
-														✅
+														❌
 													</span>
 												</span>
 											) : (

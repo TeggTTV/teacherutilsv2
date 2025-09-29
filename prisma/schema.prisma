@@ -1,3 +1,13 @@
+model Feedback {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  feedback  String
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("feedbacks")
+}
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -41,6 +51,7 @@ model User {
   templates     Template[]
   templateDownloads TemplateDownload[]
   templateRatings   TemplateRating[]
+  feedbacks     Feedback[]
 
 
   // Referral system

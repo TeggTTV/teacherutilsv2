@@ -178,7 +178,7 @@ export default function CreatePage() {
 									<span className="w-3 h-3 bg-green-500 rounded-full"></span>
 								) : (
 									<span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium">
-										Soon
+										Coming Soon
 									</span>
 								)}
 							</div>
