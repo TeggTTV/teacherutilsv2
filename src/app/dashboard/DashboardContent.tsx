@@ -27,6 +27,21 @@ import Head from './head';
 // Small reusable card component to allow hooks (dropdown state) inside a proper component
 
 export default function DashboardContent() {
+	// Fetch myTemplates on mount to ensure downloadedTemplateIds is up-to-date
+	useEffect(() => {
+		async function fetchMyTemplates() {
+			try {
+				const response = await fetch('/api/templates/my');
+				if (response.ok) {
+					const data = await response.json();
+					setMyTemplates(data.templates || []);
+				}
+			} catch (error) {
+				console.error('Error fetching my templates:', error);
+			}
+		}
+		fetchMyTemplates();
+	}, []);
 	const { user, loading } = useAuthGuard();
 	const searchParams = useSearchParams();
 	const router = useRouter();
