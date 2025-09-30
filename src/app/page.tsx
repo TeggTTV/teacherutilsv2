@@ -51,7 +51,7 @@ export default function Home() {
 			   <Hero />
 			   <ChooseCompyy />
 			   <FaqComponent />
-			   <GamePreview />
+			   {/* <GamePreview /> */}
 			   <Testimonials />
 			   <Newsletter />
 			   <CTA />

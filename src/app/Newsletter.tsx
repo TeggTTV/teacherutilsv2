@@ -41,7 +41,7 @@ export default function Newsletter() {
 								</svg>
 								5 Ready-to-Use Game Templates
 							</li> */}
-								<li className="flex items-center">
+								{/* <li className="flex items-center">
 									<svg
 										className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 sm:mr-3 flex-shrink-0"
 										fill="none"
@@ -56,7 +56,7 @@ export default function Newsletter() {
 										></path>
 									</svg>
 									Weekly Teaching Tips & Strategies
-								</li>
+								</li> */}
 								<li className="flex items-center">
 									<svg
 										className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 sm:mr-3 flex-shrink-0"
