@@ -52,7 +52,7 @@ export default function CreatePage() {
 				'Timer Options',
 				'Instant Results',
 			],
-			available: false,
+			available: true,
 			color: 'green',
 		},
 		{

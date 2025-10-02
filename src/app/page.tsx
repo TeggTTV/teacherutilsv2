@@ -46,15 +46,15 @@ export const metadata = {
 export default function Home() {
 	// SEO config for Home page
 
-	   return (
-		   <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-			   <Hero />
-			   <ChooseCompyy />
-			   <FaqComponent />
-			   {/* <GamePreview /> */}
-			   <Testimonials />
-			   <Newsletter />
-			   <CTA />
-		   </div>
-	   );
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+			<Hero />
+			<ChooseCompyy />
+			<FaqComponent />
+			{/* <GamePreview /> */}
+			<Testimonials />
+			<Newsletter />
+			<CTA />
+		</div>
+	);
 }
